@@ -1,0 +1,2508 @@
+// ============================================
+// CONFIGURATION CONSTANTS
+// ============================================
+const CONFIG = {
+    GRID_WIDTH: 10,
+    GRID_HEIGHT: 8,
+    TILE_SIZE: 64,
+    COLORS: {
+        GRASS: 0x4a7c59,
+        GRASS_DARK: 0x3d6b4a,
+        HIGHLIGHT_MOVE: 0x4a90d9,
+        HIGHLIGHT_ATTACK: 0xd94a4a,
+        HIGHLIGHT_SELECTED: 0xffd700,
+        PLAYER_SIDE: 0x4a7cd9,
+        ENEMY_SIDE: 0xd94a4a
+    }
+};
+
+// ============================================
+// UNIT TYPES DATABASE - Easy to expand
+// ============================================
+const UNIT_TYPES = {
+    KNIGHT: {
+        name: 'Knight',
+        emoji: '⚔️',
+        health: 100,
+        maxHealth: 100,
+        damage: 25,
+        moveRange: 4,
+        initiative: 10,
+        isPlayer: true,
+        cost: 200,
+        passive: {
+            name: 'Heavy Armor',
+            description: '-50% damage from ranged attacks',
+            effect: 'rangedDefense',
+            value: 0.5
+        }
+    },
+    ARCHER: {
+        name: 'Archer',
+        emoji: '🏹',
+        health: 60,
+        maxHealth: 60,
+        damage: 35,
+        moveRange: 2,
+        rangedRange: 6,
+        initiative: 12,
+        isPlayer: true,
+        cost: 300
+    },
+    // Enemy unit types with point costs
+    ORC_WARRIOR: {
+        name: 'Orc Warrior',
+        emoji: '👹',
+        health: 50,
+        maxHealth: 50,
+        damage: 25,
+        moveRange: 4,
+        initiative: 10,
+        isPlayer: false,
+        cost: 250
+    },
+    ORC_BRUTE: {
+        name: 'Orc Brute',
+        emoji: '🐗',
+        health: 200,
+        maxHealth: 200,
+        damage: 50,
+        moveRange: 2,
+        initiative: 6,
+        isPlayer: false,
+        cost: 500
+    },
+    ORC_ROGUE: {
+        name: 'Orc Rogue',
+        emoji: '🥷',
+        health: 60,
+        maxHealth: 60,
+        damage: 35,
+        moveRange: 6,
+        initiative: 16,
+        isPlayer: false,
+        cost: 500,
+        special: 'hitAndRun' // Returns to starting position after attack
+    },
+    WIZARD: {
+        name: 'Wizard',
+        emoji: '🧙',
+        health: 40,
+        maxHealth: 40,
+        damage: 45,
+        moveRange: 2,
+        rangedRange: 4,
+        initiative: 15,
+        isPlayer: true,
+        cost: 400,
+        passive: {
+            name: 'Arcane Channeling',
+            description: 'Each Wizard increases mana regen by +1 per turn',
+            effect: 'manaRegen',
+            value: 1
+        }
+    },
+    // Additional recruitable units
+    PALADIN: {
+        name: 'Paladin',
+        emoji: '🛡️',
+        health: 150,
+        maxHealth: 150,
+        damage: 20,
+        moveRange: 2,
+        initiative: 9,
+        isPlayer: true
+    },
+    RANGER: {
+        name: 'Ranger',
+        emoji: '🎯',
+        health: 70,
+        maxHealth: 70,
+        damage: 40,
+        moveRange: 3,
+        rangedRange: 5,
+        initiative: 13,
+        isPlayer: true
+    },
+    BERSERKER: {
+        name: 'Berserker',
+        emoji: '🪓',
+        health: 90,
+        maxHealth: 90,
+        damage: 50,
+        moveRange: 3,
+        initiative: 11,
+        isPlayer: true
+    },
+    CLERIC: {
+        name: 'Cleric',
+        emoji: '✝️',
+        health: 80,
+        maxHealth: 80,
+        damage: 15,
+        moveRange: 2,
+        initiative: 10,
+        isPlayer: true
+    },
+    ROGUE: {
+        name: 'Rogue',
+        emoji: '🗡️',
+        health: 55,
+        maxHealth: 55,
+        damage: 40,
+        moveRange: 4,
+        initiative: 16,
+        isPlayer: true
+    },
+    SORCERER: {
+        name: 'Sorcerer',
+        emoji: '🔮',
+        health: 50,
+        maxHealth: 50,
+        damage: 55,
+        moveRange: 2,
+        rangedRange: 4,
+        initiative: 14,
+        isPlayer: true
+    }
+};
+
+// ============================================
+// SPELL DATABASE - 12 Different Spells
+// ============================================
+const SPELLS = {
+    fireball: {
+        id: 'fireball',
+        name: 'Fireball',
+        icon: '🔥',
+        type: 'AoE Damage',
+        manaCost: 25,
+        description: 'Explodes in a 3x3 area dealing 30 damage to all enemies',
+        targetType: 'tile',
+        effect: 'aoeDamage',
+        power: 30,
+        range: 5
+    },
+    lightning_bolt: {
+        id: 'lightning_bolt',
+        name: 'Lightning Bolt',
+        icon: '⚡',
+        type: 'Single Damage',
+        manaCost: 15,
+        description: 'Strikes a single enemy for 45 damage',
+        targetType: 'enemy',
+        effect: 'singleDamage',
+        power: 45,
+        range: 6
+    },
+    heal: {
+        id: 'heal',
+        name: 'Heal',
+        icon: '💚',
+        type: 'Heal',
+        manaCost: 20,
+        description: 'Restores 40 HP to a friendly unit',
+        targetType: 'ally',
+        effect: 'heal',
+        power: 40,
+        range: 5
+    },
+    haste: {
+        id: 'haste',
+        name: 'Haste',
+        icon: '💨',
+        type: 'Buff',
+        manaCost: 15,
+        description: 'Increases movement range by 2 for 3 turns',
+        targetType: 'ally',
+        effect: 'haste',
+        power: 2,
+        duration: 3,
+        range: 5
+    },
+    shield: {
+        id: 'shield',
+        name: 'Shield',
+        icon: '🛡️',
+        type: 'Buff',
+        manaCost: 15,
+        description: 'Reduces damage taken by 50% for 2 turns',
+        targetType: 'ally',
+        effect: 'shield',
+        power: 0.5,
+        duration: 2,
+        range: 5
+    },
+    ice_storm: {
+        id: 'ice_storm',
+        name: 'Ice Storm',
+        icon: '❄️',
+        type: 'AoE Damage',
+        manaCost: 30,
+        description: 'Deals 20 damage and reduces enemy movement by 1 for 2 turns',
+        targetType: 'tile',
+        effect: 'iceStorm',
+        power: 20,
+        range: 4
+    },
+    meteor: {
+        id: 'meteor',
+        name: 'Meteor',
+        icon: '☄️',
+        type: 'Heavy AoE',
+        manaCost: 50,
+        description: 'Devastating 5x5 area attack dealing 60 damage',
+        targetType: 'tile',
+        effect: 'meteor',
+        power: 60,
+        range: 6
+    },
+    bless: {
+        id: 'bless',
+        name: 'Bless',
+        icon: '✨',
+        type: 'Buff',
+        manaCost: 25,
+        description: 'Increases damage dealt by 50% for 3 turns',
+        targetType: 'ally',
+        effect: 'bless',
+        power: 1.5,
+        duration: 3,
+        range: 5
+    },
+    cure_wounds: {
+        id: 'cure_wounds',
+        name: 'Cure Wounds',
+        icon: '💗',
+        type: 'Strong Heal',
+        manaCost: 35,
+        description: 'Powerful healing that restores 80 HP',
+        targetType: 'ally',
+        effect: 'heal',
+        power: 80,
+        range: 4
+    },
+    teleport: {
+        id: 'teleport',
+        name: 'Teleport',
+        icon: '🌀',
+        type: 'Utility',
+        manaCost: 30,
+        description: 'Instantly moves a unit to any empty tile within range 8',
+        targetType: 'ally_then_tile',
+        effect: 'teleport',
+        power: 0,
+        range: 8
+    },
+    chain_lightning: {
+        id: 'chain_lightning',
+        name: 'Chain Lightning',
+        icon: '🔌',
+        type: 'Multi Damage',
+        manaCost: 40,
+        description: 'Hits target and chains to 2 nearby enemies for 35 damage each',
+        targetType: 'enemy',
+        effect: 'chainLightning',
+        power: 35,
+        chains: 2,
+        range: 5
+    },
+    regenerate: {
+        id: 'regenerate',
+        name: 'Regenerate',
+        icon: '🌿',
+        type: 'HoT',
+        manaCost: 25,
+        description: 'Heals 15 HP at the start of each turn for 4 turns',
+        targetType: 'ally',
+        effect: 'regenerate',
+        power: 15,
+        duration: 4,
+        range: 5
+    }
+};
+
+// ============================================
+// UNIT CLASS
+// ============================================
+class Unit {
+    constructor(type, gridX, gridY, scene = null) {
+        const template = UNIT_TYPES[type];
+        this.type = type;
+        this.name = template.name;
+        this.emoji = template.emoji;
+        this.health = template.health;
+        this.maxHealth = template.maxHealth;
+        this.damage = template.damage;
+        this.moveRange = template.moveRange;
+        this.rangedRange = template.rangedRange || 0;
+        this.initiative = template.initiative;
+        this.isPlayer = template.isPlayer;
+        this.gridX = gridX;
+        this.gridY = gridY;
+        this.hasMoved = false;
+        this.hasAttacked = false;
+        this.sprite = null;
+        this.scene = scene;
+        this.healthBar = null;
+        this.isDead = false;
+        
+        // Buff/debuff tracking
+        this.hasteRounds = 0;
+        this.shieldRounds = 0;
+        this.shieldValue = 0;
+        this.blessRounds = 0;
+        this.blessValue = 1;
+        this.iceSlowRounds = 0;
+        this.regenerateRounds = 0;
+        this.regenerateAmount = 0;
+    }
+
+    takeDamage(amount, isRanged = false) {
+        // Apply shield if active
+        if (this.shieldRounds > 0) {
+            amount = Math.floor(amount * (1 - this.shieldValue));
+        }
+        
+        // Apply Knight's ranged damage reduction
+        if (isRanged && this.type === 'KNIGHT') {
+            const template = UNIT_TYPES[this.type];
+            if (template.passive && template.passive.effect === 'rangedDefense') {
+                amount = Math.floor(amount * (1 - template.passive.value));
+            }
+        }
+        
+        this.health = Math.max(0, this.health - amount);
+        this.updateHealthBar();
+        
+        if (this.health <= 0) {
+            this.die(this.scene);
+        }
+        return this.health > 0;
+    }
+
+    heal(amount) {
+        this.health = Math.min(this.maxHealth, this.health + amount);
+        this.updateHealthBar();
+    }
+
+    die(scene) {
+        this.isDead = true;
+        this.health = 0;
+        
+        if (this.sprite) {
+            // Replace with skull, keep position but make non-interactive
+            this.sprite.setText('💀');
+            this.sprite.setAlpha(0.5);
+            this.sprite.setAngle(0);
+            this.sprite.removeInteractive();
+        }
+        
+        // Hide health bar
+        if (this.healthBar) {
+            this.healthBar.clear();
+        }
+        
+        // Clear unit info panel if this unit was selected
+        if (scene && scene.selectedUnit === this) {
+            scene.selectedUnit = null;
+            const infoPanel = document.getElementById('unit-info');
+            if (infoPanel) {
+                infoPanel.innerHTML = '<em>Select a unit to view details</em>';
+            }
+        }
+        
+        // Immediately check victory
+        if (scene && scene.unitManager) {
+            const enemies = scene.unitManager.getEnemyUnits();
+            const players = scene.unitManager.getPlayerUnits();
+            
+            if (enemies.length === 0 && !scene.victoryShown) {
+                scene.victoryShown = true;
+                scene.showVictoryScreen(true);
+            } else if (players.length === 0 && !scene.victoryShown) {
+                scene.victoryShown = true;
+                scene.showVictoryScreen(false);
+            }
+        }
+    }
+
+    resetTurn() {
+        this.hasMoved = false;
+        this.hasAttacked = false;
+        
+        // Handle regenerate healing at start of turn
+        if (this.regenerateRounds > 0) {
+            this.heal(this.regenerateAmount);
+            this.regenerateRounds--;
+            if (this.regenerateRounds === 0) {
+                this.regenerateAmount = 0;
+            }
+        }
+        
+        // Decrement buff durations
+        if (this.hasteRounds > 0) {
+            this.hasteRounds--;
+            if (this.hasteRounds === 0) {
+                this.moveRange = UNIT_TYPES[this.type].moveRange;
+            }
+        }
+        
+        if (this.shieldRounds > 0) {
+            this.shieldRounds--;
+            if (this.shieldRounds === 0) {
+                this.shieldValue = 0;
+            }
+        }
+        
+        if (this.blessRounds > 0) {
+            this.blessRounds--;
+            if (this.blessRounds === 0) {
+                this.blessValue = 1;
+            }
+        }
+        
+        if (this.iceSlowRounds > 0) {
+            this.iceSlowRounds--;
+        }
+    }
+
+    canMove() {
+        return !this.hasMoved && !this.isDead;
+    }
+
+    canAttack() {
+        return !this.hasAttacked && !this.isDead;
+    }
+
+    getDisplayStats() {
+        const rangedInfo = this.rangedRange > 0 ? ` | RNG: ${this.rangedRange}` : '';
+        let buffs = [];
+        if (this.hasteRounds > 0) buffs.push(`Haste(${this.hasteRounds})`);
+        if (this.shieldRounds > 0) buffs.push(`Shield(${this.shieldRounds})`);
+        if (this.blessRounds > 0) buffs.push(`Bless(${this.blessRounds})`);
+        if (this.regenerateRounds > 0) buffs.push(`Regen(${this.regenerateRounds})`);
+        if (this.iceSlowRounds > 0) buffs.push(`Slow(${this.iceSlowRounds})`);
+        
+        const buffDisplay = buffs.length > 0 ? `<br>✨ ${buffs.join(', ')}` : '';
+        
+        // Show passive ability if present
+        const template = UNIT_TYPES[this.type];
+        const passiveEmoji = this.type === 'KNIGHT' ? '🛡️' : '🔮';
+        const passiveDisplay = template.passive ? `<br>${passiveEmoji} Passive: ${template.passive.name}` : '';
+        
+        // Show special ability for enemies
+        const specialDisplay = template.special ? `<br>⚡ Special: Hit & Run` : '';
+        
+        return `${this.emoji} ${this.name}<br>
+                HP: ${this.health}/${this.maxHealth}<br>
+                DMG: ${Math.floor(this.damage * this.blessValue)} | MOV: ${this.moveRange}${rangedInfo}<br>
+                INIT: ${this.initiative}${buffDisplay}${passiveDisplay}${specialDisplay}`;
+    }
+
+    updateHealthBar() {
+        if (this.healthBar) {
+            const percent = this.health / this.maxHealth;
+            this.healthBar.clear();
+            this.healthBar.fillStyle(0x000000);
+            this.healthBar.fillRect(-20, -40, 40, 6);
+            this.healthBar.fillStyle(percent > 0.5 ? 0x00ff00 : percent > 0.25 ? 0xffff00 : 0xff0000);
+            this.healthBar.fillRect(-20, -40, 40 * percent, 6);
+        }
+    }
+}
+
+
+// ============================================
+// GRID SYSTEM
+// ============================================
+class GridSystem {
+    constructor(scene) {
+        this.scene = scene;
+        this.tiles = [];
+        this.tileGraphics = [];
+        this.highlightGraphics = null;
+        this.selectedUnit = null;
+        this.validMoves = [];
+    }
+
+    create() {
+        // Create tile graphics
+        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+            this.tiles[y] = [];
+            this.tileGraphics[y] = [];
+            for (let x = 0; x < CONFIG.GRID_WIDTH; x++) {
+                const color = (x + y) % 2 === 0 ? CONFIG.COLORS.GRASS : CONFIG.COLORS.GRASS_DARK;
+                const tile = this.scene.add.rectangle(
+                    x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+                    y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+                    CONFIG.TILE_SIZE - 2,
+                    CONFIG.TILE_SIZE - 2,
+                    color
+                );
+                tile.setInteractive();
+                tile.gridX = x;
+                tile.gridY = y;
+                this.tiles[y][x] = tile;
+                this.tileGraphics[y][x] = color;
+            }
+        }
+
+        // Highlight graphics overlay
+        this.highlightGraphics = this.scene.add.graphics();
+
+        // Input handling
+        this.scene.input.on('gameobjectdown', (pointer, gameObject) => {
+            this.handleTileClick(gameObject);
+        });
+    }
+
+    handleTileClick(tile) {
+        const { gridX, gridY } = tile;
+        const clickedUnit = this.scene.unitManager.getUnitAt(gridX, gridY);
+
+        // Handle spell targeting (tile-based spells)
+        if (this.scene.spellSystem.activeSpell) {
+            const spell = SPELLS[this.scene.spellSystem.activeSpell];
+            if (spell) {
+                if (spell.targetType === 'tile' || spell.targetType === 'enemy' || spell.targetType === 'ally') {
+                    this.scene.spellSystem.executeSpellAt(gridX, gridY);
+                    return;
+                } else if (spell.targetType === 'ally_then_tile' && this.scene.spellSystem.teleportUnit && !clickedUnit) {
+                    // Teleport destination selected
+                    this.scene.spellSystem.executeSpellAt(gridX, gridY);
+                    return;
+                }
+            }
+        }
+
+        // Handle ranged attack mode
+        if (this.scene.rangedAttackMode) {
+            if (clickedUnit && !clickedUnit.isDead && !clickedUnit.isPlayer) {
+                const dist = Math.abs(clickedUnit.gridX - this.scene.turnSystem.currentUnit.gridX) + 
+                             Math.abs(clickedUnit.gridY - this.scene.turnSystem.currentUnit.gridY);
+                if (dist <= this.scene.turnSystem.currentUnit.rangedRange) {
+                    this.scene.performRangedAttack(this.scene.turnSystem.currentUnit, clickedUnit);
+                }
+            }
+            return;
+        }
+
+        // If clicking on a unit
+        if (clickedUnit && !clickedUnit.isDead) {
+            this.scene.selectUnit(clickedUnit);
+            return;
+        }
+
+        // If we have a selected unit and clicked an empty tile
+        if (this.selectedUnit && this.selectedUnit.canMove()) {
+            if (this.isValidMove(gridX, gridY)) {
+                this.scene.moveUnit(this.selectedUnit, gridX, gridY);
+            }
+        }
+    }
+
+    highlightValidMoves(unit) {
+        this.highlightGraphics.clear();
+        this.validMoves = [];
+        this.selectedUnit = unit;
+
+        // Highlight selected unit tile
+        this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_SELECTED, 0.5);
+        this.highlightGraphics.fillRect(
+            unit.gridX * CONFIG.TILE_SIZE + 2,
+            unit.gridY * CONFIG.TILE_SIZE + 2,
+            CONFIG.TILE_SIZE - 4,
+            CONFIG.TILE_SIZE - 4
+        );
+
+        if (!unit.canMove()) return;
+
+        // Calculate valid movement positions (simple BFS for range)
+        const queue = [{ x: unit.gridX, y: unit.gridY, dist: 0 }];
+        const visited = new Set([`${unit.gridX},${unit.gridY}`]);
+
+        while (queue.length > 0) {
+            const { x, y, dist } = queue.shift();
+
+            if (dist > 0 && dist <= unit.moveRange) {
+                const targetUnit = this.scene.unitManager.getUnitAt(x, y);
+                if (!targetUnit) {
+                    this.validMoves.push({ x, y });
+                    this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_MOVE, 0.4);
+                    this.highlightGraphics.fillRect(
+                        x * CONFIG.TILE_SIZE + 4,
+                        y * CONFIG.TILE_SIZE + 4,
+                        CONFIG.TILE_SIZE - 8,
+                        CONFIG.TILE_SIZE - 8
+                    );
+                }
+            }
+
+            if (dist < unit.moveRange) {
+                const neighbors = [
+                    { x: x + 1, y }, { x: x - 1, y },
+                    { x, y: y + 1 }, { x, y: y - 1 }
+                ];
+
+                for (const n of neighbors) {
+                    if (n.x >= 0 && n.x < CONFIG.GRID_WIDTH &&
+                        n.y >= 0 && n.y < CONFIG.GRID_HEIGHT &&
+                        !visited.has(`${n.x},${n.y}`)) {
+                        visited.add(`${n.x},${n.y}`);
+                        queue.push({ x: n.x, y: n.y, dist: dist + 1 });
+                    }
+                }
+            }
+        }
+
+        // Highlight attackable enemies
+        const enemies = this.scene.unitManager.getEnemyUnits(unit.isPlayer);
+        for (const enemy of enemies) {
+            const dist = Math.abs(enemy.gridX - unit.gridX) + Math.abs(enemy.gridY - unit.gridY);
+            if (dist === 1) { // Adjacent attack
+                this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_ATTACK, 0.5);
+                this.highlightGraphics.fillRect(
+                    enemy.gridX * CONFIG.TILE_SIZE + 4,
+                    enemy.gridY * CONFIG.TILE_SIZE + 4,
+                    CONFIG.TILE_SIZE - 8,
+                    CONFIG.TILE_SIZE - 8
+                );
+            }
+        }
+    }
+
+    clearHighlights() {
+        this.highlightGraphics.clear();
+        this.validMoves = [];
+        this.selectedUnit = null;
+    }
+
+    clearRangedHighlights() {
+        this.highlightGraphics.clear();
+    }
+
+    highlightRangedAttackRange(unit) {
+        this.highlightGraphics.clear();
+        
+        // Highlight the unit's position
+        this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_SELECTED, 0.5);
+        this.highlightGraphics.fillRect(
+            unit.gridX * CONFIG.TILE_SIZE + 2,
+            unit.gridY * CONFIG.TILE_SIZE + 2,
+            CONFIG.TILE_SIZE - 4,
+            CONFIG.TILE_SIZE - 4
+        );
+
+        // Highlight all enemies within ranged range
+        const enemies = this.scene.unitManager.getEnemyUnits(unit.isPlayer);
+        for (const enemy of enemies) {
+            const dist = Math.abs(enemy.gridX - unit.gridX) + Math.abs(enemy.gridY - unit.gridY);
+            if (dist > 0 && dist <= unit.rangedRange) {
+                // Enemy is in range - highlight as valid target
+                this.highlightGraphics.lineStyle(3, 0xff6600, 1);
+                this.highlightGraphics.strokeRect(
+                    enemy.gridX * CONFIG.TILE_SIZE + 4,
+                    enemy.gridY * CONFIG.TILE_SIZE + 4,
+                    CONFIG.TILE_SIZE - 8,
+                    CONFIG.TILE_SIZE - 8
+                );
+                this.highlightGraphics.fillStyle(0xff6600, 0.3);
+                this.highlightGraphics.fillRect(
+                    enemy.gridX * CONFIG.TILE_SIZE + 4,
+                    enemy.gridY * CONFIG.TILE_SIZE + 4,
+                    CONFIG.TILE_SIZE - 8,
+                    CONFIG.TILE_SIZE - 8
+                );
+            }
+        }
+    }
+
+    isValidMove(x, y) {
+        return this.validMoves.some(m => m.x === x && m.y === y);
+    }
+}
+
+
+// ============================================
+// UNIT MANAGER
+// ============================================
+class UnitManager {
+    constructor(scene) {
+        this.scene = scene;
+        this.units = [];
+    }
+
+    addUnit(type, gridX, gridY) {
+        const unit = new Unit(type, gridX, gridY, this.scene);
+        
+        // Create sprite
+        unit.sprite = this.scene.add.text(
+            gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+            gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+            unit.emoji,
+            { fontSize: '36px', align: 'center' }
+        ).setOrigin(0.5);
+
+        // Create health bar
+        unit.healthBar = this.scene.add.graphics();
+        unit.updateHealthBar();
+
+        // Make unit clickable
+        unit.sprite.setInteractive();
+        unit.sprite.on('pointerdown', () => {
+            this.scene.selectUnit(unit);
+        });
+
+        this.units.push(unit);
+        return unit;
+    }
+
+    getUnitAt(x, y) {
+        return this.units.find(u => u.gridX === x && u.gridY === y && !u.isDead && u.health > 0);
+    }
+
+    getPlayerUnits() {
+        return this.units.filter(u => u.isPlayer && !u.isDead && u.health > 0);
+    }
+
+    getEnemyUnits() {
+        return this.units.filter(u => !u.isPlayer && !u.isDead && u.health > 0);
+    }
+
+    getAllAliveUnits() {
+        return this.units.filter(u => !u.isDead && u.health > 0);
+    }
+
+    updateUnitPosition(unit, newX, newY) {
+        unit.gridX = newX;
+        unit.gridY = newY;
+        unit.sprite.setPosition(
+            newX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+            newY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2
+        );
+        unit.updateHealthBar();
+    }
+
+    removeDeadUnits() {
+        this.units = this.units.filter(u => !u.isDead && u.health > 0);
+    }
+}
+
+// ============================================
+// TURN SYSTEM
+// ============================================
+class TurnSystem {
+    constructor(scene) {
+        this.scene = scene;
+        this.turnQueue = [];
+        this.currentUnit = null;
+        this.roundNumber = 1;
+    }
+
+    initQueue() {
+        this.updateQueue();
+        this.nextTurn();
+    }
+
+    updateQueue() {
+        const aliveUnits = this.scene.unitManager.getAllAliveUnits();
+        // Sort by initiative (higher goes first)
+        this.turnQueue = aliveUnits.sort((a, b) => b.initiative - a.initiative);
+    }
+
+    nextTurn() {
+        // Filter out dead units
+        this.turnQueue = this.turnQueue.filter(u => !u.isDead);
+
+        if (this.turnQueue.length === 0) {
+            this.startNewRound();
+            return;
+        }
+
+        this.currentUnit = this.turnQueue.shift();
+        
+        if (this.currentUnit.isDead) {
+            this.nextTurn();
+            return;
+        }
+
+        this.currentUnit.resetTurn();
+        this.updateTurnDisplay();
+
+        if (!this.currentUnit.isPlayer) {
+            this.scene.time.delayedCall(500, () => this.executeAITurn());
+        } else {
+            this.scene.selectUnit(this.currentUnit);
+        }
+    }
+
+    startNewRound() {
+        this.roundNumber++;
+        // Regenerate mana at start of round
+        this.scene.regenerateMana();
+        // Reset spell cast counter
+        this.scene.spellsCastThisRound = 0;
+        this.updateQueue();
+        this.nextTurn();
+    }
+
+    executeAITurn() {
+        if (!this.currentUnit || this.currentUnit.isDead) {
+            this.nextTurn();
+            return;
+        }
+
+        const unit = this.currentUnit;
+        const playerUnits = this.scene.unitManager.getPlayerUnits();
+
+        if (playerUnits.length === 0) return;
+
+        // Find nearest player unit
+        let nearest = null;
+        let minDist = Infinity;
+
+        for (const player of playerUnits) {
+            const dist = Math.abs(player.gridX - unit.gridX) + Math.abs(player.gridY - unit.gridY);
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = player;
+            }
+        }
+
+        // If adjacent, attack
+        if (minDist === 1) {
+            this.scene.performAttack(unit, nearest);
+            
+            // Orc Rogue hit-and-run: return to starting position after attack
+            if (unit.type === 'ORC_ROGUE' && unit.startX !== undefined) {
+                this.scene.time.delayedCall(600, () => {
+                    if (!unit.isDead && unit.health > 0) {
+                        this.scene.showBuffText(unit, 'VANISH!', '#9932cc');
+                        this.scene.unitManager.updateUnitPosition(unit, unit.startX, unit.startY);
+                    }
+                });
+            }
+            
+            this.scene.time.delayedCall(800, () => this.nextTurn());
+            return;
+        }
+
+        // Move towards player
+        if (unit.canMove()) {
+            const dx = Math.sign(nearest.gridX - unit.gridX);
+            const dy = Math.sign(nearest.gridY - unit.gridY);
+            
+            let moved = false;
+            
+            // Try to move horizontally first
+            if (dx !== 0 && !moved) {
+                const newX = unit.gridX + dx;
+                if (this.scene.gridSystem.isValidMoveAI(newX, unit.gridY)) {
+                    this.scene.moveUnit(unit, newX, unit.gridY);
+                    moved = true;
+                }
+            }
+            
+            // Then vertically
+            if (!moved && dy !== 0) {
+                const newY = unit.gridY + dy;
+                if (this.scene.gridSystem.isValidMoveAI(unit.gridX, newY)) {
+                    this.scene.moveUnit(unit, unit.gridX, newY);
+                    moved = true;
+                }
+            }
+
+            // Check if can attack after moving
+            const newDist = Math.abs(nearest.gridX - unit.gridX) + Math.abs(nearest.gridY - unit.gridY);
+            if (newDist === 1 && unit.canAttack()) {
+                this.scene.time.delayedCall(400, () => {
+                    this.scene.performAttack(unit, nearest);
+                    
+                    // Orc Rogue hit-and-run: return to starting position after attack
+                    if (unit.type === 'ORC_ROGUE' && unit.startX !== undefined) {
+                        this.scene.time.delayedCall(600, () => {
+                            if (!unit.isDead && unit.health > 0) {
+                                this.scene.showBuffText(unit, 'VANISH!', '#9932cc');
+                                this.scene.unitManager.updateUnitPosition(unit, unit.startX, unit.startY);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        this.scene.time.delayedCall(1200, () => this.nextTurn());
+    }
+
+    updateTurnDisplay() {
+        const turnText = document.getElementById('current-turn');
+        if (this.currentUnit) {
+            const side = this.currentUnit.isPlayer ? 'Player' : 'AI';
+            const name = this.currentUnit.name;
+            turnText.innerHTML = `${side}: ${this.currentUnit.emoji} ${name}`;
+            turnText.style.color = this.currentUnit.isPlayer ? '#4a7cd9' : '#d94a4a';
+        }
+        
+        // Update ranged attack button visibility
+        this.scene.updateRangedAttackButton();
+    }
+}
+
+
+// ============================================
+// SPELL SYSTEM
+// ============================================
+class SpellSystem {
+    constructor(scene) {
+        this.scene = scene;
+        this.activeSpell = null;
+        this.teleportUnit = null;
+    }
+
+    castSpell(spellId) {
+        const spell = SPELLS[spellId];
+        if (!spell) return;
+
+        // Check spells per round limit
+        if (this.scene.spellsCastThisRound >= this.scene.spellsPerRound) {
+            this.scene.showFloatingText(`Can only cast ${this.scene.spellsPerRound} spell(s) per round!`, 400, 300, '#ff4444');
+            return;
+        }
+
+        // Check mana (with cost multiplier)
+        const actualCost = Math.floor(spell.manaCost * (this.scene.manaCostMultiplier || 1));
+        if (this.scene.mana < actualCost) {
+            this.scene.showFloatingText('Not enough mana!', 400, 300, '#ff4444');
+            return;
+        }
+
+        this.activeSpell = spellId;
+        
+        // Different targeting modes
+        switch (spell.targetType) {
+            case 'tile':
+            case 'enemy':
+            case 'ally':
+                document.body.style.cursor = 'crosshair';
+                this.scene.closeSpellBook();
+                break;
+            case 'ally_then_tile':
+                // For teleport - first select unit
+                document.body.style.cursor = 'crosshair';
+                this.scene.closeSpellBook();
+                this.scene.showFloatingText('Select a unit to teleport', 400, 300, '#87ceeb');
+                break;
+        }
+    }
+
+    executeSpellAt(gridX, gridY) {
+        if (!this.activeSpell) return;
+        
+        const spell = SPELLS[this.activeSpell];
+        const unit = this.scene.unitManager.getUnitAt(gridX, gridY);
+
+        // Validate target based on spell type
+        switch (spell.targetType) {
+            case 'tile':
+                this.executeTileSpell(spell, gridX, gridY);
+                break;
+            case 'enemy':
+                if (unit && !unit.isPlayer) {
+                    this.executeUnitSpell(spell, unit);
+                }
+                break;
+            case 'ally':
+                if (unit && unit.isPlayer) {
+                    this.executeUnitSpell(spell, unit);
+                }
+                break;
+            case 'ally_then_tile':
+                if (unit && unit.isPlayer && !this.teleportUnit) {
+                    this.teleportUnit = unit;
+                    this.scene.showFloatingText('Now select destination', 400, 300, '#87ceeb');
+                    return; // Don't clear active spell yet
+                } else if (this.teleportUnit && !unit) {
+                    this.executeTeleport(this.teleportUnit, gridX, gridY);
+                }
+                break;
+        }
+    }
+
+    executeTileSpell(spell, centerX, centerY) {
+        // Deduct mana (with cost multiplier)
+        const actualCost = Math.floor(spell.manaCost * (this.scene.manaCostMultiplier || 1));
+        this.scene.spendMana(actualCost);
+        
+        // Increment spell cast counter
+        this.scene.spellsCastThisRound++;
+
+        switch (spell.effect) {
+            case 'aoeDamage':
+                this.executeAoEDamage(spell, centerX, centerY, 1);
+                break;
+            case 'meteor':
+                this.executeAoEDamage(spell, centerX, centerY, 2);
+                break;
+            case 'iceStorm':
+                this.executeIceStorm(spell, centerX, centerY);
+                break;
+        }
+
+        this.clearSpell();
+    }
+
+    executeUnitSpell(spell, unit) {
+        // Deduct mana (with cost multiplier)
+        const actualCost = Math.floor(spell.manaCost * (this.scene.manaCostMultiplier || 1));
+        this.scene.spendMana(actualCost);
+        
+        // Increment spell cast counter
+        this.scene.spellsCastThisRound++;
+
+        switch (spell.effect) {
+            case 'singleDamage':
+                this.executeSingleDamage(spell, unit);
+                break;
+            case 'heal':
+                this.executeHeal(spell, unit);
+                break;
+            case 'haste':
+                this.executeHaste(spell, unit);
+                break;
+            case 'shield':
+                this.executeShield(spell, unit);
+                break;
+            case 'bless':
+                this.executeBless(spell, unit);
+                break;
+            case 'regenerate':
+                this.executeRegenerate(spell, unit);
+                break;
+            case 'chainLightning':
+                this.executeChainLightning(spell, unit);
+                break;
+        }
+
+        this.clearSpell();
+    }
+
+    executeAoEDamage(spell, centerX, centerY, radius) {
+        const targets = [];
+
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const x = centerX + dx;
+                const y = centerY + dy;
+                const unit = this.scene.unitManager.getUnitAt(x, y);
+                if (unit && !unit.isPlayer) {
+                    targets.push(unit);
+                }
+            }
+        }
+
+        // Visual effect
+        if (spell.effect === 'meteor') {
+            this.createMeteorEffect(centerX, centerY);
+        } else {
+            this.createExplosionEffect(centerX, centerY, radius);
+        }
+
+        // Apply damage with spell power multiplier
+        const damage = Math.floor(spell.power * (this.scene.spellPowerMultiplier || 1));
+        for (const unit of targets) {
+            this.scene.time.delayedCall(200, () => {
+                unit.takeDamage(damage);
+                this.scene.showDamageText(unit, damage);
+                this.scene.checkVictoryCondition();
+            });
+        }
+    }
+
+    executeIceStorm(spell, centerX, centerY) {
+        const targets = [];
+
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const x = centerX + dx;
+                const y = centerY + dy;
+                const unit = this.scene.unitManager.getUnitAt(x, y);
+                if (unit && !unit.isPlayer) {
+                    targets.push(unit);
+                }
+            }
+        }
+
+        this.createIceEffect(centerX, centerY);
+
+        const damage = Math.floor(spell.power * (this.scene.spellPowerMultiplier || 1));
+        for (const unit of targets) {
+            this.scene.time.delayedCall(200, () => {
+                unit.takeDamage(damage);
+                unit.iceSlowRounds = 2;
+                unit.moveRange = Math.max(1, unit.moveRange - 1);
+                this.scene.showDamageText(unit, damage);
+                this.scene.showBuffText(unit, 'SLOWED!', '#87ceeb');
+                this.scene.checkVictoryCondition();
+            });
+        }
+    }
+
+    executeSingleDamage(spell, unit) {
+        this.createLightningEffect(unit);
+        
+        const damage = Math.floor(spell.power * (this.scene.spellPowerMultiplier || 1));
+        this.scene.time.delayedCall(200, () => {
+            unit.takeDamage(damage);
+            this.scene.showDamageText(unit, damage);
+            this.scene.checkVictoryCondition();
+        });
+    }
+
+    executeHeal(spell, unit) {
+        unit.heal(spell.power);
+        this.createHealEffect(unit);
+        this.scene.showHealText(unit, spell.power);
+    }
+
+    executeHaste(spell, unit) {
+        unit.moveRange += spell.power;
+        unit.hasteRounds = spell.duration;
+        this.scene.showBuffText(unit, 'HASTE!', '#ffff00');
+    }
+
+    executeShield(spell, unit) {
+        unit.shieldValue = spell.power;
+        unit.shieldRounds = spell.duration;
+        this.scene.showBuffText(unit, 'SHIELD!', '#4a90d9');
+    }
+
+    executeBless(spell, unit) {
+        unit.blessValue = spell.power;
+        unit.blessRounds = spell.duration;
+        this.scene.showBuffText(unit, 'BLESSED!', '#ffd700');
+    }
+
+    executeRegenerate(spell, unit) {
+        unit.regenerateAmount = spell.power;
+        unit.regenerateRounds = spell.duration;
+        this.scene.showBuffText(unit, 'REGENERATE!', '#00ff00');
+    }
+
+    executeTeleport(unit, newX, newY) {
+        const spell = SPELLS[this.activeSpell];
+        const actualCost = Math.floor(spell.manaCost * (this.scene.manaCostMultiplier || 1));
+        this.scene.spendMana(actualCost);
+        
+        // Increment spell cast counter
+        this.scene.spellsCastThisRound++;
+        
+        this.createTeleportEffect(unit);
+        this.scene.unitManager.updateUnitPosition(unit, newX, newY);
+        this.scene.showBuffText(unit, 'TELEPORT!', '#9932cc');
+        
+        this.teleportUnit = null;
+    }
+
+    executeChainLightning(spell, initialTarget) {
+        const targets = [initialTarget];
+        const allEnemies = this.scene.unitManager.getEnemyUnits();
+        
+        // Find nearby enemies to chain to
+        for (const enemy of allEnemies) {
+            if (targets.length >= spell.chains + 1) break;
+            if (targets.includes(enemy)) continue;
+            
+            // Check if enemy is near any already targeted enemy
+            for (const target of targets) {
+                const dist = Math.abs(enemy.gridX - target.gridX) + Math.abs(enemy.gridY - target.gridY);
+                if (dist <= 2) {
+                    targets.push(enemy);
+                    break;
+                }
+            }
+        }
+
+        // Apply damage with delay for each jump
+        const damage = Math.floor(spell.power * (this.scene.spellPowerMultiplier || 1));
+        targets.forEach((unit, index) => {
+            this.scene.time.delayedCall(index * 300, () => {
+                this.createLightningEffect(unit);
+                unit.takeDamage(damage);
+                this.scene.showDamageText(unit, damage);
+                this.scene.checkVictoryCondition();
+            });
+        });
+    }
+
+    clearSpell() {
+        this.activeSpell = null;
+        this.teleportUnit = null;
+        document.body.style.cursor = 'default';
+    }
+
+    // Visual Effects
+    createExplosionEffect(gridX, gridY, radius) {
+        const x = gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        const y = gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        const scale = radius === 2 ? 5 : 3;
+
+        const explosion = this.scene.add.circle(x, y, 20, 0xff6600);
+        
+        this.scene.tweens.add({
+            targets: explosion,
+            scale: scale,
+            alpha: 0,
+            duration: 500,
+            onComplete: () => explosion.destroy()
+        });
+
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const particle = this.scene.add.circle(x, y, 5, 0xffaa00);
+            
+            this.scene.tweens.add({
+                targets: particle,
+                x: x + Math.cos(angle) * 60 * (radius + 0.5),
+                y: y + Math.sin(angle) * 60 * (radius + 0.5),
+                alpha: 0,
+                duration: 400,
+                onComplete: () => particle.destroy()
+            });
+        }
+    }
+
+    createMeteorEffect(gridX, gridY) {
+        const x = gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        const y = gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+
+        // Falling meteor
+        const meteor = this.scene.add.circle(x, y - 200, 30, 0xff3300);
+        this.scene.tweens.add({
+            targets: meteor,
+            y: y,
+            duration: 600,
+            ease: 'Power2',
+            onComplete: () => {
+                meteor.destroy();
+                this.createExplosionEffect(gridX, gridY, 2);
+            }
+        });
+    }
+
+    createIceEffect(gridX, gridY) {
+        const x = gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        const y = gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const ice = this.scene.add.text(x, y, '❄️', { fontSize: '20px' }).setOrigin(0.5);
+            
+            this.scene.tweens.add({
+                targets: ice,
+                x: x + Math.cos(angle) * 80,
+                y: y + Math.sin(angle) * 80,
+                alpha: 0,
+                rotation: Math.random() * Math.PI,
+                duration: 800,
+                onComplete: () => ice.destroy()
+            });
+        }
+    }
+
+    createLightningEffect(unit) {
+        const bolt = this.scene.add.text(unit.sprite.x, unit.sprite.y - 100, '⚡', { 
+            fontSize: '60px',
+            color: '#ffff00'
+        }).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: bolt,
+            y: unit.sprite.y,
+            alpha: 0,
+            duration: 200,
+            onComplete: () => bolt.destroy()
+        });
+    }
+
+    createHealEffect(unit) {
+        const heart = this.scene.add.text(unit.sprite.x, unit.sprite.y, '💚', { 
+            fontSize: '40px'
+        }).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: heart,
+            y: unit.sprite.y - 50,
+            alpha: 0,
+            scale: 1.5,
+            duration: 800,
+            onComplete: () => heart.destroy()
+        });
+    }
+
+    createTeleportEffect(unit) {
+        const portal = this.scene.add.circle(unit.sprite.x, unit.sprite.y, 30, 0x9932cc);
+        portal.setAlpha(0.5);
+
+        this.scene.tweens.add({
+            targets: portal,
+            scale: 2,
+            alpha: 0,
+            duration: 500,
+            onComplete: () => portal.destroy()
+        });
+    }
+}
+
+
+// ============================================
+// PRE-GAME SCENE - Army Selection & Placement
+// ============================================
+class PreGameScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'PreGameScene' });
+        this.totalPoints = 1000;
+        this.remainingPoints = 1000;
+        this.unitCounts = { KNIGHT: 0, ARCHER: 0, WIZARD: 0 };
+        this.placementUnits = [];
+        this.currentPlacementIndex = 0;
+        this.placementMode = false;
+        this.placedUnits = [];
+    }
+
+    create() {
+        // Show pregame UI
+        this.showArmySelection();
+        
+        // Create a simple grid for placement phase
+        this.gridGraphics = this.add.graphics();
+        this.drawGrid();
+        
+        // Make scene accessible
+        gameScene = this;
+    }
+
+    drawGrid() {
+        this.gridGraphics.clear();
+        
+        // Draw grid background
+        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+            for (let x = 0; x < CONFIG.GRID_WIDTH; x++) {
+                const color = (x + y) % 2 === 0 ? CONFIG.COLORS.GRASS : CONFIG.COLORS.GRASS_DARK;
+                this.gridGraphics.fillStyle(color);
+                this.gridGraphics.fillRect(
+                    x * CONFIG.TILE_SIZE,
+                    y * CONFIG.TILE_SIZE,
+                    CONFIG.TILE_SIZE - 2,
+                    CONFIG.TILE_SIZE - 2
+                );
+            }
+        }
+        
+        // Draw left side highlight (player deployment zone)
+        this.gridGraphics.fillStyle(0x4a7cd9, 0.2);
+        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+            for (let x = 0; x < 3; x++) {
+                this.gridGraphics.fillRect(
+                    x * CONFIG.TILE_SIZE,
+                    y * CONFIG.TILE_SIZE,
+                    CONFIG.TILE_SIZE - 2,
+                    CONFIG.TILE_SIZE - 2
+                );
+            }
+        }
+    }
+
+    showArmySelection() {
+        document.getElementById('pregame-screen').classList.remove('hidden');
+        document.getElementById('placement-bar').classList.add('hidden');
+        document.getElementById('ui-panel').classList.remove('hidden');
+        this.placementMode = false;
+    }
+
+    updateUnitCount(unitType, change) {
+        const cost = UNIT_TYPES[unitType].cost;
+        const currentCount = this.unitCounts[unitType];
+        
+        if (change > 0) {
+            // Adding unit
+            if (this.remainingPoints >= cost) {
+                this.unitCounts[unitType]++;
+                this.remainingPoints -= cost;
+            }
+        } else if (change < 0 && currentCount > 0) {
+            // Removing unit
+            this.unitCounts[unitType]--;
+            this.remainingPoints += cost;
+        }
+        
+        this.updateUI();
+    }
+
+    updateUI() {
+        document.getElementById('points-remaining').textContent = this.remainingPoints;
+        document.getElementById('count-KNIGHT').textContent = this.unitCounts.KNIGHT;
+        document.getElementById('count-ARCHER').textContent = this.unitCounts.ARCHER;
+        document.getElementById('count-WIZARD').textContent = this.unitCounts.WIZARD;
+        
+        const totalUnits = this.unitCounts.KNIGHT + this.unitCounts.ARCHER + this.unitCounts.WIZARD;
+        const confirmBtn = document.getElementById('confirm-army');
+        confirmBtn.disabled = totalUnits === 0;
+        confirmBtn.textContent = `Confirm Army (${totalUnits} unit${totalUnits !== 1 ? 's' : ''})`;
+    }
+
+    confirmArmySelection() {
+        const totalUnits = this.unitCounts.KNIGHT + this.unitCounts.ARCHER + this.unitCounts.WIZARD;
+        if (totalUnits === 0) return;
+        
+        // Build placement queue
+        this.placementUnits = [];
+        for (const [type, count] of Object.entries(this.unitCounts)) {
+            for (let i = 0; i < count; i++) {
+                this.placementUnits.push(type);
+            }
+        }
+        
+        // Hide selection screen and normal UI, show placement bar
+        document.getElementById('pregame-screen').classList.add('hidden');
+        document.getElementById('ui-panel').classList.add('hidden');
+        document.getElementById('placement-bar').classList.remove('hidden');
+        
+        this.placementMode = true;
+        this.currentPlacementIndex = 0;
+        this.placedUnits = [];
+        
+        this.updatePlacementUI();
+        this.enablePlacementInput();
+    }
+
+    updatePlacementUI() {
+        if (this.currentPlacementIndex >= this.placementUnits.length) {
+            document.getElementById('current-placement-unit').textContent = 'Done!';
+            document.getElementById('placement-remaining').textContent = '0';
+            document.getElementById('confirm-placement').disabled = false;
+            return;
+        }
+        
+        const currentType = this.placementUnits[this.currentPlacementIndex];
+        const template = UNIT_TYPES[currentType];
+        document.getElementById('current-placement-unit').textContent = `${template.emoji} ${template.name}`;
+        document.getElementById('placement-remaining').textContent = this.placementUnits.length - this.currentPlacementIndex;
+    }
+
+    enablePlacementInput() {
+        this.input.on('pointerdown', (pointer) => {
+            if (!this.placementMode) return;
+            if (this.currentPlacementIndex >= this.placementUnits.length) return;
+            
+            const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);
+            const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
+            
+            // Only allow placement on left side (x < 3)
+            if (gridX < 0 || gridX >= 3 || gridY < 0 || gridY >= CONFIG.GRID_HEIGHT) {
+                return;
+            }
+            
+            // Check if tile is occupied
+            const isOccupied = this.placedUnits.some(u => u.x === gridX && u.y === gridY);
+            if (isOccupied) return;
+            
+            // Place unit
+            const unitType = this.placementUnits[this.currentPlacementIndex];
+            this.placeUnitVisual(unitType, gridX, gridY);
+            this.placedUnits.push({ type: unitType, x: gridX, y: gridY });
+            
+            this.currentPlacementIndex++;
+            this.updatePlacementUI();
+        });
+        
+        // Highlight valid tiles on hover
+        this.input.on('pointermove', (pointer) => {
+            if (!this.placementMode) return;
+            this.drawGrid();
+            
+            const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);
+            const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
+            
+            if (gridX >= 0 && gridX < 3 && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
+                const isOccupied = this.placedUnits.some(u => u.x === gridX && u.y === gridY);
+                
+                this.gridGraphics.fillStyle(isOccupied ? 0xff0000 : 0x00ff00, 0.4);
+                this.gridGraphics.fillRect(
+                    gridX * CONFIG.TILE_SIZE,
+                    gridY * CONFIG.TILE_SIZE,
+                    CONFIG.TILE_SIZE - 2,
+                    CONFIG.TILE_SIZE - 2
+                );
+            }
+        });
+    }
+
+    placeUnitVisual(type, gridX, gridY) {
+        const template = UNIT_TYPES[type];
+        
+        // Create visual representation
+        const sprite = this.add.text(
+            gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+            gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+            template.emoji,
+            { fontSize: '36px', align: 'center' }
+        ).setOrigin(0.5);
+        
+        // Add spawn animation
+        sprite.setScale(0);
+        this.tweens.add({
+            targets: sprite,
+            scale: 1,
+            duration: 200,
+            ease: 'Back.out'
+        });
+    }
+
+    confirmPlacement() {
+        if (this.placedUnits.length === 0) return;
+        
+        // Hide placement bar, show normal UI
+        document.getElementById('placement-bar').classList.add('hidden');
+        document.getElementById('ui-panel').classList.remove('hidden');
+        
+        // Start BattleScene with placed units
+        this.scene.start('BattleScene', { placedUnits: this.placedUnits });
+    }
+}
+
+
+// ============================================
+// MAIN GAME SCENE
+// ============================================
+class BattleScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'BattleScene' });
+        this.rangedAttackMode = false;
+        this.mana = 100;
+        this.maxMana = 100;
+        this.manaRegen = 1;
+        this.manaCostMultiplier = 1;
+        this.spellPowerMultiplier = 1;
+        this.spellsPerRound = 1;
+        this.spellsCastThisRound = 0;
+        this.battleNumber = 1;
+        this.victoryShown = false;
+    }
+
+    create(data) {
+        // Initialize systems
+        this.gridSystem = new GridSystem(this);
+        this.unitManager = new UnitManager(this);
+        this.turnSystem = new TurnSystem(this);
+        this.spellSystem = new SpellSystem(this);
+
+        // Track battle number for scaling
+        if (data && data.battleNumber) {
+            this.battleNumber = data.battleNumber;
+        }
+        
+        // Reset victory flag
+        this.victoryShown = false;
+
+        // Create game elements
+        this.gridSystem.create();
+        
+        // Create player units from placement data
+        if (data && data.placedUnits) {
+            for (const unitData of data.placedUnits) {
+                this.unitManager.addUnit(unitData.type, unitData.x, unitData.y);
+            }
+        }
+        
+        // Create enemy units using point-based system
+        this.createEnemyUnits();
+
+        // Add click handler for spell targeting
+        this.input.on('pointerdown', (pointer) => {
+            if (this.spellSystem.activeSpell) {
+                const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);
+                const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
+                if (gridX >= 0 && gridX < CONFIG.GRID_WIDTH && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
+                    this.spellSystem.executeSpellAt(gridX, gridY);
+                }
+            }
+        });
+
+        // Update mana display
+        this.updateManaDisplay();
+
+        // Start the game
+        this.turnSystem.initQueue();
+
+        // Make scene accessible globally for UI buttons
+        gameScene = this;
+    }
+
+    createEnemyUnits() {
+        // Point-based enemy generation
+        const basePoints = 1000;
+        const extraPoints = (this.battleNumber - 1) * 250; // +250 points per battle
+        const totalPoints = basePoints + extraPoints;
+        
+        // Stat scaling: +10% HP and DMG per battle
+        const statMultiplier = 1 + (this.battleNumber - 1) * 0.1;
+        
+        // Available enemy types
+        const enemyTypes = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE'];
+        
+        // Generate enemies using point buy
+        let remainingPoints = totalPoints;
+        const spawnedEnemies = [];
+        const availablePositions = this.getEnemySpawnPositions();
+        
+        // Shuffle positions for random placement
+        availablePositions.sort(() => 0.5 - Math.random());
+        
+        while (remainingPoints >= 250 && availablePositions.length > 0 && spawnedEnemies.length < 8) {
+            // Filter affordable units
+            const affordable = enemyTypes.filter(type => UNIT_TYPES[type].cost <= remainingPoints);
+            if (affordable.length === 0) break;
+            
+            // Pick random affordable unit
+            const type = affordable[Math.floor(Math.random() * affordable.length)];
+            const pos = availablePositions.pop();
+            
+            const unit = this.unitManager.addUnit(type, pos.x, pos.y);
+            
+            if (unit) {
+                // Scale enemy stats
+                unit.maxHealth = Math.floor(unit.maxHealth * statMultiplier);
+                unit.health = unit.maxHealth;
+                unit.damage = Math.floor(unit.damage * statMultiplier);
+                unit.updateHealthBar();
+                
+                // Store starting position for Orc Rogue's hit-and-run
+                if (type === 'ORC_ROGUE') {
+                    unit.startX = pos.x;
+                    unit.startY = pos.y;
+                }
+                
+                remainingPoints -= UNIT_TYPES[type].cost;
+                spawnedEnemies.push(type);
+            }
+        }
+        
+        // Show battle info
+        if (this.battleNumber > 1) {
+            this.showFloatingText(
+                `Battle ${this.battleNumber} - ${spawnedEnemies.length} enemies!`,
+                320, 100, '#ff6b35'
+            );
+        } else {
+            this.showFloatingText(
+                `Battle 1 - Defeat the orc horde!`,
+                320, 100, '#ff6b35'
+            );
+        }
+    }
+    
+    getEnemySpawnPositions() {
+        // Rightmost 2 columns (x=8 and x=9)
+        const positions = [];
+        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+            positions.push({ x: 8, y });
+            positions.push({ x: 9, y });
+        }
+        return positions;
+    }
+
+    spendMana(amount) {
+        this.mana = Math.max(0, this.mana - amount);
+        this.updateManaDisplay();
+    }
+
+    regenerateMana() {
+        // Calculate total mana regen including wizard passive bonus
+        const wizardCount = this.unitManager.getPlayerUnits().filter(u => u.type === 'WIZARD').length;
+        const totalRegen = this.manaRegen + wizardCount;
+        
+        if (this.mana < this.maxMana) {
+            this.mana = Math.min(this.maxMana, this.mana + totalRegen);
+            this.updateManaDisplay();
+        }
+        
+        // Show regen text with wizard bonus if applicable
+        if (totalRegen > this.manaRegen) {
+            this.showFloatingText(`+${totalRegen} Mana (${this.manaRegen} + ${wizardCount} from Wizards)`, 320, 50, '#87ceeb');
+        }
+    }
+
+    updateManaDisplay() {
+        document.getElementById('mana-current').textContent = this.mana;
+        document.getElementById('mana-max').textContent = this.maxMana;
+        document.getElementById('spellbook-mana').textContent = this.mana;
+        document.getElementById('spellbook-max-mana').textContent = this.maxMana;
+        
+        const display = document.getElementById('mana-display');
+        if (this.mana < 20) {
+            display.classList.add('low');
+        } else {
+            display.classList.remove('low');
+        }
+    }
+
+    openSpellBook() {
+        const modal = document.getElementById('spellbook-modal');
+        const grid = document.getElementById('spell-grid');
+        
+        // Update mana display in modal
+        this.updateManaDisplay();
+        
+        // Generate spell cards
+        grid.innerHTML = '';
+        for (const [key, spell] of Object.entries(SPELLS)) {
+            const card = document.createElement('div');
+            card.className = 'spell-card';
+            
+            const canAfford = this.mana >= Math.floor(spell.manaCost * this.manaCostMultiplier);
+            if (!canAfford) {
+                card.classList.add('disabled');
+            }
+            
+            card.innerHTML = `
+                <div class="spell-icon">${spell.icon}</div>
+                <div class="spell-name">${spell.name}</div>
+                <div class="spell-type">${spell.type}</div>
+                <div class="spell-desc">${spell.description}</div>
+                <div class="spell-cost ${!canAfford ? 'too-expensive' : ''}">💧 ${Math.floor(spell.manaCost * this.manaCostMultiplier)} Mana</div>
+            `;
+            
+            if (canAfford) {
+                card.onclick = () => this.spellSystem.castSpell(key);
+            }
+            
+            grid.appendChild(card);
+        }
+        
+        modal.classList.remove('hidden');
+    }
+
+    closeSpellBook() {
+        document.getElementById('spellbook-modal').classList.add('hidden');
+    }
+
+    showFloatingText(text, x, y, color = '#ffffff') {
+        const display = this.add.text(x, y, text, {
+            fontSize: '20px',
+            color: color,
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: display,
+            y: y - 40,
+            alpha: 0,
+            duration: 1500,
+            onComplete: () => display.destroy()
+        });
+    }
+
+    showHealText(unit, amount) {
+        const text = this.add.text(
+            unit.sprite.x, unit.sprite.y - 40,
+            `+${amount}`,
+            { fontSize: '24px', color: '#00ff00', fontStyle: 'bold' }
+        ).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: text,
+            y: text.y - 40,
+            alpha: 0,
+            duration: 800,
+            onComplete: () => text.destroy()
+        });
+    }
+
+    showBuffText(unit, message, color) {
+        const text = this.add.text(
+            unit.sprite.x, unit.sprite.y - 60,
+            message,
+            { fontSize: '18px', color: color, fontStyle: 'bold' }
+        ).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: text,
+            y: text.y - 40,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => text.destroy()
+        });
+    }
+
+    selectUnit(unit) {
+        // Handle spell targeting on units
+        if (this.spellSystem.activeSpell) {
+            const spell = SPELLS[this.spellSystem.activeSpell];
+            if (spell) {
+                if (spell.targetType === 'enemy' && !unit.isPlayer) {
+                    this.spellSystem.executeUnitSpell(spell, unit);
+                    return;
+                } else if (spell.targetType === 'ally' && unit.isPlayer) {
+                    this.spellSystem.executeUnitSpell(spell, unit);
+                    return;
+                } else if (spell.targetType === 'ally_then_tile' && unit.isPlayer && !this.spellSystem.teleportUnit) {
+                    // First step of teleport - select the unit
+                    this.spellSystem.teleportUnit = unit;
+                    this.showFloatingText('Now select destination', 400, 300, '#87ceeb');
+                    return;
+                }
+            }
+        }
+
+        this.gridSystem.highlightValidMoves(unit);
+        this.updateUnitInfo(unit);
+        this.selectedUnit = unit;
+
+        // Update ranged attack button visibility
+        this.updateRangedAttackButton();
+
+        // Check if clicking on enemy (for melee attack)
+        if (this.turnSystem.currentUnit && 
+            this.turnSystem.currentUnit.isPlayer && 
+            this.turnSystem.currentUnit.canAttack() &&
+            !unit.isPlayer) {
+            const dist = Math.abs(unit.gridX - this.turnSystem.currentUnit.gridX) + 
+                         Math.abs(unit.gridY - this.turnSystem.currentUnit.gridY);
+            if (dist === 1 && !this.rangedAttackMode) {
+                this.performAttack(this.turnSystem.currentUnit, unit);
+            } else if (this.rangedAttackMode && dist <= this.turnSystem.currentUnit.rangedRange) {
+                // Ranged attack on target
+                this.performRangedAttack(this.turnSystem.currentUnit, unit);
+            }
+        }
+    }
+
+    updateRangedAttackButton() {
+        const btn = document.getElementById('ranged-attack-btn');
+        const currentUnit = this.turnSystem.currentUnit;
+        
+        if (currentUnit && 
+            currentUnit.isPlayer && 
+            currentUnit.rangedRange > 0 && 
+            currentUnit.canAttack()) {
+            btn.style.display = 'inline-block';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    startRangedAttack() {
+        const currentUnit = this.turnSystem.currentUnit;
+        if (!currentUnit || !currentUnit.canAttack() || currentUnit.rangedRange <= 0) return;
+        
+        this.rangedAttackMode = true;
+        document.body.style.cursor = 'crosshair';
+        
+        // Highlight ranged attack range
+        this.gridSystem.highlightRangedAttackRange(currentUnit);
+        
+        // Show cancel option
+        const btn = document.getElementById('ranged-attack-btn');
+        btn.textContent = '❌ Cancel';
+        btn.onclick = () => this.cancelRangedAttack();
+    }
+
+    cancelRangedAttack() {
+        this.rangedAttackMode = false;
+        document.body.style.cursor = 'default';
+        this.gridSystem.clearRangedHighlights();
+        
+        // Restore button
+        const btn = document.getElementById('ranged-attack-btn');
+        btn.textContent = '🎯 Ranged Attack';
+        btn.onclick = () => this.startRangedAttack();
+        
+        // Re-highlight normal moves
+        if (this.turnSystem.currentUnit) {
+            this.gridSystem.highlightValidMoves(this.turnSystem.currentUnit);
+        }
+    }
+
+    performRangedAttack(attacker, defender) {
+        if (!attacker.canAttack()) return;
+
+        attacker.hasAttacked = true;
+        this.rangedAttackMode = false;
+        document.body.style.cursor = 'default';
+
+        // Create arrow projectile
+        const arrow = this.add.text(
+            attacker.sprite.x, attacker.sprite.y - 20,
+            '➤',
+            { fontSize: '24px', color: '#8b4513' }
+        ).setOrigin(0.5);
+        
+        // Point arrow at target
+        const angle = Phaser.Math.Angle.Between(
+            attacker.sprite.x, attacker.sprite.y,
+            defender.sprite.x, defender.sprite.y
+        );
+        arrow.setRotation(angle);
+
+        // Animate arrow
+        this.tweens.add({
+            targets: arrow,
+            x: defender.sprite.x,
+            y: defender.sprite.y,
+            duration: 400,
+            onComplete: () => {
+                arrow.destroy();
+                
+                // Deal damage (true = ranged attack, triggers Knight passive)
+                const damage = Math.floor(attacker.damage * 0.8); // Ranged does 80% damage
+                defender.takeDamage(damage, true);
+                this.showDamageText(defender, damage);
+
+                // Visual feedback
+                this.tweens.add({
+                    targets: defender.sprite,
+                    alpha: 0.3,
+                    duration: 50,
+                    yoyo: true,
+                    repeat: 2
+                });
+
+                // Reset button
+                const btn = document.getElementById('ranged-attack-btn');
+                btn.textContent = '🎯 Ranged Attack';
+                btn.onclick = () => this.startRangedAttack();
+                this.updateRangedAttackButton();
+
+                this.gridSystem.clearHighlights();
+                this.checkVictoryCondition();
+            }
+        });
+    }
+
+    updateUnitInfo(unit) {
+        const infoPanel = document.getElementById('unit-info');
+        infoPanel.innerHTML = unit.getDisplayStats();
+    }
+
+    moveUnit(unit, newX, newY) {
+        this.unitManager.updateUnitPosition(unit, newX, newY);
+        unit.hasMoved = true;
+        
+        // Recalculate valid moves
+        if (this.selectedUnit === unit) {
+            this.gridSystem.highlightValidMoves(unit);
+        }
+
+        // Check if adjacent to enemy for attack
+        this.checkForAttackOpportunity(unit);
+    }
+
+    checkForAttackOpportunity(unit) {
+        const enemies = this.unitManager.getEnemyUnits(unit.isPlayer);
+        for (const enemy of enemies) {
+            const dist = Math.abs(enemy.gridX - unit.gridX) + Math.abs(enemy.gridY - unit.gridY);
+            if (dist === 1 && unit.canAttack()) {
+                // Auto-attack opportunity? No, let player decide
+                this.gridSystem.highlightValidMoves(unit);
+                break;
+            }
+        }
+    }
+
+    performAttack(attacker, defender) {
+        if (!attacker.canAttack()) return;
+
+        attacker.hasAttacked = true;
+
+        // Visual lunge
+        const originalX = attacker.sprite.x;
+        const originalY = attacker.sprite.y;
+        const targetX = defender.sprite.x;
+        const targetY = defender.sprite.y;
+
+        const lungeX = originalX + (targetX - originalX) * 0.3;
+        const lungeY = originalY + (targetY - originalY) * 0.3;
+
+        this.tweens.add({
+            targets: attacker.sprite,
+            x: lungeX,
+            y: lungeY,
+            duration: 100,
+            yoyo: true,
+            onComplete: () => {
+                // Deal damage with bless modifier
+                const damage = Math.floor(attacker.damage * attacker.blessValue);
+                defender.takeDamage(damage);
+                
+                // Update UI if defender is selected
+                if (this.selectedUnit === defender) {
+                    this.updateUnitInfo(defender);
+                }
+                
+                this.showDamageText(defender, damage);
+
+                // Visual feedback
+                this.tweens.add({
+                    targets: defender.sprite,
+                    alpha: 0.3,
+                    duration: 50,
+                    yoyo: true,
+                    repeat: 2
+                });
+
+                this.checkVictoryCondition();
+            }
+        });
+
+        this.gridSystem.clearHighlights();
+    }
+
+    showDamageText(unit, damage) {
+        const text = this.add.text(
+            unit.sprite.x, unit.sprite.y - 40,
+            `-${damage}`,
+            { fontSize: '24px', color: '#ff0000', fontStyle: 'bold' }
+        ).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: text,
+            y: text.y - 40,
+            alpha: 0,
+            duration: 800,
+            onComplete: () => text.destroy()
+        });
+    }
+
+    checkVictoryCondition() {
+        if (this.victoryShown) return;
+        
+        const playerUnits = this.unitManager.getPlayerUnits();
+        const enemyUnits = this.unitManager.getEnemyUnits();
+        
+        if (enemyUnits.length === 0) {
+            this.victoryShown = true;
+            this.showVictoryScreen(true);
+        } else if (playerUnits.length === 0) {
+            this.victoryShown = true;
+            this.showVictoryScreen(false);
+        }
+    }
+
+
+    showVictoryScreen(playerWon) {
+        const victoryScreen = document.getElementById('victory-screen');
+        const victoryText = document.getElementById('victory-text');
+
+        victoryText.innerHTML = playerWon ? '🎉 Victory! 🎉' : 'Defeat...';
+        victoryText.style.color = playerWon ? '#ffd700' : '#ff4444';
+
+        if (playerWon) {
+            this.selectedRewards = { unit: null, buff: null, magic: null };
+            this.generateRewardChoices();
+        } else {
+            document.getElementById('reward-units').innerHTML = 
+                '<button class="spell-button" onclick="location.reload()">Try Again</button>';
+        }
+
+        victoryScreen.classList.remove('hidden');
+    }
+
+    generateRewardChoices() {
+        // 1. NEW UNIT OPTIONS (3 random units)
+        const recruitableUnits = ['PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
+        const unitOptions = recruitableUnits
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 3);
+        
+        const unitContainer = document.getElementById('reward-units');
+        unitContainer.innerHTML = '';
+        unitOptions.forEach(unitType => {
+            const template = UNIT_TYPES[unitType];
+            const card = this.createRewardCard('unit', unitType, `
+                <div style="font-size: 40px; margin-bottom: 5px;">${template.emoji}</div>
+                <div style="color: #ffd700; font-weight: bold;">${template.name}</div>
+                <div style="font-size: 12px; color: #aaa;">
+                    HP: ${template.health} | DMG: ${template.damage}<br>
+                    MOV: ${template.moveRange}${template.rangedRange ? ` | RNG: ${template.rangedRange}` : ''}<br>
+                    INIT: ${template.initiative}
+                </div>
+            `);
+            unitContainer.appendChild(card);
+        });
+
+        // 2. UNIT BUFF OPTIONS (apply to one existing unit)
+        const buffOptions = [
+            { 
+                id: 'veteran', 
+                name: 'Veteran Training', 
+                icon: '⚔️',
+                desc: '+10 Damage', 
+                effect: (unit) => { unit.damage += 10; } 
+            },
+            { 
+                id: 'toughness', 
+                name: 'Enhanced Toughness', 
+                icon: '💪',
+                desc: '+30 Max HP', 
+                effect: (unit) => { 
+                    unit.maxHealth += 30; 
+                    unit.health += 30;
+                    unit.updateHealthBar();
+                } 
+            },
+            { 
+                id: 'agility', 
+                name: 'Greater Agility', 
+                icon: '💨',
+                desc: '+1 Movement', 
+                effect: (unit) => { unit.moveRange += 1; } 
+            },
+            { 
+                id: 'precision', 
+                name: 'Precision Strikes', 
+                icon: '🎯',
+                desc: '+5 Initiative & +5 Damage', 
+                effect: (unit) => { unit.initiative += 5; unit.damage += 5; } 
+            },
+            { 
+                id: 'ranged', 
+                name: 'Ranged Training', 
+                icon: '🏹',
+                desc: 'Gain Ranged Attack (Range 3)', 
+                effect: (unit) => { if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2; } 
+            },
+            { 
+                id: 'legendary', 
+                name: 'Legendary Status', 
+                icon: '⭐',
+                desc: '+20 HP, +5 DMG, +1 MOV', 
+                effect: (unit) => { 
+                    unit.maxHealth += 20; 
+                    unit.health += 20;
+                    unit.damage += 5;
+                    unit.moveRange += 1;
+                    unit.updateHealthBar();
+                } 
+            }
+        ].sort(() => 0.5 - Math.random()).slice(0, 3);
+
+        const buffContainer = document.getElementById('reward-buffs');
+        buffContainer.innerHTML = '';
+        buffOptions.forEach(buff => {
+            const card = this.createRewardCard('buff', buff.id, `
+                <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
+                <div style="color: #228b22; font-weight: bold;">${buff.name}</div>
+                <div style="font-size: 12px; color: #aaa;">${buff.desc}</div>
+            `, buff);
+            buffContainer.appendChild(card);
+        });
+
+        // 3. MAGIC ENHANCEMENT OPTIONS
+        const magicOptions = [
+            { 
+                id: 'mana_max', 
+                name: 'Expanded Mana Pool', 
+                icon: '💧',
+                desc: '+30 Max Mana', 
+                effect: () => { 
+                    this.maxMana += 30; 
+                    this.mana = this.maxMana;
+                    this.updateManaDisplay();
+                } 
+            },
+            { 
+                id: 'mana_regen', 
+                name: 'Mana Flow', 
+                icon: '🌊',
+                desc: '+2 Mana Regen per turn', 
+                effect: () => { this.manaRegen += 1; } 
+            },
+            { 
+                id: 'spell_power', 
+                name: 'Arcane Power', 
+                icon: '🔮',
+                desc: '+20% Spell Damage', 
+                effect: () => { this.spellPowerMultiplier = (this.spellPowerMultiplier || 1) * 1.2; } 
+            },
+            { 
+                id: 'spell_efficiency', 
+                name: 'Efficient Casting', 
+                icon: '⚡',
+                desc: '-20% Mana Cost for all spells', 
+                effect: () => { this.manaCostMultiplier = (this.manaCostMultiplier || 1) * 0.8; } 
+            },
+            { 
+                id: 'mana_restore', 
+                name: 'Mana Surge', 
+                icon: '✨',
+                desc: 'Fully restore mana now & +20 max', 
+                effect: () => { 
+                    this.maxMana += 20; 
+                    this.mana = this.maxMana;
+                    this.updateManaDisplay();
+                } 
+            },
+            { 
+                id: 'double_cast', 
+                name: 'Twin Cast', 
+                icon: '🔄',
+                desc: 'Cast 2 spells per round', 
+                effect: () => { this.spellsPerRound = (this.spellsPerRound || 1) + 1; } 
+            }
+        ].sort(() => 0.5 - Math.random()).slice(0, 3);
+
+        const magicContainer = document.getElementById('reward-magic');
+        magicContainer.innerHTML = '';
+        magicOptions.forEach(magic => {
+            const card = this.createRewardCard('magic', magic.id, `
+                <div style="font-size: 32px; margin-bottom: 5px;">${magic.icon}</div>
+                <div style="color: #9932cc; font-weight: bold;">${magic.name}</div>
+                <div style="font-size: 12px; color: #aaa;">${magic.desc}</div>
+            `, magic);
+            magicContainer.appendChild(card);
+        });
+
+        this.updateConfirmButton();
+    }
+
+    createRewardCard(category, id, innerHTML, effectData = null) {
+        const card = document.createElement('div');
+        card.className = 'reward-card';
+        card.dataset.category = category;
+        card.dataset.id = id;
+        card.style.cssText = `
+            background: linear-gradient(135deg, #2d2d44, #1a1a2e);
+            border: 2px solid #555;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 150px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        `;
+        card.innerHTML = innerHTML;
+        
+        card.onclick = () => this.selectReward(category, id, card, effectData);
+        
+        return card;
+    }
+
+    selectReward(category, id, cardElement, effectData) {
+        // Handle buff category specially - need to select target unit first
+        if (category === 'buff') {
+            this.showBuffTargetSelection(id, cardElement, effectData);
+            return;
+        }
+        
+        // Deselect previous choice in this category
+        const container = document.getElementById(`reward-${category === 'buff' ? 'buffs' : category === 'magic' ? 'magic' : 'units'}`);
+        container.querySelectorAll('.reward-card').forEach(c => {
+            c.style.borderColor = '#555';
+            c.style.transform = 'scale(1)';
+            c.style.boxShadow = 'none';
+        });
+        
+        // Select this card
+        cardElement.style.borderColor = '#ffd700';
+        cardElement.style.transform = 'scale(1.05)';
+        cardElement.style.boxShadow = '0 0 20px rgba(255,215,0,0.3)';
+        
+        // Store selection
+        this.selectedRewards[category] = { id, effectData };
+        this.updateConfirmButton();
+    }
+
+    showBuffTargetSelection(buffId, buffCard, buffData) {
+        const playerUnits = this.unitManager.getPlayerUnits();
+        if (playerUnits.length === 0) return;
+        
+        // Create a modal for unit selection
+        const modal = document.createElement('div');
+        modal.id = 'buff-target-modal';
+        modal.className = 'spellbook-modal';
+        modal.style.cssText = 'display: flex; z-index: 2000;';
+        modal.innerHTML = `
+            <div class="spellbook-content" style="max-width: 600px;">
+                <div class="spellbook-header">
+                    <h2>💪 Select Unit to Buff</h2>
+                    <p style="color: #228b22;">${buffData.icon} ${buffData.name}</p>
+                    <p style="color: #888; font-size: 12px;">${buffData.desc}</p>
+                </div>
+                <div class="spell-grid" id="buff-target-grid"></div>
+                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">Cancel</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Populate unit choices
+        const grid = document.getElementById('buff-target-grid');
+        playerUnits.forEach(unit => {
+            const card = document.createElement('div');
+            card.className = 'spell-card';
+            card.style.cssText = 'cursor: pointer;';
+            card.innerHTML = `
+                <div style="font-size: 40px; margin-bottom: 10px;">${unit.emoji}</div>
+                <div style="color: #ffd700; font-weight: bold;">${unit.name}</div>
+                <div style="font-size: 12px; color: #aaa;">
+                    HP: ${unit.health}/${unit.maxHealth}<br>
+                    DMG: ${unit.damage} | MOV: ${unit.moveRange}
+                </div>
+            `;
+            card.onclick = () => {
+                // Remove modal
+                modal.remove();
+                
+                // Deselect previous buff selection
+                const buffContainer = document.getElementById('reward-buffs');
+                buffContainer.querySelectorAll('.reward-card').forEach(c => {
+                    c.style.borderColor = '#555';
+                    c.style.transform = 'scale(1)';
+                    c.style.boxShadow = 'none';
+                });
+                
+                // Select this buff card
+                buffCard.style.borderColor = '#ffd700';
+                buffCard.style.transform = 'scale(1.05)';
+                buffCard.style.boxShadow = '0 0 20px rgba(255,215,0,0.3)';
+                
+                // Store selection with target unit
+                this.selectedRewards.buff = { 
+                    id: buffId, 
+                    effectData: buffData,
+                    targetUnit: unit
+                };
+                this.updateConfirmButton();
+            };
+            grid.appendChild(card);
+        });
+    }
+
+    updateConfirmButton() {
+        const btn = document.getElementById('confirm-rewards');
+        const selected = Object.values(this.selectedRewards).filter(r => r !== null).length;
+        btn.disabled = selected < 3;
+        btn.textContent = `Confirm Choices (${selected}/3)`;
+        
+        if (selected === 3) {
+            btn.style.background = 'linear-gradient(135deg, #228b22, #006400)';
+        } else {
+            btn.style.background = 'linear-gradient(135deg, #888888, #555555)';
+        }
+    }
+
+    confirmRewards() {
+        if (!this.selectedRewards.unit || !this.selectedRewards.buff || !this.selectedRewards.magic) {
+            return;
+        }
+
+        // 1. Add the new unit
+        const unitType = this.selectedRewards.unit.id;
+        
+        // Find a good spawn position (left side)
+        let spawnX = 0, spawnY = 3;
+        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+            if (!this.unitManager.getUnitAt(0, y)) {
+                spawnY = y;
+                break;
+            }
+        }
+        this.unitManager.addUnit(unitType, spawnX, spawnY);
+
+        // 2. Apply buff to selected unit (using the unit stored in selection)
+        const buffEffect = this.selectedRewards.buff.effectData;
+        const buffTarget = this.selectedRewards.buff.targetUnit;
+        if (buffEffect && buffTarget) {
+            buffEffect.effect(buffTarget);
+        }
+
+        // 3. Apply magic enhancement
+        const magicEffect = this.selectedRewards.magic.effectData;
+        if (magicEffect) {
+            magicEffect.effect();
+            this.showFloatingText(`${magicEffect.name} Acquired!`, 400, 200, '#9932cc');
+        }
+
+        // Proceed to next battle
+        this.nextBattle();
+    }
+
+    nextBattle() {
+        document.getElementById('victory-screen').classList.add('hidden');
+        
+        // Ensure proper UI visibility
+        document.getElementById('ui-panel').classList.remove('hidden');
+        document.getElementById('placement-bar').classList.add('hidden');
+        
+        // Get current player units to persist
+        const playerUnits = this.unitManager.getPlayerUnits().map(u => ({
+            type: u.type,
+            x: u.gridX,
+            y: u.gridY
+        }));
+        
+        // Increment battle number for next wave
+        const nextBattleNumber = this.battleNumber + 1;
+        
+        // Restart scene with new battle number and player units
+        this.scene.restart({
+            battleNumber: nextBattleNumber,
+            placedUnits: playerUnits
+        });
+    }
+
+    skipTurn() {
+        if (this.turnSystem.currentUnit && this.turnSystem.currentUnit.isPlayer) {
+            // Mark current unit as done for this turn
+            this.turnSystem.currentUnit.hasMoved = true;
+            this.turnSystem.currentUnit.hasAttacked = true;
+            
+            this.gridSystem.clearHighlights();
+            this.cancelRangedAttack();
+            this.cancelSpell();
+            this.turnSystem.nextTurn();
+        }
+    }
+
+    endTurn() {
+        if (this.turnSystem.currentUnit && this.turnSystem.currentUnit.isPlayer) {
+            this.cancelRangedAttack();
+            this.cancelSpell();
+            this.gridSystem.clearHighlights();
+            this.turnSystem.nextTurn();
+        }
+    }
+
+    cancelSpell() {
+        if (this.spellSystem.activeSpell) {
+            this.spellSystem.clearSpell();
+            this.showFloatingText('Spell cancelled', 400, 300, '#888888');
+        }
+    }
+}
+
+// ============================================
+// PHASER GAME CONFIG
+// ============================================
+const config = {
+    type: Phaser.AUTO,
+    width: CONFIG.GRID_WIDTH * CONFIG.TILE_SIZE,
+    height: CONFIG.GRID_HEIGHT * CONFIG.TILE_SIZE,
+    parent: 'game-container',
+    backgroundColor: '#1a1a2e',
+    scene: [PreGameScene, BattleScene],
+    pixelArt: false
+};
+
+// Global reference for UI access
+let gameScene;
+
+// Initialize game
+const game = new Phaser.Game(config);
+
+// Helper method for AI pathfinding
+GridSystem.prototype.isValidMoveAI = function(x, y) {
+    if (x < 0 || x >= CONFIG.GRID_WIDTH || y < 0 || y >= CONFIG.GRID_HEIGHT) return false;
+    const unit = this.scene.unitManager.getUnitAt(x, y);
+    return !unit;
+};
