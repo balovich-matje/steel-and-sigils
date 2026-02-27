@@ -189,6 +189,13 @@ export class BattleScene extends Phaser.Scene {
         });
         
         this.input.keyboard.on('keydown-ESC', () => {
+            // Check if spellbook modal is open - close it
+            const spellbookModal = document.getElementById('spellbook-modal');
+            if (spellbookModal && !spellbookModal.classList.contains('hidden')) {
+                this.closeSpellBook();
+                return;
+            }
+            // Otherwise cancel active spell if any
             if (this.spellSystem.activeSpell) {
                 this.spellSystem.clearSpell();
                 this.uiManager.showFloatingText('Spell cancelled', 400, 300, '#A68966');
