@@ -403,6 +403,13 @@ export class BattleScene extends Phaser.Scene {
             this.gridSystem.highlightValidMoves(unit);
         }
     }
+    
+    // Move unit for AI without setting hasMoved (for multi-cell movement)
+    moveUnitAI(unit, newX, newY) {
+        console.log(`[AI Movement] ${unit.name} moving from (${unit.gridX},${unit.gridY}) to (${newX},${newY})`);
+        this.unitManager.updateUnitPosition(unit, newX, newY);
+        // Note: hasMoved is NOT set here - AI handles that separately after all movement
+    }
 
     // Combat
     performAttack(attacker, defender, isSecondStrike = false) {

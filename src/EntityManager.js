@@ -628,10 +628,18 @@ export class TurnSystem {
         }
 
         // Move towards player - use all available movement
+        console.log(`[AI Turn] ${unit.name} starting movement, range: ${unit.moveRange}, hasMoved: ${unit.hasMoved}`);
         let movesRemaining = unit.moveRange;
-        while (movesRemaining > 0 && unit.canMove()) {
+        let totalMoves = 0;
+        
+        while (movesRemaining > 0) {
             const currentDist = this.getDistanceToUnit(unit, nearest);
-            if (currentDist === 1) break;
+            console.log(`[AI Movement] Distance to target: ${currentDist}, moves remaining: ${movesRemaining}`);
+            
+            if (currentDist === 1) {
+                console.log(`[AI Movement] Adjacent to target, stopping movement`);
+                break;
+            }
             
             const dx = Math.sign(nearest.gridX - unit.gridX);
             const dy = Math.sign(nearest.gridY - unit.gridY);
@@ -646,12 +654,12 @@ export class TurnSystem {
                 // Try X first, then Y
                 const newX = unit.gridX + dx;
                 if (this.isValidMoveForUnit(unit, newX, unit.gridY)) {
-                    this.scene.moveUnit(unit, newX, unit.gridY);
+                    this.scene.moveUnitAI(unit, newX, unit.gridY);
                     moved = true;
                 } else if (dy !== 0) {
                     const newY = unit.gridY + dy;
                     if (this.isValidMoveForUnit(unit, unit.gridX, newY)) {
-                        this.scene.moveUnit(unit, unit.gridX, newY);
+                        this.scene.moveUnitAI(unit, unit.gridX, newY);
                         moved = true;
                     }
                 }
@@ -659,12 +667,12 @@ export class TurnSystem {
                 // Try Y first, then X
                 const newY = unit.gridY + dy;
                 if (this.isValidMoveForUnit(unit, unit.gridX, newY)) {
-                    this.scene.moveUnit(unit, unit.gridX, newY);
+                    this.scene.moveUnitAI(unit, unit.gridX, newY);
                     moved = true;
                 } else if (dx !== 0) {
                     const newX = unit.gridX + dx;
                     if (this.isValidMoveForUnit(unit, newX, unit.gridY)) {
-                        this.scene.moveUnit(unit, newX, unit.gridY);
+                        this.scene.moveUnitAI(unit, newX, unit.gridY);
                         moved = true;
                     }
                 }
@@ -686,7 +694,7 @@ export class TurnSystem {
                         // Only move if it gets us closer to target
                         const newDist = Math.abs(nearest.gridX - newX) + Math.abs(nearest.gridY - newY);
                         if (newDist < currentDist) {
-                            this.scene.moveUnit(unit, newX, newY);
+                            this.scene.moveUnitAI(unit, newX, newY);
                             moved = true;
                             break;
                         }
@@ -694,9 +702,19 @@ export class TurnSystem {
                 }
             }
             
-            if (!moved) break;
+            if (!moved) {
+                console.log(`[AI Movement] Could not find valid move, stopping`);
+                break;
+            }
+            
+            totalMoves++;
             movesRemaining--;
+            console.log(`[AI Movement] Successfully moved, total moves this turn: ${totalMoves}`);
         }
+        
+        // Mark unit as having moved after all movement is complete
+        unit.hasMoved = true;
+        console.log(`[AI Turn] ${unit.name} finished movement, moved ${totalMoves} cells`);
 
         // Check if can attack after moving (melee or ranged)
         const finalDist = this.getDistanceToUnit(unit, nearest);
@@ -923,15 +941,20 @@ export class TurnSystem {
             
             // Move towards best position
             if (bestX !== unit.gridX || bestY !== unit.gridY) {
-                // Use simple path towards best position
+                // Use simple path towards best position (Shaman King moves once per turn)
                 const dx = Math.sign(bestX - unit.gridX);
                 const dy = Math.sign(bestY - unit.gridY);
                 
+                console.log(`[Shaman King] Moving towards optimal position (${bestX},${bestY})`);
                 if (dx !== 0 && this.isValidMoveForUnit(unit, unit.gridX + dx, unit.gridY)) {
-                    scene.moveUnit(unit, unit.gridX + dx, unit.gridY);
+                    scene.moveUnitAI(unit, unit.gridX + dx, unit.gridY);
+                    unit.hasMoved = true;
                 } else if (dy !== 0 && this.isValidMoveForUnit(unit, unit.gridX, unit.gridY + dy)) {
-                    scene.moveUnit(unit, unit.gridX, unit.gridY + dy);
+                    scene.moveUnitAI(unit, unit.gridX, unit.gridY + dy);
+                    unit.hasMoved = true;
                 }
+            } else {
+                unit.hasMoved = true;
             }
         }
         
