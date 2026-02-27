@@ -120,6 +120,26 @@ export class BattleScene extends Phaser.Scene {
                     unit.bloodlustStacks = unitData.bloodlustStacks;
                     unit.damage += unitData.bloodlustStacks * 15;
                 }
+                
+                // Restore active buffs
+                if (unitData.buffs) {
+                    if (unitData.buffs.hasteRounds) {
+                        unit.hasteRounds = unitData.buffs.hasteRounds;
+                        unit.moveRange += unitData.buffs.hasteValue || 0;
+                    }
+                    if (unitData.buffs.shieldRounds) {
+                        unit.shieldRounds = unitData.buffs.shieldRounds;
+                        unit.shieldValue = unitData.buffs.shieldValue || 0;
+                    }
+                    if (unitData.buffs.blessRounds) {
+                        unit.blessRounds = unitData.buffs.blessRounds;
+                        unit.blessValue = unitData.buffs.blessValue || 1;
+                    }
+                    if (unitData.buffs.regenerateRounds) {
+                        unit.regenerateRounds = unitData.buffs.regenerateRounds;
+                        unit.regenerateAmount = unitData.buffs.regenerateAmount || 0;
+                    }
+                }
             }
         }
         
@@ -1155,7 +1175,18 @@ export class BattleScene extends Phaser.Scene {
             x: u.gridX,
             y: u.gridY,
             statModifiers: u.statModifiers || null,
-            bloodlustStacks: u.bloodlustStacks || 0
+            bloodlustStacks: u.bloodlustStacks || 0,
+            // Persist active buffs
+            buffs: {
+                hasteRounds: u.hasteRounds,
+                hasteValue: u.hasteRounds > 0 || u.hasteRounds === -1 ? u.moveRange - UNIT_TYPES[u.type].moveRange : 0,
+                shieldRounds: u.shieldRounds,
+                shieldValue: u.shieldValue,
+                blessRounds: u.blessRounds,
+                blessValue: u.blessValue,
+                regenerateRounds: u.regenerateRounds,
+                regenerateAmount: u.regenerateAmount
+            }
         }));
         
         const nextBattleNumber = this.battleNumber + 1;

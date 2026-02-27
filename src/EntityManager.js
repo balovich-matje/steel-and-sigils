@@ -451,7 +451,14 @@ export class TurnSystem {
             }
         }
 
-        // If adjacent, attack
+        // Check for ranged attack first (if within range and not adjacent)
+        if (unit.rangedRange > 0 && minDist > 1 && minDist <= unit.rangedRange && unit.canAttack()) {
+            this.scene.performRangedAttack(unit, nearest);
+            this.scene.time.delayedCall(800, () => this.nextTurn());
+            return;
+        }
+
+        // If adjacent, melee attack
         if (minDist === 1) {
             this.scene.performAttack(unit, nearest);
             
@@ -500,22 +507,30 @@ export class TurnSystem {
             movesRemaining--;
         }
 
-        // Check if can attack after moving
+        // Check if can attack after moving (melee or ranged)
         const finalDist = Math.abs(nearest.gridX - unit.gridX) + Math.abs(nearest.gridY - unit.gridY);
-        if (finalDist === 1 && unit.canAttack()) {
-            this.scene.time.delayedCall(400, () => {
-                this.scene.performAttack(unit, nearest);
-                
-                // Orc Rogue hit-and-run
-                if (unit.type === 'ORC_ROGUE' && unit.turnStartX !== undefined) {
-                    this.scene.time.delayedCall(600, () => {
-                        if (!unit.isDead && unit.health > 0) {
-                            this.scene.uiManager.showBuffText(unit, 'VANISH!', '#6B5B8B');
-                            this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
-                        }
-                    });
-                }
-            });
+        if (unit.canAttack()) {
+            if (finalDist === 1) {
+                // Melee attack
+                this.scene.time.delayedCall(400, () => {
+                    this.scene.performAttack(unit, nearest);
+                    
+                    // Orc Rogue hit-and-run
+                    if (unit.type === 'ORC_ROGUE' && unit.turnStartX !== undefined) {
+                        this.scene.time.delayedCall(600, () => {
+                            if (!unit.isDead && unit.health > 0) {
+                                this.scene.uiManager.showBuffText(unit, 'VANISH!', '#6B5B8B');
+                                this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
+                            }
+                        });
+                    }
+                });
+            } else if (unit.rangedRange > 0 && finalDist <= unit.rangedRange) {
+                // Ranged attack after moving
+                this.scene.time.delayedCall(400, () => {
+                    this.scene.performRangedAttack(unit, nearest);
+                });
+            }
         }
 
         this.scene.time.delayedCall(1200, () => this.nextTurn());
