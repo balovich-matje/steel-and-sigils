@@ -46,7 +46,8 @@ export class BattleScene extends Phaser.Scene {
         }
         
         // Load enemy unit images
-        const enemyUnits = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER'];
+        const enemyUnits = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER', 
+            'OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN'];
         for (const unitType of enemyUnits) {
             const template = UNIT_TYPES[unitType];
             if (template && template.image) {
