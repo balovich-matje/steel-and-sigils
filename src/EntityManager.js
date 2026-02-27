@@ -303,6 +303,25 @@ export class UnitManager {
 
         unit.sprite.setInteractive();
         unit.sprite.on('pointerdown', () => {
+            // Check if current player unit can attack this unit
+            const currentUnit = this.scene.turnSystem.currentUnit;
+            if (currentUnit && currentUnit.isPlayer && currentUnit.canAttack() && 
+                !unit.isPlayer && !unit.isDead) {
+                const dist = Math.abs(unit.gridX - currentUnit.gridX) + 
+                             Math.abs(unit.gridY - currentUnit.gridY);
+                
+                // Ranged attack
+                if (dist > 1 && dist <= currentUnit.rangedRange && currentUnit.rangedRange > 0) {
+                    this.scene.performRangedAttack(currentUnit, unit);
+                    return;
+                }
+                // Melee attack
+                if (dist === 1) {
+                    this.scene.performAttack(currentUnit, unit);
+                    return;
+                }
+            }
+            // Otherwise just select the unit
             this.scene.selectUnit(unit);
         });
 
@@ -329,10 +348,24 @@ export class UnitManager {
     updateUnitPosition(unit, newX, newY) {
         unit.gridX = newX;
         unit.gridY = newY;
-        unit.sprite.setPosition(
-            newX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
-            newY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2
-        );
+        // Check if this unit uses an image (bottom-origin) or emoji (center-origin)
+        const template = UNIT_TYPES[unit.type];
+        const imageKey = template.image ? unit.type.toLowerCase() + '_img' : null;
+        const hasImage = imageKey && this.scene.textures.exists(imageKey);
+        
+        if (hasImage) {
+            // Images: position at bottom of tile with 5px gap
+            unit.sprite.setPosition(
+                newX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+                (newY + 1) * CONFIG.TILE_SIZE - 5
+            );
+        } else {
+            // Emoji: position at center of tile
+            unit.sprite.setPosition(
+                newX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+                newY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2
+            );
+        }
         unit.updateHealthBar();
     }
 }
