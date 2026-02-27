@@ -431,6 +431,7 @@ export class BattleScene extends Phaser.Scene {
     showVictoryScreen(playerWon) {
         const victoryScreen = document.getElementById('victory-screen');
         const victoryText = document.getElementById('victory-text');
+        const confirmBtn = document.getElementById('confirm-rewards');
 
         victoryText.innerHTML = playerWon ? '🎉 Victory! 🎉' : 'Defeat...';
         victoryText.style.color = playerWon ? '#A68966' : '#9E4A4A';
@@ -443,9 +444,22 @@ export class BattleScene extends Phaser.Scene {
                 magic: null 
             };
             this.generateRewardChoices();
+            confirmBtn.style.display = 'block';
         } else {
-            document.getElementById('reward-units').innerHTML = 
-                '<button class="spell-button" onclick="location.reload()">Try Again</button>';
+            // Defeat - show simple try again screen
+            document.getElementById('reward-units').innerHTML = '';
+            document.getElementById('reward-buffs').innerHTML = '';
+            document.getElementById('reward-magic').innerHTML = '';
+            
+            // Show defeat message with try again button
+            document.getElementById('reward-units').innerHTML = `
+                <div style="text-align: center; padding: 30px;">
+                    <p style="color: #B8A896; font-size: 18px; margin-bottom: 20px;">Your army has fallen...</p>
+                    <p style="color: #8B7355; font-size: 14px; margin-bottom: 30px; font-style: italic;">Better luck next time, commander.</p>
+                    <button class="spell-button" onclick="location.reload()" style="font-size: 16px; padding: 12px 30px;">⚔️ Try Again</button>
+                </div>
+            `;
+            confirmBtn.style.display = 'none';
         }
 
         victoryScreen.classList.remove('hidden');
