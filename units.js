@@ -216,7 +216,7 @@ const UNIT_TYPES = {
     OGRE_CHIEFTAIN: {
         name: 'Ogre Chieftain',
         emoji: '👑',
-        image: null, // Uses emoji
+        image: 'images/enemy/ogre_chieftain.png',
         health: 500,
         maxHealth: 500,
         damage: 80,
@@ -236,7 +236,7 @@ const UNIT_TYPES = {
     ORC_SHAMAN_KING: {
         name: 'Orc Shaman King',
         emoji: '🔮',
-        image: null, // Uses emoji
+        image: 'images/enemy/orc_shaman_king.png',
         health: 350,
         maxHealth: 350,
         damage: 40,
@@ -257,7 +257,7 @@ const UNIT_TYPES = {
     LOOT_GOBLIN: {
         name: 'Loot Goblin',
         emoji: '💰',
-        image: null, // Uses emoji
+        image: 'images/enemy/loot_goblin.png',
         health: 150,
         maxHealth: 150,
         damage: 50,

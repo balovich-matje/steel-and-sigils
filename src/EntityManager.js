@@ -638,19 +638,59 @@ export class TurnSystem {
             
             let moved = false;
             
-            if (dx !== 0) {
+            // Try to move in both directions - prioritize the larger distance
+            const xDist = Math.abs(nearest.gridX - unit.gridX);
+            const yDist = Math.abs(nearest.gridY - unit.gridY);
+            
+            if (xDist >= yDist && dx !== 0) {
+                // Try X first, then Y
                 const newX = unit.gridX + dx;
                 if (this.isValidMoveForUnit(unit, newX, unit.gridY)) {
                     this.scene.moveUnit(unit, newX, unit.gridY);
                     moved = true;
+                } else if (dy !== 0) {
+                    const newY = unit.gridY + dy;
+                    if (this.isValidMoveForUnit(unit, unit.gridX, newY)) {
+                        this.scene.moveUnit(unit, unit.gridX, newY);
+                        moved = true;
+                    }
                 }
-            }
-            
-            if (!moved && dy !== 0) {
+            } else if (dy !== 0) {
+                // Try Y first, then X
                 const newY = unit.gridY + dy;
                 if (this.isValidMoveForUnit(unit, unit.gridX, newY)) {
                     this.scene.moveUnit(unit, unit.gridX, newY);
                     moved = true;
+                } else if (dx !== 0) {
+                    const newX = unit.gridX + dx;
+                    if (this.isValidMoveForUnit(unit, newX, unit.gridY)) {
+                        this.scene.moveUnit(unit, newX, unit.gridY);
+                        moved = true;
+                    }
+                }
+            }
+            
+            // If still not moved, try any valid direction as fallback
+            if (!moved) {
+                const directions = [
+                    { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+                    { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
+                ];
+                // Shuffle directions for variety
+                directions.sort(() => 0.5 - Math.random());
+                
+                for (const dir of directions) {
+                    const newX = unit.gridX + dir.dx;
+                    const newY = unit.gridY + dir.dy;
+                    if (this.isValidMoveForUnit(unit, newX, newY)) {
+                        // Only move if it gets us closer to target
+                        const newDist = Math.abs(nearest.gridX - newX) + Math.abs(nearest.gridY - newY);
+                        if (newDist < currentDist) {
+                            this.scene.moveUnit(unit, newX, newY);
+                            moved = true;
+                            break;
+                        }
+                    }
                 }
             }
             
