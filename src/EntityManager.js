@@ -303,8 +303,9 @@ export class UnitManager {
 
         unit.sprite.setInteractive();
         unit.sprite.on('pointerdown', () => {
-            // Block all actions if a spell is selected - spell casting takes priority
+            // If a spell is selected, cast it at this unit's position
             if (this.scene.spellSystem.activeSpell) {
+                this.scene.spellSystem.executeSpellAt(unit.gridX, unit.gridY);
                 return;
             }
             
