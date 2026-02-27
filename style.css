@@ -524,3 +524,26 @@ h1 {
 .bg-charcoal { background: #1A1C1E; }
 .bg-wood { background: #2D241E; }
 .border-gold { border-color: #A68966; }
+
+/* Legendary glow animation for special units and buffs */
+@keyframes legendary-glow {
+    0%, 100% {
+        box-shadow: 0 0 5px #ff8c00, 0 0 10px #ff8c00, 0 0 15px #ff8c00, inset 0 0 8px rgba(255, 140, 0, 0.3);
+        border-color: #ff8c00;
+    }
+    50% {
+        box-shadow: 0 0 10px #ff8c00, 0 0 20px #ff8c00, 0 0 30px #ff8c00, inset 0 0 12px rgba(255, 140, 0, 0.5);
+        border-color: #ffa500;
+    }
+}
+
+.legendary-card {
+    animation: legendary-glow 2s ease-in-out infinite;
+    border: 2px solid #ff8c00 !important;
+    background: linear-gradient(135deg, #2D241E 0%, #3D2814 100%) !important;
+}
+
+.legendary-card:hover {
+    animation: legendary-glow 1s ease-in-out infinite;
+    border-color: #ffa500 !important;
+}

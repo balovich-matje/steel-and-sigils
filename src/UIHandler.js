@@ -142,35 +142,60 @@ export class UIManager {
     }
 
     // Create reward card HTML element
-    createRewardCard(category, id, innerHTML, effectData = null) {
+    createRewardCard(category, id, innerHTML, effectData = null, isLegendary = false) {
         const card = document.createElement('div');
-        card.className = 'reward-card';
+        card.className = isLegendary ? 'reward-card legendary-card' : 'reward-card';
         card.dataset.category = category;
         card.dataset.id = id;
-        card.style.cssText = `
-            background: #2D241E;
-            border: 2px solid #A68966;
-            border-radius: 4px;
-            padding: 15px;
-            min-width: 150px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.15s;
-            color: #E3D5B8;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        `;
+        
+        if (isLegendary) {
+            // Legendary styling with animated glow - inline styles for base, animation from CSS
+            card.style.cssText = `
+                border: 2px solid #ff8c00;
+                border-radius: 4px;
+                padding: 15px;
+                min-width: 150px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.15s;
+                color: #E3D5B8;
+                background: linear-gradient(135deg, #2D241E 0%, #3D2814 100%);
+            `;
+        } else {
+            card.style.cssText = `
+                background: #2D241E;
+                border: 2px solid #A68966;
+                border-radius: 4px;
+                padding: 15px;
+                min-width: 150px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.15s;
+                color: #E3D5B8;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            `;
+        }
+        
         card.innerHTML = innerHTML;
         
         // Add hover effect via JS since inline styles don't support :hover
         card.onmouseenter = () => {
-            card.style.background = '#3D342E';
-            card.style.borderColor = '#B69976';
-            card.style.boxShadow = 'inset 0 2px 8px rgba(0,0,0,0.3)';
+            if (isLegendary) {
+                card.style.background = 'linear-gradient(135deg, #3D342E 0%, #4D3820 100%)';
+            } else {
+                card.style.background = '#3D342E';
+                card.style.borderColor = '#B69976';
+                card.style.boxShadow = 'inset 0 2px 8px rgba(0,0,0,0.3)';
+            }
         };
         card.onmouseleave = () => {
-            card.style.background = '#2D241E';
-            card.style.borderColor = '#A68966';
-            card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+            if (isLegendary) {
+                card.style.background = 'linear-gradient(135deg, #2D241E 0%, #3D2814 100%)';
+            } else {
+                card.style.background = '#2D241E';
+                card.style.borderColor = '#A68966';
+                card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+            }
         };
         
         card.onclick = () => this.scene.selectReward(category, id, card, effectData);
