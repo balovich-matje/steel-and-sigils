@@ -250,7 +250,11 @@ export class BattleScene extends Phaser.Scene {
         const positions = [];
         for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
             for (let x = CONFIG.GRID_WIDTH - 3; x < CONFIG.GRID_WIDTH; x++) {
-                positions.push({ x, y });
+                // Check if position is occupied by a player unit
+                const existingUnit = this.unitManager.getUnitAt(x, y);
+                if (!existingUnit) {
+                    positions.push({ x, y });
+                }
             }
         }
         return positions.sort(() => 0.5 - Math.random());
