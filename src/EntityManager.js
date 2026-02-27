@@ -279,8 +279,14 @@ export class UnitManager {
         
         if (hasImage) {
             unit.sprite = this.scene.add.image(x, y, imageKey);
-            // Scale to max 1.2x of tile size while preserving original aspect ratio
-            unit.sprite.setScale(1.2);
+            // Scale image to fit within tile size (64px) while preserving aspect ratio
+            const texture = this.scene.textures.get(imageKey);
+            const srcWidth = texture.getSourceImage().width;
+            const srcHeight = texture.getSourceImage().height;
+            // Target: fit within 64px tile, but allow up to 1.3x (83px) for tall units
+            const maxSize = CONFIG.TILE_SIZE * 1.3; // 83px max
+            const scale = Math.min(maxSize / srcWidth, maxSize / srcHeight);
+            unit.sprite.setScale(scale);
             unit.sprite.setOrigin(0.5, 1.0); // Bottom center so feet are on the tile
         } else {
             unit.sprite = this.scene.add.text(
