@@ -277,7 +277,7 @@ export class BattleScene extends Phaser.Scene {
             yoyo: true,
             onComplete: () => {
                 const damage = Math.floor(attacker.damage * attacker.blessValue);
-                defender.takeDamage(damage);
+                defender.takeDamage(damage, false, attacker);
                 
                 if (this.selectedUnit === defender) {
                     this.uiManager.updateUnitInfo(defender);
@@ -349,7 +349,7 @@ export class BattleScene extends Phaser.Scene {
                 arrow.destroy();
                 
                 const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
-                defender.takeDamage(damage, true);
+                defender.takeDamage(damage, true, attacker);
                 this.uiManager.showDamageText(defender, damage);
 
                 this.tweens.add({
@@ -793,7 +793,7 @@ export class PreGameScene extends Phaser.Scene {
         super({ key: 'PreGameScene' });
         this.totalPoints = 1000;
         this.remainingPoints = 1000;
-        this.unitCounts = { KNIGHT: 0, ARCHER: 0, WIZARD: 0 };
+        this.unitCounts = { KNIGHT: 0, ARCHER: 0, WIZARD: 0, CLERIC: 0, ROGUE: 0, PALADIN: 0, RANGER: 0, BERSERKER: 0, SORCERER: 0 };
         this.placedUnits = [];
         this.placementMode = false;
         this.unitsToPlace = [];

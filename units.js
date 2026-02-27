@@ -54,17 +54,17 @@ const UNIT_TYPES = {
             value: 1
         }
     },
-    // Additional recruitable units
     PALADIN: {
         name: 'Paladin',
         emoji: '🛡️',
         image: 'images/player/paladin.png',
         health: 150,
         maxHealth: 150,
-        damage: 40,
-        moveRange: 2,
+        damage: 50,
+        moveRange: 4,
         initiative: 9,
         isPlayer: true,
+        cost: 1000,
         passive: {
             name: 'Divine Protection',
             description: '-50% ranged damage taken, +50% healing received',
@@ -78,11 +78,12 @@ const UNIT_TYPES = {
         image: 'images/player/ranger.png',
         health: 70,
         maxHealth: 70,
-        damage: 40,
-        moveRange: 3,
+        damage: 50,
+        moveRange: 2,
         rangedRange: 10,
         initiative: 13,
         isPlayer: true,
+        cost: 1000,
         passive: {
             name: 'Eagle Eye',
             description: '10 tile range'
@@ -98,10 +99,21 @@ const UNIT_TYPES = {
         moveRange: 4,
         initiative: 11,
         isPlayer: true,
+        cost: 1000,
         passive: {
             name: 'Fury',
             description: 'Strikes 2 times per attack'
-        }
+        },
+        passives: [
+            {
+                name: 'Reckless',
+                description: 'Damage taken is +50%'
+            },
+            {
+                name: 'Bloodlust',
+                description: 'Killing blow permanently increases damage by 15'
+            }
+        ]
     },
     CLERIC: {
         name: 'Cleric',
@@ -114,6 +126,7 @@ const UNIT_TYPES = {
         rangedRange: 4,
         initiative: 10,
         isPlayer: true,
+        cost: 500,
         passive: {
             name: 'Blessed Touch',
             description: '+50% healing done, ranged attacks (4 tiles)'
@@ -129,6 +142,7 @@ const UNIT_TYPES = {
         moveRange: 8,
         initiative: 16,
         isPlayer: true,
+        cost: 500,
         passive: {
             name: 'Shadow Step',
             description: 'Returns to starting position after attack'
@@ -145,6 +159,7 @@ const UNIT_TYPES = {
         rangedRange: 4,
         initiative: 14,
         isPlayer: true,
+        cost: 1000,
         passive: {
             name: 'Arcane Mastery',
             description: '+50% spell damage'

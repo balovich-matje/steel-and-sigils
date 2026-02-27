@@ -53,7 +53,7 @@ export class Unit {
         return !this.hasAttacked && !this.isDead;
     }
 
-    takeDamage(amount, isRanged = false) {
+    takeDamage(amount, isRanged = false, attacker = null) {
         // Apply shield if active
         if (this.shieldRounds > 0) {
             amount = Math.floor(amount * (1 - this.shieldValue));
@@ -73,10 +73,17 @@ export class Unit {
             }
         }
         
+        // Apply Berserker Reckless passive (+50% damage taken)
+        if (this.type === 'BERSERKER') {
+            amount = Math.floor(amount * 1.5);
+        }
+        
         this.health = Math.max(0, this.health - amount);
         this.updateHealthBar();
         
         if (this.health <= 0) {
+            // Track that this unit was killed by attacker (for Bloodlust)
+            this.killedBy = attacker;
             this.die(this.scene);
         }
         return this.health > 0;
@@ -90,6 +97,15 @@ export class Unit {
     die(scene) {
         this.isDead = true;
         this.health = 0;
+        
+        // Bloodlust: If killed by Berserker, they get +15 permanent damage
+        if (this.killedBy && this.killedBy.type === 'BERSERKER' && !this.killedBy.isDead) {
+            this.killedBy.damage += 15;
+            if (scene && scene.uiManager) {
+                scene.uiManager.showBuffText(this.killedBy, 'BLOODLUST!', '#9E4A4A');
+                scene.uiManager.showFloatingText('+15 DMG', this.killedBy.sprite.x, this.killedBy.sprite.y - 80, '#9E4A4A');
+            }
+        }
         
         if (this.sprite) {
             if (this.sprite.setText) {
@@ -201,8 +217,16 @@ export class Unit {
         const buffDisplay = buffs.length > 0 ? `<br>✨ ${buffs.join(', ')}` : '';
         
         const template = UNIT_TYPES[this.type];
-        const passiveEmoji = this.type === 'KNIGHT' ? '🛡️' : '🔮';
-        const passiveDisplay = template.passive ? `<br>${passiveEmoji} Passive: ${template.passive.name}` : '';
+        let passiveDisplay = '';
+        
+        // Handle multiple passives (e.g., Berserker)
+        if (template.passives) {
+            passiveDisplay = template.passives.map(p => `<br>⚔️ ${p.name}: ${p.description}`).join('');
+        } else if (template.passive) {
+            const passiveEmoji = this.type === 'KNIGHT' ? '🛡️' : '🔮';
+            passiveDisplay = `<br>${passiveEmoji} Passive: ${template.passive.name}`;
+        }
+        
         const specialDisplay = template.special ? `<br>⚡ Special: Hit & Run` : '';
         
         return `${this.emoji} ${this.name}<br>

@@ -65,52 +65,154 @@
             💰 Points: <span id="points-remaining">1000</span>/1000
         </div>
         
-        <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center;">
-            <div class="spell-card" style="min-width: 180px;">
-                <div style="font-size: 48px; margin-bottom: 10px;">⚔️</div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 5px;">Knight</div>
-                <div style="font-size: 12px; color: #B8A896; margin-bottom: 10px;">
+        <div style="display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; max-width: 1200px;">
+            <!-- Basic Units (200-400 points) -->
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">⚔️</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Knight</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 100 | DMG: 25<br>MOV: 4 | INIT: 12
                 </div>
-                <div style="color: #8B7355; font-size: 11px; margin-bottom: 10px; font-style: italic;">
-                    🛡️ Passive: -50% ranged damage
+                <div style="color: #8B7355; font-size: 10px; margin-bottom: 8px; font-style: italic;">
+                    🛡️ -50% ranged dmg
                 </div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 10px;">💰 200 points</div>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', -1)" style="padding: 5px 15px;">-</button>
-                    <span id="count-KNIGHT" style="font-size: 20px; font-weight: bold; min-width: 30px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', 1)" style="padding: 5px 15px;">+</button>
-                </div>
-            </div>
-            
-            <div class="spell-card" style="min-width: 180px;">
-                <div style="font-size: 48px; margin-bottom: 10px;">🏹</div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 5px;">Archer</div>
-                <div style="font-size: 12px; color: #B8A896; margin-bottom: 10px;">
-                    HP: 60 | DMG: 35<br>MOV: 2 | RNG: 6 | INIT: 15
-                </div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 10px;">💰 300 points</div>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', -1)" style="padding: 5px 15px;">-</button>
-                    <span id="count-ARCHER" style="font-size: 20px; font-weight: bold; min-width: 30px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', 1)" style="padding: 5px 15px;">+</button>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 200</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-KNIGHT" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', 1)" style="padding: 4px 12px;">+</button>
                 </div>
             </div>
             
-            <div class="spell-card" style="min-width: 180px;">
-                <div style="font-size: 48px; margin-bottom: 10px;">🧙</div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 5px;">Wizard</div>
-                <div style="font-size: 12px; color: #B8A896; margin-bottom: 10px;">
-                    HP: 40 | DMG: 45<br>MOV: 2 | RNG: 4 | INIT: 10
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">🏹</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Archer</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
+                    HP: 60 | DMG: 35<br>MOV: 2 | RNG: 6
                 </div>
-                <div style="color: #4A729E; font-size: 11px; margin-bottom: 10px; font-style: italic;">
-                    🔮 Passive: +1 Mana Regen per Wizard
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 300</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-ARCHER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', 1)" style="padding: 4px 12px;">+</button>
                 </div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 10px;">💰 400 points</div>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', -1)" style="padding: 5px 15px;">-</button>
-                    <span id="count-WIZARD" style="font-size: 20px; font-weight: bold; min-width: 30px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', 1)" style="padding: 5px 15px;">+</button>
+            </div>
+            
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">🧙</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Wizard</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
+                    HP: 40 | DMG: 45<br>MOV: 2 | RNG: 4
+                </div>
+                <div style="color: #4A729E; font-size: 10px; margin-bottom: 8px; font-style: italic;">
+                    🔮 +1 Mana/turn
+                </div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 400</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-WIZARD" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', 1)" style="padding: 4px 12px;">+</button>
+                </div>
+            </div>
+
+            <!-- Specialist Units (500 points) -->
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">✝️</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Cleric</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
+                    HP: 80 | DMG: 15<br>MOV: 2 | RNG: 4
+                </div>
+                <div style="color: #6B8B5B; font-size: 10px; margin-bottom: 8px; font-style: italic;">
+                    💚 +50% healing
+                </div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 500</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-CLERIC" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', 1)" style="padding: 4px 12px;">+</button>
+                </div>
+            </div>
+            
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">🗡️</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Rogue</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
+                    HP: 55 | DMG: 40<br>MOV: 8 | INIT: 16
+                </div>
+                <div style="color: #6B5B8B; font-size: 10px; margin-bottom: 8px; font-style: italic;">
+                    👤 Hit & Run
+                </div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 500</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-ROGUE" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', 1)" style="padding: 4px 12px;">+</button>
+                </div>
+            </div>
+
+            <!-- Elite Units (1000 points) -->
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">🛡️</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Paladin</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
+                    HP: 150 | DMG: 50<br>MOV: 4 | INIT: 9
+                </div>
+                <div style="color: #8B7355; font-size: 10px; margin-bottom: 8px; font-style: italic;">
+                    🛡️ -50% ranged, +50% heal
+                </div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 1000</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-PALADIN" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', 1)" style="padding: 4px 12px;">+</button>
+                </div>
+            </div>
+            
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">🎯</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Ranger</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
+                    HP: 70 | DMG: 50<br>MOV: 2 | RNG: 10
+                </div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 1000</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-RANGER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', 1)" style="padding: 4px 12px;">+</button>
+                </div>
+            </div>
+            
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">🪓</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Berserker</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
+                    HP: 90 | DMG: 50<br>MOV: 4 | INIT: 11
+                </div>
+                <div style="color: #9E5B4A; font-size: 10px; margin-bottom: 8px; font-style: italic;">
+                    ⚔️ Double strike, Reckless
+                </div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 1000</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-BERSERKER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', 1)" style="padding: 4px 12px;">+</button>
+                </div>
+            </div>
+            
+            <div class="spell-card" style="min-width: 140px; max-width: 180px;">
+                <div style="font-size: 36px; margin-bottom: 8px;">🔮</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Sorcerer</div>
+                <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
+                    HP: 50 | DMG: 55<br>MOV: 2 | RNG: 4
+                </div>
+                <div style="color: #6B5B8B; font-size: 10px; margin-bottom: 8px; font-style: italic;">
+                    ✨ +50% spell dmg
+                </div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 1000</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', -1)" style="padding: 4px 12px;">-</button>
+                    <span id="count-SORCERER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', 1)" style="padding: 4px 12px;">+</button>
                 </div>
             </div>
         </div>
