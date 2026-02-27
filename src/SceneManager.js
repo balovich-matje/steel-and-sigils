@@ -103,6 +103,12 @@ export class BattleScene extends Phaser.Scene {
                     if (unitData.statModifiers.rangedRange) unit.rangedRange = unitData.statModifiers.rangedRange;
                     unit.updateHealthBar();
                 }
+                
+                // Restore Bloodlust stacks for Berserker
+                if (unitData.bloodlustStacks && unit.type === 'BERSERKER') {
+                    unit.bloodlustStacks = unitData.bloodlustStacks;
+                    unit.damage += unitData.bloodlustStacks * 15;
+                }
             }
         }
         
@@ -745,7 +751,8 @@ export class BattleScene extends Phaser.Scene {
             type: u.type,
             x: u.gridX,
             y: u.gridY,
-            statModifiers: u.statModifiers || null
+            statModifiers: u.statModifiers || null,
+            bloodlustStacks: u.bloodlustStacks || 0
         }));
         
         const nextBattleNumber = this.battleNumber + 1;
@@ -757,19 +764,12 @@ export class BattleScene extends Phaser.Scene {
         });
     }
 
-    skipTurn() {
+    endTurn() {
         if (this.turnSystem.currentUnit && this.turnSystem.currentUnit.isPlayer) {
+            // Mark unit as done for this turn
             this.turnSystem.currentUnit.hasMoved = true;
             this.turnSystem.currentUnit.hasAttacked = true;
             
-            this.gridSystem.clearHighlights();
-            this.cancelSpell();
-            this.turnSystem.nextTurn();
-        }
-    }
-
-    endTurn() {
-        if (this.turnSystem.currentUnit && this.turnSystem.currentUnit.isPlayer) {
             this.gridSystem.clearHighlights();
             this.cancelSpell();
             this.turnSystem.nextTurn();

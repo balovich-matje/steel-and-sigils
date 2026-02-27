@@ -43,6 +43,9 @@ export class Unit {
         
         // Permanent stat modifiers from rewards
         this.statModifiers = null;
+        
+        // Berserker Bloodlust stacks (permanent damage increase from kills)
+        this.bloodlustStacks = 0;
     }
 
     canMove() {
@@ -101,6 +104,7 @@ export class Unit {
         // Bloodlust: If killed by Berserker, they get +15 permanent damage
         if (this.killedBy && this.killedBy.type === 'BERSERKER' && !this.killedBy.isDead) {
             this.killedBy.damage += 15;
+            this.killedBy.bloodlustStacks += 1;
             if (scene && scene.uiManager) {
                 scene.uiManager.showBuffText(this.killedBy, 'BLOODLUST!', '#9E4A4A');
                 scene.uiManager.showFloatingText('+15 DMG', this.killedBy.sprite.x, this.killedBy.sprite.y - 80, '#9E4A4A');
