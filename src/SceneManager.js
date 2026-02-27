@@ -121,6 +121,12 @@ export class BattleScene extends Phaser.Scene {
                     unit.damage += unitData.bloodlustStacks * 15;
                 }
                 
+                // Restore current health (if saved)
+                if (unitData.health !== undefined) {
+                    unit.health = Math.min(unitData.health, unit.maxHealth);
+                    unit.updateHealthBar();
+                }
+                
                 // Restore active buffs
                 if (unitData.buffs) {
                     if (unitData.buffs.hasteRounds) {
@@ -806,7 +812,9 @@ export class BattleScene extends Phaser.Scene {
             buffContainer.appendChild(card);
         });
 
-        const magicOptions = [
+        // Filter out buffs that are already owned (unique buffs)
+        const ownedBuffTypes = new Set(this.magicBuffs.map(b => b.type));
+        const allMagicOptions = [
             { id: 'mana_max', name: 'Expanded Mana Pool', icon: '💧', desc: '+30 Max Mana', 
                 buffType: 'maxMana', buffValue: 30,
                 effect: () => { this.maxMana += 30; this.mana = this.maxMana; this.uiManager.updateManaDisplay(); } 
@@ -833,13 +841,23 @@ export class BattleScene extends Phaser.Scene {
             },
             { id: 'permanent_buffs', name: 'Eternal Magic', icon: '♾️', desc: 'Spell buffs no longer expire', 
                 buffType: 'permanentBuffs', buffValue: 1,
-                effect: () => { this.permanentBuffs = true; } 
+                effect: () => { this.permanentBuffs = true; },
+                unique: true
             },
             { id: 'army_buffs', name: 'Mass Enchantment', icon: '🌟', desc: 'Spells target whole army', 
                 buffType: 'armyBuffs', buffValue: 1,
-                effect: () => { this.armyBuffs = true; } 
+                effect: () => { this.armyBuffs = true; },
+                unique: true
             }
-        ].sort(() => 0.5 - Math.random()).slice(0, 3);
+        ];
+        
+        // Filter out unique buffs that are already owned
+        const availableOptions = allMagicOptions.filter(opt => {
+            if (opt.unique && ownedBuffTypes.has(opt.buffType)) return false;
+            return true;
+        });
+        
+        const magicOptions = availableOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
 
         const magicContainer = document.getElementById('reward-magic');
         magicContainer.innerHTML = '';
@@ -1198,6 +1216,7 @@ export class BattleScene extends Phaser.Scene {
             type: u.type,
             x: u.gridX,
             y: u.gridY,
+            health: u.health, // Save current health
             statModifiers: u.statModifiers || null,
             bloodlustStacks: u.bloodlustStacks || 0,
             // Persist active buffs
