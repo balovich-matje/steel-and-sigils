@@ -910,9 +910,9 @@ export class BattleScene extends Phaser.Scene {
             const isLegendary = buff.id === 'legendary';
             const card = this.uiManager.createRewardCard('buff', buff.id, `
                 <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
-                <div style="color: ${isLegendary ? '#ff8c00' : '#6B8B5B'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : ''}">${buff.name}</div>
+                <div style="color: ${isLegendary ? '#ff8c00' : '#6B8B5B'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${buff.name}</div>
                 <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
-                ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">⚡ Legendary</div>' : ''}
+                ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">⚡ Legendary</div>' : ''}
             `, buff, isLegendary);
             
             card.onclick = () => {
@@ -1010,13 +1010,13 @@ export class BattleScene extends Phaser.Scene {
                 const isLegendary = legendaryUnits.includes(unitType);
                 const card = this.uiManager.createRewardCard('unit', unitType, `
                     <div style="font-size: 40px; margin-bottom: 5px;">${template.emoji}</div>
-                    <div style="color: ${isLegendary ? '#ff8c00' : '#A68966'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : ''}">${template.name}</div>
+                    <div style="color: ${isLegendary ? '#ff8c00' : '#A68966'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${template.name}</div>
                     <div style="font-size: 12px; color: #B8A896;">
                         HP: ${template.health} | DMG: ${template.damage}<br>
                         MOV: ${template.moveRange}${template.rangedRange ? ` | RNG: ${template.rangedRange}` : ''}<br>
                         INIT: ${template.initiative}
                     </div>
-                    ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">⚡ Legendary Class</div>' : ''}
+                    ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">⚡ Legendary Class</div>' : ''}
                 `, null, isLegendary);
                 unitContainer.appendChild(card);
             });
@@ -1187,9 +1187,9 @@ export class BattleScene extends Phaser.Scene {
             const isLegendary = legendaryMagicBuffs.includes(magic.id);
             const card = this.uiManager.createRewardCard('magic', magic.id, `
                 <div style="font-size: 32px; margin-bottom: 5px;">${magic.icon}</div>
-                <div style="color: ${isLegendary ? '#ff8c00' : '#6B7A9A'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : ''}">${magic.name}</div>
+                <div style="color: ${isLegendary ? '#ff8c00' : '#6B7A9A'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${magic.name}</div>
                 <div style="font-size: 12px; color: #B8A896;">${magic.desc}</div>
-                ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">✨ Legendary Enhancement</div>' : ''}
+                ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">✨ Legendary Enhancement</div>' : ''}
             `, magic, isLegendary);
             magicContainer.appendChild(card);
         });
