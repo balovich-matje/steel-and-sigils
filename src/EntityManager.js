@@ -364,6 +364,8 @@ export class TurnSystem {
             this.scene.time.delayedCall(500, () => this.executeAITurn());
         } else {
             this.scene.selectUnit(this.currentUnit);
+            // Re-enable spellbook button for player's turn
+            this.scene.spellSystem.resetSpellButton();
         }
     }
 
@@ -371,6 +373,8 @@ export class TurnSystem {
         this.roundNumber++;
         this.scene.regenerateMana();
         this.scene.spellsCastThisRound = 0;
+        // Reset spell button at start of new round
+        this.scene.spellSystem.resetSpellButton();
         this.updateQueue();
         this.nextTurn();
     }
@@ -476,9 +480,35 @@ export class TurnSystem {
             turnText.style.color = this.currentUnit.isPlayer ? '#4a7cd9' : '#d94a4a';
         }
         
+        // Update initiative bar (show up to 8 units)
+        this.updateInitiativeBar();
+        
         // Auto-highlight ranged targets if applicable
         if (this.currentUnit && this.currentUnit.isPlayer && this.currentUnit.rangedRange > 0 && this.currentUnit.canAttack()) {
             this.scene.gridSystem.highlightRangedAttackRange(this.currentUnit);
         }
+    }
+
+    updateInitiativeBar() {
+        const queueEl = document.getElementById('initiative-queue');
+        if (!queueEl) return;
+        
+        // Build queue: current unit + next up to 7 units
+        const displayQueue = [this.currentUnit, ...this.turnQueue.slice(0, 7)];
+        
+        let html = '';
+        displayQueue.forEach((unit, index) => {
+            if (!unit || unit.isDead) return;
+            const isActive = index === 0;
+            const activeClass = isActive ? 'active' : '';
+            html += `
+                <div class="initiative-unit ${activeClass}">
+                    <div class="unit-emoji">${unit.emoji}</div>
+                    <div class="unit-init">${unit.initiative}</div>
+                </div>
+            `;
+        });
+        
+        queueEl.innerHTML = html;
     }
 }

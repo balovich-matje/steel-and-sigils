@@ -35,6 +35,75 @@ h1 {
     letter-spacing: 1px;
 }
 
+/* Initiative Bar (HOMM5 style) */
+#initiative-bar {
+    background: #2D241E;
+    border: 2px solid #A68966;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+}
+
+#initiative-bar .initiative-label {
+    color: #A68966;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    padding: 5px 0;
+    border-right: 1px solid #5D4E3E;
+    padding-right: 8px;
+}
+
+#initiative-queue {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.initiative-unit {
+    width: 50px;
+    height: 60px;
+    background: #1A1C1E;
+    border: 2px solid #5D4E3E;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.initiative-unit.active {
+    border-color: #A68966;
+    background: #3D342E;
+    box-shadow: 0 0 10px rgba(166, 137, 102, 0.4);
+    transform: scale(1.05);
+}
+
+.initiative-unit .unit-emoji {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.initiative-unit .unit-init {
+    font-size: 11px;
+    color: #B8A896;
+    margin-top: 2px;
+}
+
+.initiative-unit.active .unit-init {
+    color: #A68966;
+    font-weight: bold;
+}
+
 #game-container {
     border: 3px solid #2D241E;
     border-radius: 4px;

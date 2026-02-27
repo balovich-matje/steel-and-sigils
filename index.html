@@ -11,6 +11,13 @@
 </head>
 <body>
     <h1>⚔️ Rogues of Might and Magic 🛡️</h1>
+    
+    <!-- Initiative Bar (HOMM5 style) -->
+    <div id="initiative-bar">
+        <div class="initiative-label">Turn Order</div>
+        <div id="initiative-queue"></div>
+    </div>
+    
     <div id="game-container"></div>
     
     <!-- Placement Bar (shown during placement phase, above UI panel) -->
@@ -37,7 +44,7 @@
         <div class="action-divider"></div>
         <div class="action-section">
             <strong style="color: #A68966;">Hero:</strong>
-            <button class="spell-button" onclick="gameScene.openSpellBook()">
+            <button id="spellbook-btn" class="spell-button" onclick="gameScene.openSpellBook()">
                 📖 Spell Book
             </button>
         </div>

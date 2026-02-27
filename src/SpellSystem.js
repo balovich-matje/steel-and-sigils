@@ -326,6 +326,24 @@ export class SpellSystem {
         this.activeSpell = null;
         this.teleportUnit = null;
         document.body.style.cursor = 'default';
+        
+        // Disable spellbook button after casting (until next turn)
+        const spellbookBtn = document.getElementById('spellbook-btn');
+        if (spellbookBtn) {
+            spellbookBtn.disabled = true;
+            spellbookBtn.style.opacity = '0.5';
+            spellbookBtn.style.cursor = 'not-allowed';
+        }
+    }
+    
+    resetSpellButton() {
+        // Re-enable spellbook button at start of new turn
+        const spellbookBtn = document.getElementById('spellbook-btn');
+        if (spellbookBtn) {
+            spellbookBtn.disabled = false;
+            spellbookBtn.style.opacity = '1';
+            spellbookBtn.style.cursor = 'pointer';
+        }
     }
 
     // Visual Effects
