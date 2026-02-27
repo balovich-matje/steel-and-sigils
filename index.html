@@ -154,7 +154,7 @@
                 </div>
             </div>
 
-            <!-- Elite Units (1000 points) -->
+            <!-- Elite Units (800 points) -->
             <div class="spell-card" style="min-width: 140px; max-width: 180px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">🛡️</div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Paladin</div>
@@ -164,7 +164,7 @@
                 <div style="color: #8B7355; font-size: 10px; margin-bottom: 8px; font-style: italic;">
                     🛡️ -50% ranged, +50% heal
                 </div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 1000</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 800</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', -1)" style="padding: 4px 12px;">-</button>
                     <span id="count-PALADIN" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
@@ -178,7 +178,7 @@
                 <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 70 | DMG: 50<br>MOV: 2 | RNG: 10
                 </div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 1000</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 800</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', -1)" style="padding: 4px 12px;">-</button>
                     <span id="count-RANGER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
@@ -193,9 +193,9 @@
                     HP: 90 | DMG: 50<br>MOV: 4 | INIT: 11
                 </div>
                 <div style="color: #9E5B4A; font-size: 10px; margin-bottom: 8px; font-style: italic;">
-                    ⚔️ Double strike, Reckless
+                    ⚔️ Reckless, Bloodlust
                 </div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 1000</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 800</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', -1)" style="padding: 4px 12px;">-</button>
                     <span id="count-BERSERKER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
@@ -212,7 +212,7 @@
                 <div style="color: #6B5B8B; font-size: 10px; margin-bottom: 8px; font-style: italic;">
                     ✨ +50% spell dmg
                 </div>
-                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 1000</div>
+                <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 800</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', -1)" style="padding: 4px 12px;">-</button>
                     <span id="count-SORCERER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
@@ -229,9 +229,9 @@
     <!-- Victory Screen -->
     <div id="victory-screen" class="victory-screen hidden">
         <h2 id="victory-text">🎉 Victory! 🎉</h2>
-        <p style="color: #E3D5B8; margin-bottom: 20px; font-size: 18px;">Choose your rewards for the next battle:</p>
+        <p id="victory-subtitle" style="color: #E3D5B8; margin-bottom: 20px; font-size: 18px;">Choose your rewards for the next battle:</p>
         
-        <div style="display: flex; flex-direction: column; gap: 20px; align-items: center; max-width: 1200px; width: 100%;">
+        <div id="rewards-container" style="display: flex; flex-direction: column; gap: 20px; align-items: center; max-width: 1200px; width: 100%;">
             <div style="width: 100%;">
                 <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;">⚔️ Recruit a New Unit</h3>
                 <div id="reward-units" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
@@ -246,6 +246,12 @@
                 <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 10px;">🧙 Spell or Mana Enhancement</h3>
                 <div id="reward-magic" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
             </div>
+        </div>
+        
+        <div id="defeat-message" style="display: none; text-align: center; padding: 30px;">
+            <p style="color: #B8A896; font-size: 18px; margin-bottom: 20px;">Your army has fallen...</p>
+            <p style="color: #8B7355; font-size: 14px; margin-bottom: 30px; font-style: italic;">Better luck next time, commander.</p>
+            <button class="spell-button" onclick="location.reload()" style="font-size: 16px; padding: 12px 30px;">⚔️ Try Again</button>
         </div>
         
         <button id="confirm-rewards" class="spellbook-close" style="margin-top: 30px;" onclick="gameScene.confirmRewards()" disabled>

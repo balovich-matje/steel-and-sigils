@@ -64,7 +64,7 @@ const UNIT_TYPES = {
         moveRange: 4,
         initiative: 9,
         isPlayer: true,
-        cost: 1000,
+        cost: 800,
         passive: {
             name: 'Divine Protection',
             description: '-50% ranged damage taken, +50% healing received',
@@ -83,7 +83,7 @@ const UNIT_TYPES = {
         rangedRange: 10,
         initiative: 13,
         isPlayer: true,
-        cost: 1000,
+        cost: 800,
         passive: {
             name: 'Eagle Eye',
             description: '10 tile range'
@@ -99,11 +99,7 @@ const UNIT_TYPES = {
         moveRange: 4,
         initiative: 11,
         isPlayer: true,
-        cost: 1000,
-        passive: {
-            name: 'Fury',
-            description: 'Strikes 2 times per attack'
-        },
+        cost: 800,
         passives: [
             {
                 name: 'Reckless',
@@ -159,7 +155,7 @@ const UNIT_TYPES = {
         rangedRange: 4,
         initiative: 14,
         isPlayer: true,
-        cost: 1000,
+        cost: 800,
         passive: {
             name: 'Arcane Mastery',
             description: '+50% spell damage'

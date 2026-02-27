@@ -230,9 +230,12 @@ h1 {
     background: rgba(26, 28, 30, 0.97);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     z-index: 1000;
+    overflow-y: auto;
+    padding: 40px 20px;
+    box-sizing: border-box;
 }
 
 .victory-screen h2 {

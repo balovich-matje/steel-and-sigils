@@ -57,8 +57,8 @@ export class Unit {
     }
 
     takeDamage(amount, isRanged = false, attacker = null) {
-        // Apply shield if active
-        if (this.shieldRounds > 0) {
+        // Apply shield if active (including permanent with rounds = -1)
+        if (this.shieldRounds > 0 || this.shieldRounds === -1) {
             amount = Math.floor(amount * (1 - this.shieldValue));
         }
         
@@ -169,16 +169,18 @@ export class Unit {
             this.turnStartY = this.gridY;
         }
         
-        // Handle regenerate healing at start of turn
-        if (this.regenerateRounds > 0) {
+        // Handle regenerate healing at start of turn (permanent buffs have rounds = -1)
+        if (this.regenerateRounds > 0 || this.regenerateRounds === -1) {
             this.heal(this.regenerateAmount);
-            this.regenerateRounds--;
-            if (this.regenerateRounds === 0) {
-                this.regenerateAmount = 0;
+            if (this.regenerateRounds > 0) {
+                this.regenerateRounds--;
+                if (this.regenerateRounds === 0) {
+                    this.regenerateAmount = 0;
+                }
             }
         }
         
-        // Decrement buff durations
+        // Decrement buff durations (skip if permanent with rounds = -1)
         if (this.hasteRounds > 0) {
             this.hasteRounds--;
             if (this.hasteRounds === 0) {
@@ -213,9 +215,13 @@ export class Unit {
         
         let buffs = [];
         if (this.hasteRounds > 0) buffs.push(`Haste(${this.hasteRounds})`);
+        else if (this.hasteRounds === -1) buffs.push(`Haste(∞)`);
         if (this.shieldRounds > 0) buffs.push(`Shield(${this.shieldRounds})`);
+        else if (this.shieldRounds === -1) buffs.push(`Shield(∞)`);
         if (this.blessRounds > 0) buffs.push(`Bless(${this.blessRounds})`);
+        else if (this.blessRounds === -1) buffs.push(`Bless(∞)`);
         if (this.regenerateRounds > 0) buffs.push(`Regen(${this.regenerateRounds})`);
+        else if (this.regenerateRounds === -1) buffs.push(`Regen(∞)`);
         if (this.iceSlowRounds > 0) buffs.push(`Slow(${this.iceSlowRounds})`);
         
         const buffDisplay = buffs.length > 0 ? `<br>✨ ${buffs.join(', ')}` : '';

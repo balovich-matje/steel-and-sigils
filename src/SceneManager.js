@@ -23,6 +23,8 @@ export class BattleScene extends Phaser.Scene {
         this.spellPowerMultiplier = 1;
         this.spellsPerRound = 1;
         this.spellsCastThisRound = 0;
+        this.permanentBuffs = false;
+        this.armyBuffs = false;
         this.battleNumber = 1;
         this.victoryShown = false;
         this.magicBuffs = [];
@@ -74,6 +76,8 @@ export class BattleScene extends Phaser.Scene {
                 if (buff.type === 'spellPower') this.spellPowerMultiplier += buff.value;
                 if (buff.type === 'spellsPerRound') this.spellsPerRound += buff.value;
                 if (buff.type === 'maxMana') this.maxMana += buff.value;
+                if (buff.type === 'permanentBuffs') this.permanentBuffs = true;
+                if (buff.type === 'armyBuffs') this.armyBuffs = true;
             }
         }
         
@@ -101,6 +105,13 @@ export class BattleScene extends Phaser.Scene {
                     if (unitData.statModifiers.moveRange) unit.moveRange += unitData.statModifiers.moveRange;
                     if (unitData.statModifiers.initiative) unit.initiative += unitData.statModifiers.initiative;
                     if (unitData.statModifiers.rangedRange) unit.rangedRange = unitData.statModifiers.rangedRange;
+                    
+                    // Restore legendary buffs
+                    if (unitData.statModifiers.hasDoubleStrike) unit.hasDoubleStrike = true;
+                    if (unitData.statModifiers.hasCleave) unit.hasCleave = true;
+                    if (unitData.statModifiers.hasRicochet) unit.hasRicochet = true;
+                    if (unitData.statModifiers.hasPiercing) unit.hasPiercing = true;
+                    
                     unit.updateHealthBar();
                 }
                 
@@ -283,26 +294,31 @@ export class BattleScene extends Phaser.Scene {
             yoyo: true,
             onComplete: () => {
                 const damage = Math.floor(attacker.damage * attacker.blessValue);
-                defender.takeDamage(damage, false, attacker);
+                
+                // Paladin Cleave: 3x3 area damage
+                if (attacker.hasCleave) {
+                    this.performCleaveAttack(attacker, defender, damage);
+                } else {
+                    defender.takeDamage(damage, false, attacker);
+                    this.uiManager.showDamageText(defender, damage);
+                    
+                    this.tweens.add({
+                        targets: defender.sprite,
+                        alpha: 0.3,
+                        duration: 50,
+                        yoyo: true,
+                        repeat: 2
+                    });
+                }
                 
                 if (this.selectedUnit === defender) {
                     this.uiManager.updateUnitInfo(defender);
                 }
-                
-                this.uiManager.showDamageText(defender, damage);
 
-                this.tweens.add({
-                    targets: defender.sprite,
-                    alpha: 0.3,
-                    duration: 50,
-                    yoyo: true,
-                    repeat: 2
-                });
-
-                // Berserker: Strike twice
-                if (attacker.type === 'BERSERKER' && !isSecondStrike && defender.health > 0) {
+                // Berserker Legendary: Double Strike
+                if (attacker.hasDoubleStrike && !isSecondStrike && defender.health > 0) {
                     this.time.delayedCall(300, () => {
-                        this.uiManager.showBuffText(attacker, 'FURY!', '#ff0000');
+                        this.uiManager.showBuffText(attacker, 'FRENZY!', '#9E4A4A');
                         this.performAttack(attacker, defender, true);
                     });
                 }
@@ -326,51 +342,207 @@ export class BattleScene extends Phaser.Scene {
         }
     }
 
+    performCleaveAttack(attacker, mainTarget, fullDamage) {
+        // Deal full damage to main target
+        mainTarget.takeDamage(fullDamage, false, attacker);
+        this.uiManager.showDamageText(mainTarget, fullDamage);
+        this.uiManager.showBuffText(attacker, 'CLEAVE!', '#D4A574');
+        
+        this.tweens.add({
+            targets: mainTarget.sprite,
+            alpha: 0.3,
+            duration: 50,
+            yoyo: true,
+            repeat: 2
+        });
+
+        // Deal 50% damage to adjacent units in 3x3 area
+        const cleaveDamage = Math.floor(fullDamage * 0.5);
+        const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead);
+        
+        enemyUnits.forEach(enemy => {
+            if (enemy === mainTarget) return;
+            const dist = Math.abs(enemy.gridX - mainTarget.gridX) + Math.abs(enemy.gridY - mainTarget.gridY);
+            if (dist <= 1) { // Adjacent in 3x3 area (including diagonals)
+                enemy.takeDamage(cleaveDamage, false, attacker);
+                this.uiManager.showDamageText(enemy, cleaveDamage);
+                this.tweens.add({
+                    targets: enemy.sprite,
+                    alpha: 0.3,
+                    duration: 50,
+                    yoyo: true,
+                    repeat: 1
+                });
+            }
+        });
+    }
+
     performRangedAttack(attacker, defender) {
         if (!attacker.canAttack()) return;
 
         attacker.hasAttacked = true;
         document.body.style.cursor = 'default';
 
-        // Create arrow projectile
-        const arrow = this.add.text(
+        // Create arrow/projectile
+        const isWizard = attacker.type === 'WIZARD';
+        const projectile = this.add.text(
             attacker.sprite.x, attacker.sprite.y - 20,
-            '➤',
-            { fontSize: '24px', color: '#8b4513' }
+            isWizard ? '✦' : '➤',
+            { fontSize: isWizard ? '28px' : '24px', color: isWizard ? '#6B7A9A' : '#8b4513' }
         ).setOrigin(0.5);
         
         const angle = Phaser.Math.Angle.Between(
             attacker.sprite.x, attacker.sprite.y,
             defender.sprite.x, defender.sprite.y
         );
-        arrow.setRotation(angle);
+        projectile.setRotation(angle);
 
         this.tweens.add({
-            targets: arrow,
+            targets: projectile,
             x: defender.sprite.x,
             y: defender.sprite.y,
-            duration: 300,
+            duration: isWizard ? 200 : 300,
             ease: 'Power2',
             onComplete: () => {
-                arrow.destroy();
+                projectile.destroy();
                 
-                const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
-                defender.takeDamage(damage, true, attacker);
-                this.uiManager.showDamageText(defender, damage);
+                // Wizard Piercing: Shot goes through all enemies in line
+                if (attacker.hasPiercing) {
+                    this.performPiercingAttack(attacker, defender);
+                }
+                // Ranger Ricochet: Bounce to nearby targets
+                else if (attacker.hasRicochet) {
+                    this.performRicochetAttack(attacker, defender);
+                }
+                else {
+                    const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
+                    defender.takeDamage(damage, true, attacker);
+                    this.uiManager.showDamageText(defender, damage);
 
-                this.tweens.add({
-                    targets: defender.sprite,
-                    alpha: 0.3,
-                    duration: 50,
-                    yoyo: true,
-                    repeat: 2
-                });
+                    this.tweens.add({
+                        targets: defender.sprite,
+                        alpha: 0.3,
+                        duration: 50,
+                        yoyo: true,
+                        repeat: 2
+                    });
+                }
 
                 this.checkVictoryCondition();
             }
         });
 
         this.gridSystem.clearHighlights();
+    }
+
+    performRicochetAttack(attacker, mainTarget) {
+        const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
+        
+        // Hit main target
+        mainTarget.takeDamage(damage, true, attacker);
+        this.uiManager.showDamageText(mainTarget, damage);
+        this.uiManager.showBuffText(attacker, 'RICOCHET!', '#6B8B5B');
+
+        this.tweens.add({
+            targets: mainTarget.sprite,
+            alpha: 0.3,
+            duration: 50,
+            yoyo: true,
+            repeat: 2
+        });
+
+        // Find nearby enemies within 2 tiles to bounce to
+        const bounceDamage = Math.floor(damage * 0.5);
+        const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead && u !== mainTarget);
+        
+        enemyUnits.forEach((enemy, index) => {
+            const dist = Math.abs(enemy.gridX - mainTarget.gridX) + Math.abs(enemy.gridY - mainTarget.gridY);
+            if (dist <= 2) {
+                this.time.delayedCall(200 * (index + 1), () => {
+                    // Visual bounce arrow
+                    const bounceArrow = this.add.text(
+                        mainTarget.sprite.x, mainTarget.sprite.y - 20,
+                        '➤',
+                        { fontSize: '20px', color: '#8b4513' }
+                    ).setOrigin(0.5);
+                    
+                    const bounceAngle = Phaser.Math.Angle.Between(
+                        mainTarget.sprite.x, mainTarget.sprite.y,
+                        enemy.sprite.x, enemy.sprite.y
+                    );
+                    bounceArrow.setRotation(bounceAngle);
+
+                    this.tweens.add({
+                        targets: bounceArrow,
+                        x: enemy.sprite.x,
+                        y: enemy.sprite.y,
+                        duration: 150,
+                        onComplete: () => {
+                            bounceArrow.destroy();
+                            enemy.takeDamage(bounceDamage, true, attacker);
+                            this.uiManager.showDamageText(enemy, bounceDamage);
+                            this.tweens.add({
+                                targets: enemy.sprite,
+                                alpha: 0.3,
+                                duration: 50,
+                                yoyo: true,
+                                repeat: 1
+                            });
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+    performPiercingAttack(attacker, target) {
+        const baseDamage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
+        
+        // Hit all enemies in a line from attacker through target
+        const dx = target.gridX - attacker.gridX;
+        const dy = target.gridY - attacker.gridY;
+        const stepX = dx === 0 ? 0 : Math.sign(dx);
+        const stepY = dy === 0 ? 0 : Math.sign(dy);
+        
+        this.uiManager.showBuffText(attacker, 'PIERCE!', '#6B7A9A');
+        
+        // Find all enemies in the line of fire
+        const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead);
+        let hitCount = 0;
+        
+        enemyUnits.forEach(enemy => {
+            // Check if enemy is in line with the shot
+            const ex = enemy.gridX - attacker.gridX;
+            const ey = enemy.gridY - attacker.gridY;
+            
+            // Must be in same direction
+            const enemyStepX = ex === 0 ? 0 : Math.sign(ex);
+            const enemyStepY = ey === 0 ? 0 : Math.sign(ey);
+            
+            if (enemyStepX === stepX && enemyStepY === stepY) {
+                // Check if collinear (same ratio)
+                const isCollinear = (stepX === 0 || stepY === 0) ? 
+                    (stepX === 0 ? ex === 0 : ey === 0) :
+                    (Math.abs(ex * stepY - ey * stepX) <= 1);
+                
+                if (isCollinear) {
+                    hitCount++;
+                    const delay = hitCount * 100;
+                    
+                    this.time.delayedCall(delay, () => {
+                        enemy.takeDamage(baseDamage, true, attacker);
+                        this.uiManager.showDamageText(enemy, baseDamage);
+                        this.tweens.add({
+                            targets: enemy.sprite,
+                            alpha: 0.3,
+                            duration: 50,
+                            yoyo: true,
+                            repeat: 2
+                        });
+                    });
+                }
+            }
+        });
     }
 
     // UI Methods
@@ -445,20 +617,14 @@ export class BattleScene extends Phaser.Scene {
             };
             this.generateRewardChoices();
             confirmBtn.style.display = 'block';
+            document.getElementById('rewards-container').style.display = 'flex';
+            document.getElementById('defeat-message').style.display = 'none';
+            document.getElementById('victory-subtitle').style.display = 'block';
         } else {
-            // Defeat - show simple try again screen
-            document.getElementById('reward-units').innerHTML = '';
-            document.getElementById('reward-buffs').innerHTML = '';
-            document.getElementById('reward-magic').innerHTML = '';
-            
-            // Show defeat message with try again button
-            document.getElementById('reward-units').innerHTML = `
-                <div style="text-align: center; padding: 30px;">
-                    <p style="color: #B8A896; font-size: 18px; margin-bottom: 20px;">Your army has fallen...</p>
-                    <p style="color: #8B7355; font-size: 14px; margin-bottom: 30px; font-style: italic;">Better luck next time, commander.</p>
-                    <button class="spell-button" onclick="location.reload()" style="font-size: 16px; padding: 12px 30px;">⚔️ Try Again</button>
-                </div>
-            `;
+            // Defeat - hide rewards, show defeat message
+            document.getElementById('rewards-container').style.display = 'none';
+            document.getElementById('defeat-message').style.display = 'block';
+            document.getElementById('victory-subtitle').style.display = 'none';
             confirmBtn.style.display = 'none';
         }
 
@@ -473,7 +639,7 @@ export class BattleScene extends Phaser.Scene {
         unitContainer.innerHTML = '';
         
         if (canGetNewUnit) {
-            const recruitableUnits = ['PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
+            const recruitableUnits = ['KNIGHT', 'ARCHER', 'WIZARD', 'PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
             const unitOptions = recruitableUnits
                 .sort(() => 0.5 - Math.random())
                 .slice(0, 3);
@@ -502,7 +668,8 @@ export class BattleScene extends Phaser.Scene {
             `;
         }
 
-        const buffOptions = [
+        // Standard buffs pool
+        const standardBuffs = [
             { 
                 id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage', 
                 effect: (unit) => { 
@@ -556,16 +723,43 @@ export class BattleScene extends Phaser.Scene {
                     unit.updateHealthBar();
                 } 
             }
-        ].sort(() => 0.5 - Math.random()).slice(0, 3);
+        ];
+
+        // 50% chance to roll a legendary buff instead of a standard one
+        let buffOptions = [];
+        const legendaryBuff = this.tryGenerateLegendaryBuff();
+        
+        if (legendaryBuff && Math.random() < 0.5) {
+            // Legendary rolled - include it as one of the 3 buffs
+            const shuffledStandard = [...standardBuffs].sort(() => 0.5 - Math.random());
+            buffOptions = [legendaryBuff, ...shuffledStandard.slice(0, 2)];
+        } else {
+            // No legendary - just 3 standard buffs
+            buffOptions = standardBuffs.sort(() => 0.5 - Math.random()).slice(0, 3);
+        }
 
         const buffContainer = document.getElementById('reward-buffs');
         buffContainer.innerHTML = '';
         buffOptions.forEach(buff => {
-            const card = this.uiManager.createRewardCard('buff', buff.id, `
-                <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
-                <div style="color: #6B8B5B; font-weight: bold;">${buff.name}</div>
-                <div style="font-size: 12px; color: #B8A896;">${buff.desc}</div>
-            `, buff);
+            const isLegendary = buff.id.startsWith('legendary_');
+            const card = this.uiManager.createRewardCard(
+                isLegendary ? 'legendary' : 'buff', 
+                buff.id, 
+                `
+                    <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
+                    <div style="color: ${isLegendary ? '#D4A574' : '#6B8B5B'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 10px rgba(212, 165, 116, 0.5);' : ''}">${buff.name}</div>
+                    ${isLegendary ? '<div style="font-size: 11px; color: #A68966; margin-top: 2px;">Legendary Power</div>' : ''}
+                    <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
+                `, 
+                buff
+            );
+            
+            // Add legendary styling
+            if (isLegendary) {
+                card.style.border = '2px solid #8B6914';
+                card.style.background = 'linear-gradient(135deg, #2D241E 0%, #3D3028 100%)';
+            }
+            
             buffContainer.appendChild(card);
         });
 
@@ -593,6 +787,14 @@ export class BattleScene extends Phaser.Scene {
             { id: 'double_cast', name: 'Twin Cast', icon: '🔄', desc: 'Cast 2 spells per round', 
                 buffType: 'spellsPerRound', buffValue: 1,
                 effect: () => { this.spellsPerRound = (this.spellsPerRound || 1) + 1; } 
+            },
+            { id: 'permanent_buffs', name: 'Eternal Magic', icon: '♾️', desc: 'Spell buffs no longer expire', 
+                buffType: 'permanentBuffs', buffValue: 1,
+                effect: () => { this.permanentBuffs = true; } 
+            },
+            { id: 'army_buffs', name: 'Mass Enchantment', icon: '🌟', desc: 'Spells target whole army', 
+                buffType: 'armyBuffs', buffValue: 1,
+                effect: () => { this.armyBuffs = true; } 
             }
         ].sort(() => 0.5 - Math.random()).slice(0, 3);
 
@@ -610,9 +812,100 @@ export class BattleScene extends Phaser.Scene {
         this.updateConfirmButton();
     }
 
+    // Try to generate a legendary buff (50% chance when called)
+    tryGenerateLegendaryBuff() {
+        const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
+        const availableLegendaryBuffs = [];
+
+        // Helper to check if any unit of a type already has the buff
+        const hasBuff = (unitType, buffProperty) => {
+            return playerUnits.some(u => u.type === unitType && u[buffProperty]);
+        };
+
+        // Check for eligible legendary buffs based on player units
+        // Filter out buffs that units already have
+        if (playerUnits.some(u => u.type === 'BERSERKER') && !hasBuff('BERSERKER', 'hasDoubleStrike')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_frenzy',
+                name: 'Blood Frenzy',
+                icon: '🩸',
+                desc: 'Berserker: Strikes 2 times per attack',
+                unitType: 'BERSERKER',
+                effect: (unit) => { 
+                    unit.hasDoubleStrike = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasDoubleStrike = true;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'PALADIN') && !hasBuff('PALADIN', 'hasCleave')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_cleave',
+                name: 'Divine Wrath',
+                icon: '⚡',
+                desc: 'Paladin: 3x3 cleave attack, +40 damage',
+                unitType: 'PALADIN',
+                effect: (unit) => { 
+                    unit.hasCleave = true;
+                    unit.damage += 40;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasCleave = true;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 40;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'RANGER') && !hasBuff('RANGER', 'hasRicochet')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_ricochet',
+                name: 'Ricochet Shot',
+                icon: '🏹',
+                desc: 'Ranger: Arrows bounce to nearby targets (2 range, 50% dmg), +40 damage',
+                unitType: 'RANGER',
+                effect: (unit) => { 
+                    unit.hasRicochet = true;
+                    unit.damage += 40;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasRicochet = true;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 40;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'WIZARD') && !hasBuff('WIZARD', 'hasPiercing')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_piercing',
+                name: 'Arcane Pierce',
+                icon: '🔮',
+                desc: 'Wizard: 20 range, shots pierce through enemies',
+                unitType: 'WIZARD',
+                effect: (unit) => { 
+                    unit.hasPiercing = true;
+                    unit.rangedRange = 20;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasPiercing = true;
+                    unit.statModifiers.rangedRange = 20;
+                }
+            });
+        }
+
+        if (availableLegendaryBuffs.length === 0) {
+            return null;
+        }
+
+        // Return a random legendary buff
+        return availableLegendaryBuffs[Math.floor(Math.random() * availableLegendaryBuffs.length)];
+    }
+
     selectReward(category, id, cardElement, effectData) {
         if (category === 'buff') {
             this.showBuffTargetSelection(id, cardElement, effectData);
+            return;
+        }
+        
+        if (category === 'legendary') {
+            this.showLegendaryTargetSelection(id, cardElement, effectData);
             return;
         }
         
@@ -629,6 +922,19 @@ export class BattleScene extends Phaser.Scene {
         
         this.selectedRewards[category] = { id, effectData };
         this.updateConfirmButton();
+    }
+
+    clearBuffSelection() {
+        const buffContainer = document.getElementById('reward-buffs');
+        if (buffContainer) {
+            buffContainer.querySelectorAll('.reward-card').forEach(c => {
+                c.style.borderColor = '#555';
+                c.style.transform = 'scale(1)';
+                c.style.boxShadow = 'none';
+            });
+        }
+        this.selectedRewards.buff = null;
+        this.selectedRewards.legendary = null;
     }
 
     showBuffTargetSelection(buffId, buffCard, buffData) {
@@ -666,18 +972,78 @@ export class BattleScene extends Phaser.Scene {
             card.onclick = () => {
                 modal.remove();
                 
-                const buffContainer = document.getElementById('reward-buffs');
-                buffContainer.querySelectorAll('.reward-card').forEach(c => {
-                    c.style.borderColor = '#555';
-                    c.style.transform = 'scale(1)';
-                    c.style.boxShadow = 'none';
-                });
+                // Clear any existing buff/legendary selection
+                this.clearBuffSelection();
                 
                 buffCard.style.borderColor = '#A68966';
                 buffCard.style.transform = 'scale(1.05)';
                 buffCard.style.boxShadow = '0 0 20px rgba(255,215,0,0.3)';
                 
                 this.selectedRewards.buff = { id: buffId, effectData: buffData, targetUnit: unit };
+                this.updateConfirmButton();
+            };
+            grid.appendChild(card);
+        });
+    }
+
+    showLegendaryTargetSelection(buffId, buffCard, buffData) {
+        // Filter by unit type AND exclude units that already have this buff
+        const buffPropertyMap = {
+            'BERSERKER': 'hasDoubleStrike',
+            'PALADIN': 'hasCleave',
+            'RANGER': 'hasRicochet',
+            'WIZARD': 'hasPiercing'
+        };
+        const buffProperty = buffPropertyMap[buffData.unitType];
+        
+        const playerUnits = this.unitManager.getPlayerUnits().filter(u => {
+            if (u.type !== buffData.unitType) return false;
+            if (buffProperty && u[buffProperty]) return false; // Already has buff
+            return true;
+        });
+        
+        if (playerUnits.length === 0) return;
+        
+        const modal = document.createElement('div');
+        modal.id = 'legendary-target-modal';
+        modal.className = 'spellbook-modal';
+        modal.style.cssText = 'display: flex; z-index: 2000;';
+        modal.innerHTML = `
+            <div class="spellbook-content" style="max-width: 500px;">
+                <div class="spellbook-header">
+                    <h2 style="color: #D4A574;">⚡ Select Legendary Champion</h2>
+                    <p style="color: #D4A574; text-shadow: 0 0 10px rgba(212, 165, 116, 0.5);">${buffData.icon} ${buffData.name}</p>
+                    <p style="color: #8B7355; font-size: 12px;">${buffData.desc}</p>
+                </div>
+                <div class="spell-grid" id="legendary-target-grid"></div>
+                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">Cancel</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const grid = document.getElementById('legendary-target-grid');
+        playerUnits.forEach(unit => {
+            const card = document.createElement('div');
+            card.className = 'spell-card';
+            card.style.border = '2px solid #8B6914';
+            card.innerHTML = `
+                <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
+                <div style="color: #D4A574; font-weight: bold;">${unit.name}</div>
+                <div style="font-size: 11px; color: #B8A896;">HP: ${unit.health}/${unit.maxHealth}</div>
+            `;
+            
+            card.onclick = () => {
+                modal.remove();
+                
+                // Clear any existing buff/legendary selection
+                this.clearBuffSelection();
+                
+                buffCard.style.borderColor = '#D4A574';
+                buffCard.style.transform = 'scale(1.05)';
+                buffCard.style.boxShadow = '0 0 30px rgba(212, 165, 116, 0.5)';
+                
+                this.selectedRewards.legendary = { id: buffId, effectData: buffData, targetUnit: unit };
                 this.updateConfirmButton();
             };
             grid.appendChild(card);
@@ -692,7 +1058,8 @@ export class BattleScene extends Phaser.Scene {
         if (canGetNewUnit) required = 3;
         
         let selected = 0;
-        if (this.selectedRewards.buff) selected++;
+        // Buff or legendary counts as the buff slot
+        if (this.selectedRewards.buff || this.selectedRewards.legendary) selected++;
         if (this.selectedRewards.magic) selected++;
         if (canGetNewUnit && this.selectedRewards.unit) selected++;
         
@@ -709,7 +1076,9 @@ export class BattleScene extends Phaser.Scene {
     confirmRewards() {
         const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
         
-        if (!this.selectedRewards.buff || !this.selectedRewards.magic) return;
+        // Either buff or legendary must be selected
+        const hasBuff = this.selectedRewards.buff || this.selectedRewards.legendary;
+        if (!hasBuff || !this.selectedRewards.magic) return;
         if (canGetNewUnit && !this.selectedRewards.unit) return;
 
         if (canGetNewUnit && this.selectedRewards.unit) {
@@ -724,21 +1093,36 @@ export class BattleScene extends Phaser.Scene {
             this.unitManager.addUnit(unitType, spawnX, spawnY);
         }
 
-        const buffEffect = this.selectedRewards.buff.effectData;
-        const buffTarget = this.selectedRewards.buff.targetUnit;
-        if (buffEffect && buffTarget) {
-            buffEffect.effect(buffTarget);
+        // Apply regular buff (if selected)
+        if (this.selectedRewards.buff) {
+            const buffEffect = this.selectedRewards.buff.effectData;
+            const buffTarget = this.selectedRewards.buff.targetUnit;
+            if (buffEffect && buffTarget) {
+                buffEffect.effect(buffTarget);
+            }
         }
 
+        // Apply legendary buff (if selected)
+        if (this.selectedRewards.legendary) {
+            const legendaryEffect = this.selectedRewards.legendary.effectData;
+            const targetUnit = this.selectedRewards.legendary.targetUnit;
+            if (legendaryEffect && targetUnit) {
+                legendaryEffect.effect(targetUnit);
+                this.uiManager.showFloatingText(`${this.selectedRewards.legendary.effectData.name} Acquired!`, 400, 250, '#D4A574');
+            }
+        }
+
+        // Magic buffs are only added to the array here; effects applied during create()
         const magicEffect = this.selectedRewards.magic.effectData;
         if (magicEffect) {
-            magicEffect.effect();
             this.uiManager.showFloatingText(`${magicEffect.name} Acquired!`, 400, 200, '#A68966');
             
             if (magicEffect.buffType) {
                 const existingBuff = this.magicBuffs.find(b => b.type === magicEffect.buffType);
                 if (existingBuff && magicEffect.buffType === 'manaCost') {
                     existingBuff.value *= magicEffect.buffValue;
+                } else if (existingBuff && magicEffect.buffType === 'maxMana') {
+                    existingBuff.value += magicEffect.buffValue;
                 } else if (existingBuff) {
                     existingBuff.value += magicEffect.buffValue;
                 } else {

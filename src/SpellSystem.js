@@ -144,28 +144,54 @@ export class SpellSystem {
         this.scene.spendMana(actualCost);
         this.scene.spellsCastThisRound++;
 
-        switch (spell.effect) {
-            case 'singleDamage':
-                this.executeSingleDamage(spell, unit);
-                break;
-            case 'heal':
-                this.executeHeal(spell, unit);
-                break;
-            case 'haste':
-                this.executeHaste(spell, unit);
-                break;
-            case 'shield':
-                this.executeShield(spell, unit);
-                break;
-            case 'bless':
-                this.executeBless(spell, unit);
-                break;
-            case 'regenerate':
-                this.executeRegenerate(spell, unit);
-                break;
-            case 'chainLightning':
-                this.executeChainLightning(spell, unit);
-                break;
+        // If armyBuffs is enabled and this is a buff spell, apply to whole army
+        const isBuffSpell = ['haste', 'shield', 'bless', 'regenerate', 'heal'].includes(spell.effect);
+        if (this.scene.armyBuffs && isBuffSpell) {
+            const playerUnits = this.scene.unitManager.getPlayerUnits().filter(u => u.health > 0);
+            for (const targetUnit of playerUnits) {
+                switch (spell.effect) {
+                    case 'heal':
+                        this.executeHeal(spell, targetUnit);
+                        break;
+                    case 'haste':
+                        this.executeHaste(spell, targetUnit);
+                        break;
+                    case 'shield':
+                        this.executeShield(spell, targetUnit);
+                        break;
+                    case 'bless':
+                        this.executeBless(spell, targetUnit);
+                        break;
+                    case 'regenerate':
+                        this.executeRegenerate(spell, targetUnit);
+                        break;
+                }
+            }
+        } else {
+            // Single target
+            switch (spell.effect) {
+                case 'singleDamage':
+                    this.executeSingleDamage(spell, unit);
+                    break;
+                case 'heal':
+                    this.executeHeal(spell, unit);
+                    break;
+                case 'haste':
+                    this.executeHaste(spell, unit);
+                    break;
+                case 'shield':
+                    this.executeShield(spell, unit);
+                    break;
+                case 'bless':
+                    this.executeBless(spell, unit);
+                    break;
+                case 'regenerate':
+                    this.executeRegenerate(spell, unit);
+                    break;
+                case 'chainLightning':
+                    this.executeChainLightning(spell, unit);
+                    break;
+            }
         }
 
         this.clearSpell();
@@ -258,25 +284,26 @@ export class SpellSystem {
 
     executeHaste(spell, unit) {
         unit.moveRange += spell.power;
-        unit.hasteRounds = spell.duration;
+        // If permanentBuffs is enabled, duration is -1 (permanent), otherwise use spell duration
+        unit.hasteRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'HASTE!', '#ffff00');
     }
 
     executeShield(spell, unit) {
         unit.shieldValue = spell.power;
-        unit.shieldRounds = spell.duration;
+        unit.shieldRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'SHIELD!', '#4A5E7E');
     }
 
     executeBless(spell, unit) {
         unit.blessValue = spell.power;
-        unit.blessRounds = spell.duration;
+        unit.blessRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'BLESSED!', '#A68966');
     }
 
     executeRegenerate(spell, unit) {
         unit.regenerateAmount = spell.power;
-        unit.regenerateRounds = spell.duration;
+        unit.regenerateRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'REGENERATE!', '#00ff00');
     }
 

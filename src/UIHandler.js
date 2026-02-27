@@ -52,6 +52,8 @@ export class UIManager {
             else if (buff.type === 'spellPower') valueText = `+${Math.round(buff.value*100)}% damage`;
             else if (buff.type === 'spellsPerRound') valueText = `+${buff.value} spell/round`;
             else if (buff.type === 'maxMana') valueText = `+${buff.value} max mana`;
+            else if (buff.type === 'permanentBuffs') valueText = `Permanent buffs`;
+            else if (buff.type === 'armyBuffs') valueText = `Army-wide spells`;
             
             html += `
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; padding: 3px 6px; background: rgba(166, 137, 102, 0.15); border-radius: 4px;">
