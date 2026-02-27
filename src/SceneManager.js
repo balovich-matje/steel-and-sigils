@@ -128,6 +128,11 @@ export class BattleScene extends Phaser.Scene {
 
         // Add click handler for spell targeting
         this.input.on('pointerdown', (pointer) => {
+            // Check if spellbook modal is open - if so, don't process game clicks
+            const spellbookModal = document.getElementById('spellbook-modal');
+            if (spellbookModal && !spellbookModal.classList.contains('hidden')) {
+                return;
+            }
             if (this.spellSystem.activeSpell) {
                 const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);
                 const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
@@ -1280,6 +1285,11 @@ export class PreGameScene extends Phaser.Scene {
         this.updatePlacementDisplay();
         
         this.input.on('pointerdown', (pointer) => {
+            // Check if spellbook modal is open - if so, don't process game clicks
+            const spellbookModal = document.getElementById('spellbook-modal');
+            if (spellbookModal && !spellbookModal.classList.contains('hidden')) {
+                return;
+            }
             if (!this.placementMode || this.unitsToPlace.length === 0) return;
             
             const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);

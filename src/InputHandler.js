@@ -42,6 +42,11 @@ export class GridSystem {
         this.aoePreviewGraphics = this.scene.add.graphics();
 
         this.scene.input.on('gameobjectdown', (pointer, gameObject) => {
+            // Check if spellbook modal is open - if so, don't process game clicks
+            const spellbookModal = document.getElementById('spellbook-modal');
+            if (spellbookModal && !spellbookModal.classList.contains('hidden')) {
+                return;
+            }
             this.handleTileClick(gameObject);
         });
         
