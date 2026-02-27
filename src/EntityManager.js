@@ -459,7 +459,7 @@ export class TurnSystem {
             if (unit.type === 'ORC_ROGUE' && unit.turnStartX !== undefined) {
                 this.scene.time.delayedCall(600, () => {
                     if (!unit.isDead && unit.health > 0) {
-                        this.scene.showBuffText(unit, 'VANISH!', '#6B5B8B');
+                        this.scene.uiManager.showBuffText(unit, 'VANISH!', '#6B5B8B');
                         this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
                     }
                 });
@@ -510,7 +510,7 @@ export class TurnSystem {
                 if (unit.type === 'ORC_ROGUE' && unit.turnStartX !== undefined) {
                     this.scene.time.delayedCall(600, () => {
                         if (!unit.isDead && unit.health > 0) {
-                            this.scene.showBuffText(unit, 'VANISH!', '#6B5B8B');
+                            this.scene.uiManager.showBuffText(unit, 'VANISH!', '#6B5B8B');
                             this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
                         }
                     });
