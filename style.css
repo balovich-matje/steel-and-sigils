@@ -1,3 +1,15 @@
+/* ============================================
+   GRIM DARK FANTASY - Style Sheet
+   Palette:
+   - Background: Deep Charcoal #1A1C1E
+   - Panels: Dark Oak Wood #2D241E
+   - Gold Border: Aged Gold #A68966
+   - Buttons: Leather/Clay #5D2E2E
+   - Button Text: Parchment #E3D5B8
+   - Mana: Deep Sapphire #2B527E
+   - Text: Parchment #E3D5B8
+   ============================================ */
+
 * {
     margin: 0;
     padding: 0;
@@ -5,84 +17,148 @@
 }
 
 body {
-    background: #1a1a2e;
+    background: #1A1C1E;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
     padding: 20px;
+    color: #E3D5B8;
 }
 
 h1 {
-    color: #ffd700;
+    color: #A68966;
     text-shadow: 2px 2px 4px #000;
     margin-bottom: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
 }
 
 #game-container {
-    border: 4px solid #444;
-    border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    border: 3px solid #2D241E;
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.8);
 }
 
+/* UI Panel - Main Controls */
 #ui-panel {
     margin-top: 15px;
-    padding: 15px;
-    background: #2d2d44;
-    border-radius: 8px;
-    color: white;
+    padding: 12px 20px;
+    background: #2D241E;
+    border: 2px solid #A68966;
+    border-radius: 4px;
+    color: #E3D5B8;
     display: flex;
     gap: 20px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     max-width: 900px;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
 }
 
+/* Placement Bar */
+#placement-bar {
+    margin-top: 15px;
+    padding: 12px 20px;
+    background: #2D241E;
+    border: 2px solid #A68966;
+    border-radius: 4px;
+    color: #E3D5B8;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 900px;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+}
+
+#placement-bar .placement-title {
+    font-weight: bold;
+    color: #A68966;
+}
+
+#placement-bar .placement-hint {
+    color: #B8A896;
+    font-size: 14px;
+}
+
+#placement-bar #placement-info {
+    color: #E3D5B8;
+    font-weight: bold;
+}
+
+/* Buttons - Leather/Clay Style */
 .spell-button {
     padding: 10px 20px;
-    background: linear-gradient(135deg, #ff6b35, #f7931e);
-    border: 2px solid #ffd700;
-    border-radius: 6px;
-    color: white;
+    background: #5D2E2E;
+    border: 2px solid #7D4E4E;
+    border-radius: 4px;
+    color: #E3D5B8;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: all 0.15s;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
 }
 
 .spell-button:hover:not(:disabled) {
-    transform: scale(1.05);
-    background: linear-gradient(135deg, #ff8555, #ffb347);
+    background: #7D3E3E;
+    border-color: #9D6E6E;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.spell-button:active:not(:disabled) {
+    background: #4D1E1E;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.5);
+    transform: translateY(1px);
 }
 
 .spell-button:disabled {
-    background: #555;
-    border-color: #777;
+    background: #3D3D3D;
+    border-color: #555;
+    color: #777;
     cursor: not-allowed;
     opacity: 0.6;
 }
 
+/* Turn Indicator */
 .turn-indicator {
-    padding: 10px 20px;
-    background: #1a1a2e;
-    border-radius: 6px;
-    border: 2px solid #ffd700;
+    padding: 8px 16px;
+    background: #1A1C1E;
+    border-radius: 4px;
+    border: 2px solid #A68966;
+    color: #E3D5B8;
 }
 
+/* Unit Info Panel - Fixed Right Side */
 .unit-info {
-    padding: 10px;
-    background: #1a1a2e;
-    border-radius: 6px;
-    min-width: 200px;
+    padding: 15px;
+    background: #2D241E;
+    border-radius: 4px;
+    border: 2px solid #A68966;
+    min-width: 220px;
+    max-width: 280px;
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    color: #E3D5B8;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
+/* Victory/Defeat Screen */
 .victory-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.9);
+    background: rgba(26, 28, 30, 0.97);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -91,27 +167,31 @@ h1 {
 }
 
 .victory-screen h2 {
-    color: #ffd700;
+    color: #A68966;
     font-size: 48px;
     margin-bottom: 20px;
+    text-shadow: 2px 2px 4px #000;
 }
 
+/* Perk/Reward Cards */
 .perk-card {
-    background: #2d2d44;
-    border: 2px solid #ffd700;
-    border-radius: 8px;
+    background: #2D241E;
+    border: 2px solid #A68966;
+    border-radius: 4px;
     padding: 20px;
     margin: 10px;
     cursor: pointer;
-    transition: transform 0.2s;
-    color: white;
+    transition: all 0.15s;
+    color: #E3D5B8;
     min-width: 200px;
     text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .perk-card:hover {
-    transform: scale(1.05);
-    background: #3d3d54;
+    background: #3D342E;
+    border-color: #B69976;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .reward-card {
@@ -119,7 +199,7 @@ h1 {
 }
 
 .reward-card:hover {
-    border-color: #888 !important;
+    border-color: #A68966 !important;
 }
 
 #confirm-rewards:disabled {
@@ -129,6 +209,7 @@ h1 {
 
 .hidden { display: none !important; }
 
+/* Action Sections */
 .action-section {
     display: flex;
     gap: 10px;
@@ -138,32 +219,36 @@ h1 {
 .action-divider {
     width: 2px;
     height: 30px;
-    background: #555;
+    background: #5D4E3E;
     margin: 0 5px;
 }
 
+/* Mana Display - Deep Sapphire */
 .mana-display {
     padding: 8px 15px;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    border: 2px solid #4a90d9;
-    border-radius: 6px;
-    color: #87ceeb;
+    background: #2B527E;
+    border: 2px solid #4A729E;
+    border-radius: 4px;
+    color: #B8D5E8;
     font-weight: bold;
     font-size: 16px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .mana-display.low {
-    border-color: #ff4444;
-    color: #ff8888;
+    background: #7E2B2B;
+    border-color: #9E4A4A;
+    color: #E8B8B8;
 }
 
+/* Spellbook Modal */
 .spellbook-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.85);
+    background: rgba(26, 28, 30, 0.95);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -171,25 +256,25 @@ h1 {
 }
 
 .spellbook-content {
-    background: linear-gradient(135deg, #2d2d44, #1a1a2e);
-    border: 3px solid #ffd700;
-    border-radius: 12px;
+    background: #2D241E;
+    border: 2px solid #A68966;
+    border-radius: 4px;
     padding: 25px;
     max-width: 800px;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 0 30px rgba(255,215,0,0.3);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.7);
 }
 
 .spellbook-header {
     text-align: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 2px solid #444;
+    border-bottom: 2px solid #5D4E3E;
 }
 
 .spellbook-header h2 {
-    color: #ffd700;
+    color: #A68966;
     margin-bottom: 10px;
 }
 
@@ -201,28 +286,29 @@ h1 {
 }
 
 .spell-card {
-    background: #1a1a2e;
-    border: 2px solid #444;
-    border-radius: 8px;
+    background: #1A1C1E;
+    border: 2px solid #5D4E3E;
+    border-radius: 4px;
     padding: 15px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
     position: relative;
+    color: #E3D5B8;
 }
 
 .spell-card:hover:not(.disabled) {
-    border-color: #ffd700;
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(255,215,0,0.2);
+    background: #2A241E;
+    border-color: #A68966;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .spell-card.selected {
-    border-color: #4a90d9;
-    background: #252540;
+    border-color: #4A729E;
+    background: #1E2A3E;
 }
 
 .spell-card.disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
@@ -232,7 +318,7 @@ h1 {
 }
 
 .spell-card .spell-name {
-    color: #ffd700;
+    color: #A68966;
     font-weight: bold;
     margin-bottom: 5px;
 }
@@ -245,56 +331,62 @@ h1 {
 
 .spell-card .spell-desc {
     font-size: 12px;
-    color: #aaa;
+    color: #B8A896;
     margin-bottom: 8px;
     line-height: 1.3;
 }
 
 .spell-card .spell-cost {
-    color: #87ceeb;
+    color: #4A729E;
     font-weight: bold;
     font-size: 14px;
 }
 
 .spell-card .spell-cost.too-expensive {
-    color: #ff4444;
+    color: #9E4A4A;
 }
 
 .spellbook-close {
     display: block;
     margin: 0 auto;
     padding: 12px 40px;
-    background: linear-gradient(135deg, #ff6b35, #f7931e);
-    border: 2px solid #ffd700;
-    border-radius: 6px;
-    color: white;
+    background: #5D2E2E;
+    border: 2px solid #7D4E4E;
+    border-radius: 4px;
+    color: #E3D5B8;
     font-weight: bold;
     cursor: pointer;
     font-size: 16px;
+    transition: all 0.15s;
 }
 
 .spellbook-close:hover {
-    transform: scale(1.05);
+    background: #7D3E3E;
+    border-color: #9D6E6E;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
-
 
 /* Pre-game screen styles */
 #pregame-screen {
-    background: rgba(0,0,0,0.95);
+    background: rgba(26, 28, 30, 0.98);
+}
+
+#pregame-screen h2 {
+    color: #A68966;
 }
 
 #placement-screen {
     background: transparent;
     flex-direction: column;
-    pointer-events: none; /* Allow clicks to pass through to canvas */
+    pointer-events: none;
 }
 
 #placement-screen > * {
-    pointer-events: auto; /* Re-enable clicks on child elements */
+    pointer-events: auto;
 }
 
 #placement-screen h2 {
-    color: #4a90d9;
+    color: #A68966;
     font-size: 36px;
     margin-bottom: 10px;
     text-shadow: 2px 2px 4px #000;
@@ -305,29 +397,58 @@ h1 {
 }
 
 #placement-info {
-    background: rgba(26, 26, 46, 0.95);
+    background: #2D241E;
     padding: 15px 30px;
-    border-radius: 8px;
-    border: 2px solid #ffd700;
+    border-radius: 4px;
+    border: 2px solid #A68966;
     font-size: 18px;
+    color: #E3D5B8;
 }
 
 #current-placement-unit {
-    color: #ffd700;
+    color: #A68966;
     font-weight: bold;
 }
 
 #placement-remaining {
-    color: #4a90d9;
+    color: #4A729E;
     font-weight: bold;
 }
 
 #confirm-placement:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: #555 !important;
+    background: #3D3D3D !important;
+    border-color: #555 !important;
 }
 
 #confirm-placement:not(:disabled) {
-    background: linear-gradient(135deg, #228b22, #006400) !important;
+    background: #2E5D2E !important;
+    border-color: #4E7D4E !important;
 }
+
+#confirm-placement:not(:disabled):hover {
+    background: #3E7D3E !important;
+    border-color: #5E9D5E !important;
+}
+
+/* Magic Buffs Panel */
+#magic-buffs-panel {
+    background: #2D241E !important;
+    border: 2px solid #A68966 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6) !important;
+}
+
+#magic-buffs-panel > div:first-child {
+    color: #A68966 !important;
+    border-bottom-color: #5D4E3E !important;
+}
+
+/* Utility Classes */
+.text-gold { color: #A68966; }
+.text-parchment { color: #E3D5B8; }
+.text-wood { color: #B8A896; }
+.bg-charcoal { background: #1A1C1E; }
+.bg-wood { background: #2D241E; }
+.border-gold { border-color: #A68966; }

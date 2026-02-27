@@ -27,7 +27,7 @@ const SPELLS = {
         type: 'AoE Damage',
         manaCost: 25,
         description: 'Explodes in a 3x3 area dealing 30 damage to all enemies',
-        targetType: 'tile',
+        targetType: 'enemy',
         effect: 'aoeDamage',
         power: 30,
         range: 5
@@ -89,7 +89,7 @@ const SPELLS = {
         type: 'AoE Damage',
         manaCost: 30,
         description: 'Deals 20 damage and reduces enemy movement by 1 for 2 turns',
-        targetType: 'tile',
+        targetType: 'enemy',
         effect: 'iceStorm',
         power: 20,
         range: 4
@@ -101,7 +101,7 @@ const SPELLS = {
         type: 'Heavy AoE',
         manaCost: 50,
         description: 'Devastating 5x5 area attack dealing 60 damage',
-        targetType: 'tile',
+        targetType: 'enemy',
         effect: 'meteor',
         power: 60,
         range: 6
@@ -213,11 +213,15 @@ class Unit {
             amount = Math.floor(amount * (1 - this.shieldValue));
         }
         
-        // Apply Knight's ranged damage reduction
-        if (isRanged && this.type === 'KNIGHT') {
+        // Apply Knight/Paladin ranged damage reduction
+        if (isRanged && (this.type === 'KNIGHT' || this.type === 'PALADIN')) {
             const template = UNIT_TYPES[this.type];
-            if (template.passive && template.passive.effect === 'rangedDefense') {
-                amount = Math.floor(amount * (1 - template.passive.value));
+            if (template.passive && (template.passive.effect === 'rangedDefense' || 
+                (template.passive.effect === 'combined' && template.passive.combines.includes('rangedDefense')))) {
+                const defenseValue = template.passive.effect === 'combined' 
+                    ? template.passive.values[template.passive.combines.indexOf('rangedDefense')]
+                    : template.passive.value;
+                amount = Math.floor(amount * (1 - defenseValue));
             }
         }
         
@@ -240,9 +244,25 @@ class Unit {
         this.health = 0;
         
         if (this.sprite) {
-            // Replace with skull, keep position but make non-interactive
-            this.sprite.setText('💀');
-            this.sprite.setAlpha(0.5);
+            // For text sprites (emoji), replace with skull
+            if (this.sprite.setText) {
+                this.sprite.setText('💀');
+                this.sprite.setAlpha(0.5);
+            } else {
+                // For image sprites, just fade them and show skull overlay
+                this.sprite.setAlpha(0.3);
+                this.sprite.setTint(0x666666);
+                // Add a skull text overlay
+                if (scene) {
+                    const skull = scene.add.text(
+                        this.sprite.x, this.sprite.y,
+                        '💀',
+                        { fontSize: '32px', align: 'center' }
+                    ).setOrigin(0.5).setAlpha(0.7);
+                    // Store reference to remove later if needed
+                    this.deathMarker = skull;
+                }
+            }
             this.sprite.setAngle(0);
             this.sprite.removeInteractive();
         }
@@ -279,6 +299,12 @@ class Unit {
     resetTurn() {
         this.hasMoved = false;
         this.hasAttacked = false;
+        
+        // Store starting position for Rogue's hit-and-run (at start of turn)
+        if (this.type === 'ROGUE' || this.type === 'ORC_ROGUE') {
+            this.turnStartX = this.gridX;
+            this.turnStartY = this.gridY;
+        }
         
         // Handle regenerate healing at start of turn
         if (this.regenerateRounds > 0) {
@@ -399,11 +425,67 @@ class GridSystem {
 
         // Highlight graphics overlay
         this.highlightGraphics = this.scene.add.graphics();
+        
+        // AOE preview graphics
+        this.aoePreviewGraphics = this.scene.add.graphics();
 
         // Input handling
         this.scene.input.on('gameobjectdown', (pointer, gameObject) => {
             this.handleTileClick(gameObject);
         });
+        
+        // AOE preview on hover
+        this.scene.input.on('gameobjectover', (pointer, gameObject) => {
+            this.handleTileHover(gameObject);
+        });
+        
+        this.scene.input.on('gameobjectout', (pointer, gameObject) => {
+            this.clearAoePreview();
+        });
+    }
+    
+    handleTileHover(tile) {
+        // Check if an AOE spell is active
+        const activeSpell = this.scene.spellSystem.activeSpell;
+        if (!activeSpell) return;
+        
+        const spell = SPELLS[activeSpell];
+        if (!spell) return;
+        
+        // Only show preview for AOE spells
+        if (spell.effect !== 'aoeDamage' && spell.effect !== 'iceStorm' && spell.effect !== 'meteor') return;
+        
+        const { gridX, gridY } = tile;
+        const radius = spell.effect === 'meteor' ? 2 : 1;
+        
+        this.drawAoePreview(gridX, gridY, radius);
+    }
+    
+    drawAoePreview(centerX, centerY, radius) {
+        this.clearAoePreview();
+        
+        this.aoePreviewGraphics.fillStyle(0xff6600, 0.3);
+        this.aoePreviewGraphics.lineStyle(2, 0xff6600, 0.6);
+        
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const x = centerX + dx;
+                const y = centerY + dy;
+                
+                if (x >= 0 && x < CONFIG.GRID_WIDTH && y >= 0 && y < CONFIG.GRID_HEIGHT) {
+                    const px = x * CONFIG.TILE_SIZE + 1;
+                    const py = y * CONFIG.TILE_SIZE + 1;
+                    this.aoePreviewGraphics.fillRect(px, py, CONFIG.TILE_SIZE - 2, CONFIG.TILE_SIZE - 2);
+                    this.aoePreviewGraphics.strokeRect(px, py, CONFIG.TILE_SIZE - 2, CONFIG.TILE_SIZE - 2);
+                }
+            }
+        }
+    }
+    
+    clearAoePreview() {
+        if (this.aoePreviewGraphics) {
+            this.aoePreviewGraphics.clear();
+        }
     }
 
     handleTileClick(tile) {
@@ -425,20 +507,31 @@ class GridSystem {
             }
         }
 
-        // Handle ranged attack mode
-        if (this.scene.rangedAttackMode) {
-            if (clickedUnit && !clickedUnit.isDead && !clickedUnit.isPlayer) {
-                const dist = Math.abs(clickedUnit.gridX - this.scene.turnSystem.currentUnit.gridX) + 
-                             Math.abs(clickedUnit.gridY - this.scene.turnSystem.currentUnit.gridY);
-                if (dist <= this.scene.turnSystem.currentUnit.rangedRange) {
-                    this.scene.performRangedAttack(this.scene.turnSystem.currentUnit, clickedUnit);
+        // If clicking on an enemy unit - check for ranged attack first, then melee
+        if (clickedUnit && !clickedUnit.isDead && !clickedUnit.isPlayer) {
+            const currentUnit = this.scene.turnSystem.currentUnit;
+            if (currentUnit && currentUnit.isPlayer && currentUnit.canAttack()) {
+                const dist = Math.abs(clickedUnit.gridX - currentUnit.gridX) + 
+                             Math.abs(clickedUnit.gridY - currentUnit.gridY);
+                
+                // If in ranged range and not adjacent, perform ranged attack
+                if (dist > 1 && dist <= currentUnit.rangedRange && currentUnit.rangedRange > 0) {
+                    this.scene.performRangedAttack(currentUnit, clickedUnit);
+                    return;
+                }
+                // If adjacent, perform melee attack
+                if (dist === 1) {
+                    this.scene.performAttack(currentUnit, clickedUnit);
+                    return;
                 }
             }
+            // Otherwise just select the enemy to view info
+            this.scene.selectUnit(clickedUnit);
             return;
         }
 
-        // If clicking on a unit
-        if (clickedUnit && !clickedUnit.isDead) {
+        // If clicking on a friendly unit
+        if (clickedUnit && !clickedUnit.isDead && clickedUnit.isPlayer) {
             this.scene.selectUnit(clickedUnit);
             return;
         }
@@ -532,23 +625,15 @@ class GridSystem {
     }
 
     highlightRangedAttackRange(unit) {
-        this.highlightGraphics.clear();
+        // Don't clear - draw ranged highlights on top of movement highlights
         
-        // Highlight the unit's position
-        this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_SELECTED, 0.5);
-        this.highlightGraphics.fillRect(
-            unit.gridX * CONFIG.TILE_SIZE + 2,
-            unit.gridY * CONFIG.TILE_SIZE + 2,
-            CONFIG.TILE_SIZE - 4,
-            CONFIG.TILE_SIZE - 4
-        );
-
-        // Highlight all enemies within ranged range
+        // Highlight all enemies within ranged range (including adjacent for melee)
         const enemies = this.scene.unitManager.getEnemyUnits(unit.isPlayer);
         for (const enemy of enemies) {
             const dist = Math.abs(enemy.gridX - unit.gridX) + Math.abs(enemy.gridY - unit.gridY);
-            if (dist > 0 && dist <= unit.rangedRange) {
-                // Enemy is in range - highlight as valid target
+            // Highlight enemies in ranged range (dist > 1) AND adjacent enemies (dist === 1)
+            if (dist > 0 && (dist === 1 || dist <= unit.rangedRange)) {
+                // Enemy is in range - highlight as valid target with orange border
                 this.highlightGraphics.lineStyle(3, 0xff6600, 1);
                 this.highlightGraphics.strokeRect(
                     enemy.gridX * CONFIG.TILE_SIZE + 4,
@@ -585,13 +670,27 @@ class UnitManager {
     addUnit(type, gridX, gridY) {
         const unit = new Unit(type, gridX, gridY, this.scene);
         
-        // Create sprite
-        unit.sprite = this.scene.add.text(
-            gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
-            gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
-            unit.emoji,
-            { fontSize: '36px', align: 'center' }
-        ).setOrigin(0.5);
+        
+        const x = gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        const y = gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        
+        // Check if unit has an image and if it's loaded
+        const template = UNIT_TYPES[type];
+        const imageKey = template.image ? type.toLowerCase() + '_img' : null;
+        const hasImage = imageKey && this.scene.textures.exists(imageKey);
+        
+        if (hasImage) {
+            // Use image sprite
+            unit.sprite = this.scene.add.image(x, y, imageKey);
+            unit.sprite.setDisplaySize(40, 40);
+        } else {
+            // Fallback to emoji text
+            unit.sprite = this.scene.add.text(
+                x, y,
+                unit.emoji,
+                { fontSize: '36px', align: 'center' }
+            ).setOrigin(0.5);
+        }
 
         // Create health bar
         unit.healthBar = this.scene.add.graphics();
@@ -723,12 +822,12 @@ class TurnSystem {
         if (minDist === 1) {
             this.scene.performAttack(unit, nearest);
             
-            // Orc Rogue hit-and-run: return to starting position after attack
-            if (unit.type === 'ORC_ROGUE' && unit.startX !== undefined) {
+            // Orc Rogue hit-and-run: return to turn start position after attack
+            if (unit.type === 'ORC_ROGUE' && unit.turnStartX !== undefined) {
                 this.scene.time.delayedCall(600, () => {
                     if (!unit.isDead && unit.health > 0) {
                         this.scene.showBuffText(unit, 'VANISH!', '#9932cc');
-                        this.scene.unitManager.updateUnitPosition(unit, unit.startX, unit.startY);
+                        this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
                     }
                 });
             }
@@ -737,15 +836,21 @@ class TurnSystem {
             return;
         }
 
-        // Move towards player
-        if (unit.canMove()) {
+        // Move towards player - use all available movement
+        let movesRemaining = unit.moveRange;
+        while (movesRemaining > 0 && unit.canMove()) {
+            const currentDist = Math.abs(nearest.gridX - unit.gridX) + Math.abs(nearest.gridY - unit.gridY);
+            
+            // Stop if already adjacent
+            if (currentDist === 1) break;
+            
             const dx = Math.sign(nearest.gridX - unit.gridX);
             const dy = Math.sign(nearest.gridY - unit.gridY);
             
             let moved = false;
             
             // Try to move horizontally first
-            if (dx !== 0 && !moved) {
+            if (dx !== 0) {
                 const newX = unit.gridX + dx;
                 if (this.scene.gridSystem.isValidMoveAI(newX, unit.gridY)) {
                     this.scene.moveUnit(unit, newX, unit.gridY);
@@ -761,24 +866,29 @@ class TurnSystem {
                     moved = true;
                 }
             }
+            
+            // If couldn't move, break to avoid infinite loop
+            if (!moved) break;
+            
+            movesRemaining--;
+        }
 
-            // Check if can attack after moving
-            const newDist = Math.abs(nearest.gridX - unit.gridX) + Math.abs(nearest.gridY - unit.gridY);
-            if (newDist === 1 && unit.canAttack()) {
-                this.scene.time.delayedCall(400, () => {
-                    this.scene.performAttack(unit, nearest);
-                    
-                    // Orc Rogue hit-and-run: return to starting position after attack
-                    if (unit.type === 'ORC_ROGUE' && unit.startX !== undefined) {
-                        this.scene.time.delayedCall(600, () => {
-                            if (!unit.isDead && unit.health > 0) {
-                                this.scene.showBuffText(unit, 'VANISH!', '#9932cc');
-                                this.scene.unitManager.updateUnitPosition(unit, unit.startX, unit.startY);
-                            }
-                        });
-                    }
-                });
-            }
+        // Check if can attack after moving
+        const finalDist = Math.abs(nearest.gridX - unit.gridX) + Math.abs(nearest.gridY - unit.gridY);
+        if (finalDist === 1 && unit.canAttack()) {
+            this.scene.time.delayedCall(400, () => {
+                this.scene.performAttack(unit, nearest);
+                
+                // Orc Rogue hit-and-run: return to turn start position after attack
+                if (unit.type === 'ORC_ROGUE' && unit.turnStartX !== undefined) {
+                    this.scene.time.delayedCall(600, () => {
+                        if (!unit.isDead && unit.health > 0) {
+                            this.scene.showBuffText(unit, 'VANISH!', '#9932cc');
+                            this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
+                        }
+                    });
+                }
+            });
         }
 
         this.scene.time.delayedCall(1200, () => this.nextTurn());
@@ -793,8 +903,10 @@ class TurnSystem {
             turnText.style.color = this.currentUnit.isPlayer ? '#4a7cd9' : '#d94a4a';
         }
         
-        // Update ranged attack button visibility
-        this.scene.updateRangedAttackButton();
+        // Auto-highlight ranged targets if unit has ranged attack available
+        if (this.currentUnit && this.currentUnit.isPlayer && this.currentUnit.rangedRange > 0 && this.currentUnit.canAttack()) {
+            this.scene.gridSystem.highlightRangedAttackRange(this.currentUnit);
+        }
     }
 }
 
@@ -858,7 +970,12 @@ class SpellSystem {
                 break;
             case 'enemy':
                 if (unit && !unit.isPlayer) {
-                    this.executeUnitSpell(spell, unit);
+                    // Check if this is an AoE spell - if so, cast at enemy's position
+                    if (spell.effect === 'aoeDamage' || spell.effect === 'iceStorm' || spell.effect === 'meteor') {
+                        this.executeTileSpell(spell, gridX, gridY);
+                    } else {
+                        this.executeUnitSpell(spell, unit);
+                    }
                 }
                 break;
             case 'ally':
@@ -899,6 +1016,21 @@ class SpellSystem {
         }
 
         this.clearSpell();
+    }
+
+    getSpellDamage(basePower) {
+        // Base spell power multiplier
+        let multiplier = this.scene.spellPowerMultiplier || 1;
+        
+        // Check for Sorcerer passive (+50% spell damage per Sorcerer)
+        const playerUnits = this.scene.unitManager.getPlayerUnits();
+        const sorcererCount = playerUnits.filter(u => u.type === 'SORCERER' && u.health > 0).length;
+        if (sorcererCount > 0) {
+            // Each Sorcerer adds 50% bonus
+            multiplier += sorcererCount * 0.5;
+        }
+        
+        return Math.floor(basePower * multiplier);
     }
 
     executeUnitSpell(spell, unit) {
@@ -957,8 +1089,8 @@ class SpellSystem {
             this.createExplosionEffect(centerX, centerY, radius);
         }
 
-        // Apply damage with spell power multiplier
-        const damage = Math.floor(spell.power * (this.scene.spellPowerMultiplier || 1));
+        // Apply damage with spell power multiplier (including Sorcerer bonus)
+        const damage = this.getSpellDamage(spell.power);
         for (const unit of targets) {
             this.scene.time.delayedCall(200, () => {
                 unit.takeDamage(damage);
@@ -984,7 +1116,7 @@ class SpellSystem {
 
         this.createIceEffect(centerX, centerY);
 
-        const damage = Math.floor(spell.power * (this.scene.spellPowerMultiplier || 1));
+        const damage = this.getSpellDamage(spell.power);
         for (const unit of targets) {
             this.scene.time.delayedCall(200, () => {
                 unit.takeDamage(damage);
@@ -1000,7 +1132,7 @@ class SpellSystem {
     executeSingleDamage(spell, unit) {
         this.createLightningEffect(unit);
         
-        const damage = Math.floor(spell.power * (this.scene.spellPowerMultiplier || 1));
+        const damage = this.getSpellDamage(spell.power);
         this.scene.time.delayedCall(200, () => {
             unit.takeDamage(damage);
             this.scene.showDamageText(unit, damage);
@@ -1009,9 +1141,18 @@ class SpellSystem {
     }
 
     executeHeal(spell, unit) {
-        unit.heal(spell.power);
+        // Calculate heal amount with Cleric passive bonus
+        let healAmount = spell.power;
+        const playerUnits = this.scene.unitManager.getPlayerUnits();
+        const clericCount = playerUnits.filter(u => (u.type === 'CLERIC' || u.type === 'PALADIN') && u.health > 0).length;
+        if (clericCount > 0) {
+            // Each Cleric/Paladin adds 50% bonus
+            healAmount = Math.floor(healAmount * (1 + clericCount * 0.5));
+        }
+        
+        unit.heal(healAmount);
         this.createHealEffect(unit);
-        this.scene.showHealText(unit, spell.power);
+        this.scene.showHealText(unit, healAmount);
     }
 
     executeHaste(spell, unit) {
@@ -1072,8 +1213,8 @@ class SpellSystem {
             }
         }
 
-        // Apply damage with delay for each jump
-        const damage = Math.floor(spell.power * (this.scene.spellPowerMultiplier || 1));
+        // Apply damage with delay for each jump (including Sorcerer bonus)
+        const damage = this.getSpellDamage(spell.power);
         targets.forEach((unit, index) => {
             this.scene.time.delayedCall(index * 300, () => {
                 this.createLightningEffect(unit);
@@ -1427,9 +1568,30 @@ class PreGameScene extends Phaser.Scene {
 class BattleScene extends Phaser.Scene {
     constructor() {
         super({ key: 'BattleScene' });
-        this.rangedAttackMode = false;
         this.mana = 100;
         this.maxMana = 100;
+    }
+
+    preload() {
+        // Load player unit images
+        const playerUnits = ['KNIGHT', 'ARCHER', 'WIZARD', 'PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
+        for (const unitType of playerUnits) {
+            const template = UNIT_TYPES[unitType];
+            if (template && template.image) {
+                const imageKey = unitType.toLowerCase() + '_img';
+                this.load.image(imageKey, template.image);
+            }
+        }
+        
+        // Load enemy unit images
+        const enemyUnits = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER'];
+        for (const unitType of enemyUnits) {
+            const template = UNIT_TYPES[unitType];
+            if (template && template.image) {
+                const imageKey = unitType.toLowerCase() + '_img';
+                this.load.image(imageKey, template.image);
+            }
+        }
         this.manaRegen = 1;
         this.manaCostMultiplier = 1;
         this.spellPowerMultiplier = 1;
@@ -1437,6 +1599,9 @@ class BattleScene extends Phaser.Scene {
         this.spellsCastThisRound = 0;
         this.battleNumber = 1;
         this.victoryShown = false;
+        
+        // Track magic buffs for display
+        this.magicBuffs = [];
     }
 
     create(data) {
@@ -1451,6 +1616,23 @@ class BattleScene extends Phaser.Scene {
             this.battleNumber = data.battleNumber;
         }
         
+        // Restore magic buffs from previous battle
+        if (data && data.magicBuffs) {
+            this.magicBuffs = data.magicBuffs;
+            for (const buff of this.magicBuffs) {
+                if (buff.type === 'manaRegen') this.manaRegen += buff.value;
+                if (buff.type === 'manaCost') this.manaCostMultiplier *= buff.value;
+                if (buff.type === 'spellPower') this.spellPowerMultiplier += buff.value;
+                if (buff.type === 'spellsPerRound') this.spellsPerRound += buff.value;
+                if (buff.type === 'maxMana') this.maxMana += buff.value;
+            }
+        } else {
+            this.magicBuffs = [];
+        }
+        
+        // Update magic buffs display
+        this.updateMagicBuffsDisplay();
+        
         // Reset victory flag
         this.victoryShown = false;
 
@@ -1460,7 +1642,20 @@ class BattleScene extends Phaser.Scene {
         // Create player units from placement data
         if (data && data.placedUnits) {
             for (const unitData of data.placedUnits) {
-                this.unitManager.addUnit(unitData.type, unitData.x, unitData.y);
+                const unit = this.unitManager.addUnit(unitData.type, unitData.x, unitData.y);
+                // Apply permanent stat modifiers if they exist
+                if (unitData.statModifiers) {
+                    unit.statModifiers = unitData.statModifiers;
+                    if (unitData.statModifiers.damage) unit.damage += unitData.statModifiers.damage;
+                    if (unitData.statModifiers.maxHealth) {
+                        unit.maxHealth += unitData.statModifiers.maxHealth;
+                        unit.health += unitData.statModifiers.maxHealth;
+                    }
+                    if (unitData.statModifiers.moveRange) unit.moveRange += unitData.statModifiers.moveRange;
+                    if (unitData.statModifiers.initiative) unit.initiative += unitData.statModifiers.initiative;
+                    if (unitData.statModifiers.rangedRange) unit.rangedRange = unitData.statModifiers.rangedRange;
+                    unit.updateHealthBar();
+                }
             }
         }
         
@@ -1498,7 +1693,7 @@ class BattleScene extends Phaser.Scene {
         const statMultiplier = 1 + (this.battleNumber - 1) * 0.1;
         
         // Available enemy types
-        const enemyTypes = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE'];
+        const enemyTypes = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER'];
         
         // Generate enemies using point buy
         let remainingPoints = totalPoints;
@@ -1526,11 +1721,6 @@ class BattleScene extends Phaser.Scene {
                 unit.damage = Math.floor(unit.damage * statMultiplier);
                 unit.updateHealthBar();
                 
-                // Store starting position for Orc Rogue's hit-and-run
-                if (type === 'ORC_ROGUE') {
-                    unit.startX = pos.x;
-                    unit.startY = pos.y;
-                }
                 
                 remainingPoints -= UNIT_TYPES[type].cost;
                 spawnedEnemies.push(type);
@@ -1594,6 +1784,34 @@ class BattleScene extends Phaser.Scene {
         } else {
             display.classList.remove('low');
         }
+    }
+
+    updateMagicBuffsDisplay() {
+        const buffsList = document.getElementById('magic-buffs-list');
+        if (!buffsList) return;
+        
+        if (this.magicBuffs.length === 0) {
+            buffsList.innerHTML = '<div style="color: #888; font-style: italic; text-align: center;">No active buffs</div>';
+            return;
+        }
+        
+        let html = '';
+        for (const buff of this.magicBuffs) {
+            let valueText = '';
+            if (buff.type === 'manaRegen') valueText = `+${buff.value} regen`;
+            else if (buff.type === 'manaCost') valueText = `${Math.round((1-buff.value)*100)}% cost reduction`;
+            else if (buff.type === 'spellPower') valueText = `+${Math.round(buff.value*100)}% damage`;
+            else if (buff.type === 'spellsPerRound') valueText = `+${buff.value} spell/round`;
+            else if (buff.type === 'maxMana') valueText = `+${buff.value} max mana`;
+            
+            html += `
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; padding: 3px 6px; background: rgba(153, 50, 204, 0.2); border-radius: 4px;">
+                    <span style="font-size: 14px;">${buff.icon}</span>
+                    <span style="color: #dda0dd;">${valueText}</span>
+                </div>
+            `;
+        }
+        buffsList.innerHTML = html;
     }
 
     openSpellBook() {
@@ -1690,7 +1908,12 @@ class BattleScene extends Phaser.Scene {
             const spell = SPELLS[this.spellSystem.activeSpell];
             if (spell) {
                 if (spell.targetType === 'enemy' && !unit.isPlayer) {
-                    this.spellSystem.executeUnitSpell(spell, unit);
+                    // Check if this is an AoE spell - if so, cast at enemy's position
+                    if (spell.effect === 'aoeDamage' || spell.effect === 'iceStorm' || spell.effect === 'meteor') {
+                        this.spellSystem.executeSpellAt(unit.gridX, unit.gridY);
+                    } else {
+                        this.spellSystem.executeUnitSpell(spell, unit);
+                    }
                     return;
                 } else if (spell.targetType === 'ally' && unit.isPlayer) {
                     this.spellSystem.executeUnitSpell(spell, unit);
@@ -1708,76 +1931,21 @@ class BattleScene extends Phaser.Scene {
         this.updateUnitInfo(unit);
         this.selectedUnit = unit;
 
-        // Update ranged attack button visibility
-        this.updateRangedAttackButton();
-
-        // Check if clicking on enemy (for melee attack)
-        if (this.turnSystem.currentUnit && 
-            this.turnSystem.currentUnit.isPlayer && 
-            this.turnSystem.currentUnit.canAttack() &&
-            !unit.isPlayer) {
-            const dist = Math.abs(unit.gridX - this.turnSystem.currentUnit.gridX) + 
-                         Math.abs(unit.gridY - this.turnSystem.currentUnit.gridY);
-            if (dist === 1 && !this.rangedAttackMode) {
-                this.performAttack(this.turnSystem.currentUnit, unit);
-            } else if (this.rangedAttackMode && dist <= this.turnSystem.currentUnit.rangedRange) {
-                // Ranged attack on target
-                this.performRangedAttack(this.turnSystem.currentUnit, unit);
-            }
+        // Auto-highlight ranged targets if this is the current unit and can attack
+        if (this.turnSystem.currentUnit === unit && 
+            unit.isPlayer && 
+            unit.rangedRange > 0 && 
+            unit.canAttack()) {
+            this.gridSystem.highlightRangedAttackRange(unit);
         }
     }
 
-    updateRangedAttackButton() {
-        const btn = document.getElementById('ranged-attack-btn');
-        const currentUnit = this.turnSystem.currentUnit;
-        
-        if (currentUnit && 
-            currentUnit.isPlayer && 
-            currentUnit.rangedRange > 0 && 
-            currentUnit.canAttack()) {
-            btn.style.display = 'inline-block';
-        } else {
-            btn.style.display = 'none';
-        }
-    }
 
-    startRangedAttack() {
-        const currentUnit = this.turnSystem.currentUnit;
-        if (!currentUnit || !currentUnit.canAttack() || currentUnit.rangedRange <= 0) return;
-        
-        this.rangedAttackMode = true;
-        document.body.style.cursor = 'crosshair';
-        
-        // Highlight ranged attack range
-        this.gridSystem.highlightRangedAttackRange(currentUnit);
-        
-        // Show cancel option
-        const btn = document.getElementById('ranged-attack-btn');
-        btn.textContent = '❌ Cancel';
-        btn.onclick = () => this.cancelRangedAttack();
-    }
-
-    cancelRangedAttack() {
-        this.rangedAttackMode = false;
-        document.body.style.cursor = 'default';
-        this.gridSystem.clearRangedHighlights();
-        
-        // Restore button
-        const btn = document.getElementById('ranged-attack-btn');
-        btn.textContent = '🎯 Ranged Attack';
-        btn.onclick = () => this.startRangedAttack();
-        
-        // Re-highlight normal moves
-        if (this.turnSystem.currentUnit) {
-            this.gridSystem.highlightValidMoves(this.turnSystem.currentUnit);
-        }
-    }
 
     performRangedAttack(attacker, defender) {
         if (!attacker.canAttack()) return;
 
         attacker.hasAttacked = true;
-        this.rangedAttackMode = false;
         document.body.style.cursor = 'default';
 
         // Create arrow projectile
@@ -1859,10 +2027,12 @@ class BattleScene extends Phaser.Scene {
         }
     }
 
-    performAttack(attacker, defender) {
-        if (!attacker.canAttack()) return;
+    performAttack(attacker, defender, isSecondStrike = false) {
+        if (!isSecondStrike && !attacker.canAttack()) return;
 
-        attacker.hasAttacked = true;
+        if (!isSecondStrike) {
+            attacker.hasAttacked = true;
+        }
 
         // Visual lunge
         const originalX = attacker.sprite.x;
@@ -1900,11 +2070,31 @@ class BattleScene extends Phaser.Scene {
                     repeat: 2
                 });
 
+                // Berserker: Strike twice
+                if (attacker.type === 'BERSERKER' && !isSecondStrike && defender.health > 0) {
+                    this.time.delayedCall(300, () => {
+                        this.showBuffText(attacker, 'FURY!', '#ff0000');
+                        this.performAttack(attacker, defender, true);
+                    });
+                }
+
+                // Rogue: Hit and run (return to turn start position)
+                if (attacker.type === 'ROGUE' && attacker.turnStartX !== undefined) {
+                    this.time.delayedCall(400, () => {
+                        if (!attacker.isDead && attacker.health > 0) {
+                            this.showBuffText(attacker, 'VANISH!', '#9932cc');
+                            this.unitManager.updateUnitPosition(attacker, attacker.turnStartX, attacker.turnStartY);
+                        }
+                    });
+                }
+
                 this.checkVictoryCondition();
             }
         });
 
-        this.gridSystem.clearHighlights();
+        if (!isSecondStrike) {
+            this.gridSystem.clearHighlights();
+        }
     }
 
     showDamageText(unit, damage) {
@@ -1947,7 +2137,13 @@ class BattleScene extends Phaser.Scene {
         victoryText.style.color = playerWon ? '#ffd700' : '#ff4444';
 
         if (playerWon) {
-            this.selectedRewards = { unit: null, buff: null, magic: null };
+            const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
+            // On rounds without new units, mark unit as 'skipped' so validation passes
+            this.selectedRewards = { 
+                unit: canGetNewUnit ? null : { id: 'skipped', effectData: null }, 
+                buff: null, 
+                magic: null 
+            };
             this.generateRewardChoices();
         } else {
             document.getElementById('reward-units').innerHTML = 
@@ -1958,27 +2154,42 @@ class BattleScene extends Phaser.Scene {
     }
 
     generateRewardChoices() {
-        // 1. NEW UNIT OPTIONS (3 random units)
-        const recruitableUnits = ['PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
-        const unitOptions = recruitableUnits
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 3);
+        // 1. NEW UNIT OPTIONS (3 random units) - only every 2 rounds starting from round 2
+        const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
         
         const unitContainer = document.getElementById('reward-units');
         unitContainer.innerHTML = '';
-        unitOptions.forEach(unitType => {
-            const template = UNIT_TYPES[unitType];
-            const card = this.createRewardCard('unit', unitType, `
-                <div style="font-size: 40px; margin-bottom: 5px;">${template.emoji}</div>
-                <div style="color: #ffd700; font-weight: bold;">${template.name}</div>
-                <div style="font-size: 12px; color: #aaa;">
-                    HP: ${template.health} | DMG: ${template.damage}<br>
-                    MOV: ${template.moveRange}${template.rangedRange ? ` | RNG: ${template.rangedRange}` : ''}<br>
-                    INIT: ${template.initiative}
+        
+        if (canGetNewUnit) {
+            const recruitableUnits = ['PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
+            const unitOptions = recruitableUnits
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 3);
+            
+            unitOptions.forEach(unitType => {
+                const template = UNIT_TYPES[unitType];
+                const card = this.createRewardCard('unit', unitType, `
+                    <div style="font-size: 40px; margin-bottom: 5px;">${template.emoji}</div>
+                    <div style="color: #ffd700; font-weight: bold;">${template.name}</div>
+                    <div style="font-size: 12px; color: #aaa;">
+                        HP: ${template.health} | DMG: ${template.damage}<br>
+                        MOV: ${template.moveRange}${template.rangedRange ? ` | RNG: ${template.rangedRange}` : ''}<br>
+                        INIT: ${template.initiative}
+                    </div>
+                `);
+                unitContainer.appendChild(card);
+            });
+        } else {
+            // Show message that no new unit this round
+            const roundMsg = this.battleNumber === 1 ? 'First victory! No new unit yet.' : `Victory! New unit available in round ${this.battleNumber + 1}.`;
+            unitContainer.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; color: #888; padding: 20px;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">📦</div>
+                    <div>${roundMsg}</div>
+                    <div style="font-size: 11px; margin-top: 5px;">(New units every 2 rounds)</div>
                 </div>
-            `);
-            unitContainer.appendChild(card);
-        });
+            `;
+        }
 
         // 2. UNIT BUFF OPTIONS (apply to one existing unit)
         const buffOptions = [
@@ -1987,7 +2198,11 @@ class BattleScene extends Phaser.Scene {
                 name: 'Veteran Training', 
                 icon: '⚔️',
                 desc: '+10 Damage', 
-                effect: (unit) => { unit.damage += 10; } 
+                effect: (unit) => { 
+                    unit.damage += 10; 
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
+                } 
             },
             { 
                 id: 'toughness', 
@@ -1997,6 +2212,8 @@ class BattleScene extends Phaser.Scene {
                 effect: (unit) => { 
                     unit.maxHealth += 30; 
                     unit.health += 30;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
                     unit.updateHealthBar();
                 } 
             },
@@ -2005,21 +2222,36 @@ class BattleScene extends Phaser.Scene {
                 name: 'Greater Agility', 
                 icon: '💨',
                 desc: '+1 Movement', 
-                effect: (unit) => { unit.moveRange += 1; } 
+                effect: (unit) => { 
+                    unit.moveRange += 1; 
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                } 
             },
             { 
                 id: 'precision', 
                 name: 'Precision Strikes', 
                 icon: '🎯',
                 desc: '+5 Initiative & +5 Damage', 
-                effect: (unit) => { unit.initiative += 5; unit.damage += 5; } 
+                effect: (unit) => { 
+                    unit.initiative += 5; 
+                    unit.damage += 5; 
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+                } 
             },
             { 
                 id: 'ranged', 
                 name: 'Ranged Training', 
                 icon: '🏹',
                 desc: 'Gain Ranged Attack (Range 3)', 
-                effect: (unit) => { if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2; } 
+                effect: (unit) => { 
+                    if (!unit.rangedRange) unit.rangedRange = 3; 
+                    else unit.rangedRange += 2; 
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.rangedRange = unit.rangedRange;
+                } 
             },
             { 
                 id: 'legendary', 
@@ -2031,6 +2263,10 @@ class BattleScene extends Phaser.Scene {
                     unit.health += 20;
                     unit.damage += 5;
                     unit.moveRange += 1;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
                     unit.updateHealthBar();
                 } 
             }
@@ -2054,6 +2290,8 @@ class BattleScene extends Phaser.Scene {
                 name: 'Expanded Mana Pool', 
                 icon: '💧',
                 desc: '+30 Max Mana', 
+                buffType: 'maxMana',
+                buffValue: 30,
                 effect: () => { 
                     this.maxMana += 30; 
                     this.mana = this.maxMana;
@@ -2065,20 +2303,26 @@ class BattleScene extends Phaser.Scene {
                 name: 'Mana Flow', 
                 icon: '🌊',
                 desc: '+2 Mana Regen per turn', 
-                effect: () => { this.manaRegen += 1; } 
+                buffType: 'manaRegen',
+                buffValue: 2,
+                effect: () => { this.manaRegen += 2; } 
             },
             { 
                 id: 'spell_power', 
                 name: 'Arcane Power', 
                 icon: '🔮',
                 desc: '+20% Spell Damage', 
-                effect: () => { this.spellPowerMultiplier = (this.spellPowerMultiplier || 1) * 1.2; } 
+                buffType: 'spellPower',
+                buffValue: 0.2,
+                effect: () => { this.spellPowerMultiplier = (this.spellPowerMultiplier || 1) + 0.2; } 
             },
             { 
                 id: 'spell_efficiency', 
                 name: 'Efficient Casting', 
                 icon: '⚡',
                 desc: '-20% Mana Cost for all spells', 
+                buffType: 'manaCost',
+                buffValue: 0.8,
                 effect: () => { this.manaCostMultiplier = (this.manaCostMultiplier || 1) * 0.8; } 
             },
             { 
@@ -2086,6 +2330,8 @@ class BattleScene extends Phaser.Scene {
                 name: 'Mana Surge', 
                 icon: '✨',
                 desc: 'Fully restore mana now & +20 max', 
+                buffType: 'maxMana',
+                buffValue: 20,
                 effect: () => { 
                     this.maxMana += 20; 
                     this.mana = this.maxMana;
@@ -2097,6 +2343,8 @@ class BattleScene extends Phaser.Scene {
                 name: 'Twin Cast', 
                 icon: '🔄',
                 desc: 'Cast 2 spells per round', 
+                buffType: 'spellsPerRound',
+                buffValue: 1,
                 effect: () => { this.spellsPerRound = (this.spellsPerRound || 1) + 1; } 
             }
         ].sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -2229,11 +2477,21 @@ class BattleScene extends Phaser.Scene {
 
     updateConfirmButton() {
         const btn = document.getElementById('confirm-rewards');
-        const selected = Object.values(this.selectedRewards).filter(r => r !== null).length;
-        btn.disabled = selected < 3;
-        btn.textContent = `Confirm Choices (${selected}/3)`;
+        const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
         
-        if (selected === 3) {
+        // Count required selections (unit only required on even rounds)
+        let required = 2; // buff and magic always required
+        if (canGetNewUnit) required = 3;
+        
+        let selected = 0;
+        if (this.selectedRewards.buff) selected++;
+        if (this.selectedRewards.magic) selected++;
+        if (canGetNewUnit && this.selectedRewards.unit) selected++;
+        
+        btn.disabled = selected < required;
+        btn.textContent = `Confirm Choices (${selected}/${required})`;
+        
+        if (selected === required) {
             btn.style.background = 'linear-gradient(135deg, #228b22, #006400)';
         } else {
             btn.style.background = 'linear-gradient(135deg, #888888, #555555)';
@@ -2241,22 +2499,30 @@ class BattleScene extends Phaser.Scene {
     }
 
     confirmRewards() {
-        if (!this.selectedRewards.unit || !this.selectedRewards.buff || !this.selectedRewards.magic) {
+        const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
+        
+        // Check required selections
+        if (!this.selectedRewards.buff || !this.selectedRewards.magic) {
+            return;
+        }
+        if (canGetNewUnit && !this.selectedRewards.unit) {
             return;
         }
 
-        // 1. Add the new unit
-        const unitType = this.selectedRewards.unit.id;
-        
-        // Find a good spawn position (left side)
-        let spawnX = 0, spawnY = 3;
-        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
-            if (!this.unitManager.getUnitAt(0, y)) {
-                spawnY = y;
-                break;
+        // 1. Add the new unit (only on even rounds starting from round 2)
+        if (canGetNewUnit && this.selectedRewards.unit) {
+            const unitType = this.selectedRewards.unit.id;
+            
+            // Find a good spawn position (left side)
+            let spawnX = 0, spawnY = 3;
+            for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+                if (!this.unitManager.getUnitAt(0, y)) {
+                    spawnY = y;
+                    break;
+                }
             }
+            this.unitManager.addUnit(unitType, spawnX, spawnY);
         }
-        this.unitManager.addUnit(unitType, spawnX, spawnY);
 
         // 2. Apply buff to selected unit (using the unit stored in selection)
         const buffEffect = this.selectedRewards.buff.effectData;
@@ -2270,6 +2536,30 @@ class BattleScene extends Phaser.Scene {
         if (magicEffect) {
             magicEffect.effect();
             this.showFloatingText(`${magicEffect.name} Acquired!`, 400, 200, '#9932cc');
+            
+            // Track the buff for persistence and display
+            if (magicEffect.buffType) {
+                // Check if we already have a buff of this type (for stacking)
+                const existingBuff = this.magicBuffs.find(b => b.type === magicEffect.buffType);
+                if (existingBuff && magicEffect.buffType === 'manaCost') {
+                    // For mana cost, multiply the multipliers
+                    existingBuff.value *= magicEffect.buffValue;
+                } else if (existingBuff) {
+                    // For others, add the values
+                    existingBuff.value += magicEffect.buffValue;
+                } else {
+                    // New buff type
+                    this.magicBuffs.push({
+                        type: magicEffect.buffType,
+                        value: magicEffect.buffValue,
+                        name: magicEffect.name,
+                        icon: magicEffect.icon
+                    });
+                }
+                
+                // Update the display
+                this.updateMagicBuffsDisplay();
+            }
         }
 
         // Proceed to next battle
@@ -2283,20 +2573,22 @@ class BattleScene extends Phaser.Scene {
         document.getElementById('ui-panel').classList.remove('hidden');
         document.getElementById('placement-bar').classList.add('hidden');
         
-        // Get current player units to persist
+        // Get current player units to persist with their stat modifications
         const playerUnits = this.unitManager.getPlayerUnits().map(u => ({
             type: u.type,
             x: u.gridX,
-            y: u.gridY
+            y: u.gridY,
+            statModifiers: u.statModifiers || null
         }));
         
         // Increment battle number for next wave
         const nextBattleNumber = this.battleNumber + 1;
         
-        // Restart scene with new battle number and player units
+        // Restart scene with new battle number, player units, and magic buffs
         this.scene.restart({
             battleNumber: nextBattleNumber,
-            placedUnits: playerUnits
+            placedUnits: playerUnits,
+            magicBuffs: this.magicBuffs
         });
     }
 
@@ -2307,7 +2599,7 @@ class BattleScene extends Phaser.Scene {
             this.turnSystem.currentUnit.hasAttacked = true;
             
             this.gridSystem.clearHighlights();
-            this.cancelRangedAttack();
+            this.gridSystem.clearRangedHighlights();
             this.cancelSpell();
             this.turnSystem.nextTurn();
         }
@@ -2315,7 +2607,7 @@ class BattleScene extends Phaser.Scene {
 
     endTurn() {
         if (this.turnSystem.currentUnit && this.turnSystem.currentUnit.isPlayer) {
-            this.cancelRangedAttack();
+            this.gridSystem.clearRangedHighlights();
             this.cancelSpell();
             this.gridSystem.clearHighlights();
             this.turnSystem.nextTurn();
@@ -2325,6 +2617,7 @@ class BattleScene extends Phaser.Scene {
     cancelSpell() {
         if (this.spellSystem.activeSpell) {
             this.spellSystem.clearSpell();
+            this.gridSystem.clearAoePreview();
             this.showFloatingText('Spell cancelled', 400, 300, '#888888');
         }
     }
