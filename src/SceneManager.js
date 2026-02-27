@@ -810,9 +810,23 @@ export class PreGameScene extends Phaser.Scene {
         this.gridGraphics.clear();
         for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
             for (let x = 0; x < CONFIG.GRID_WIDTH; x++) {
-                const color = (x + y) % 2 === 0 ? CONFIG.COLORS.GRASS : CONFIG.COLORS.GRASS_DARK;
-                this.gridGraphics.fillStyle(color, 0.3);
+                const isPlacementZone = x < 2;
+                const baseColor = (x + y) % 2 === 0 ? CONFIG.COLORS.GRASS : CONFIG.COLORS.GRASS_DARK;
+                // Make placement zone brighter
+                const alpha = isPlacementZone ? 0.6 : 0.2;
+                this.gridGraphics.fillStyle(baseColor, alpha);
                 this.gridGraphics.fillRect(x * CONFIG.TILE_SIZE, y * CONFIG.TILE_SIZE, CONFIG.TILE_SIZE - 2, CONFIG.TILE_SIZE - 2);
+                
+                // Add border highlight for placement zone
+                if (isPlacementZone) {
+                    this.gridGraphics.lineStyle(2, 0xA68966, 0.5);
+                    this.gridGraphics.strokeRect(
+                        x * CONFIG.TILE_SIZE + 2,
+                        y * CONFIG.TILE_SIZE + 2,
+                        CONFIG.TILE_SIZE - 4,
+                        CONFIG.TILE_SIZE - 4
+                    );
+                }
             }
         }
     }
@@ -873,7 +887,7 @@ export class PreGameScene extends Phaser.Scene {
             const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);
             const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
             
-            if (gridX >= 0 && gridX < 3 && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
+            if (gridX >= 0 && gridX < 2 && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
                 const isOccupied = this.placedUnits.some(u => u.x === gridX && u.y === gridY);
                 
                 if (!isOccupied) {
@@ -899,10 +913,10 @@ export class PreGameScene extends Phaser.Scene {
             const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);
             const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
             
-            if (gridX >= 0 && gridX < 3 && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
+            if (gridX >= 0 && gridX < 2 && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
                 const isOccupied = this.placedUnits.some(u => u.x === gridX && u.y === gridY);
                 
-                this.gridGraphics.fillStyle(isOccupied ? 0xff0000 : 0x00ff00, 0.4);
+                this.gridGraphics.fillStyle(isOccupied ? 0x9E4A4A : 0x6B8B5B, 0.5);
                 this.gridGraphics.fillRect(
                     gridX * CONFIG.TILE_SIZE + 4,
                     gridY * CONFIG.TILE_SIZE + 4,
