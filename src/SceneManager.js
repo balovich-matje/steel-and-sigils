@@ -72,7 +72,7 @@ export class BattleScene extends Phaser.Scene {
             this.magicBuffs = data.magicBuffs;
             for (const buff of this.magicBuffs) {
                 if (buff.type === 'manaRegen') this.manaRegen += buff.value;
-                if (buff.type === 'manaCost') this.manaCostMultiplier *= buff.value;
+                if (buff.type === 'manaCost') this.manaCostMultiplier = Math.max(0.2, 1 - buff.value); // buff.value is reduction amount (0.2 = 20%)
                 if (buff.type === 'spellPower') this.spellPowerMultiplier += buff.value;
                 if (buff.type === 'spellsPerRound') this.spellsPerRound += buff.value;
                 if (buff.type === 'maxMana') this.maxMana += buff.value;
@@ -828,8 +828,12 @@ export class BattleScene extends Phaser.Scene {
                 effect: () => { this.spellPowerMultiplier = (this.spellPowerMultiplier || 1) + 0.2; } 
             },
             { id: 'spell_efficiency', name: 'Efficient Casting', icon: '⚡', desc: '-20% Mana Cost for all spells', 
-                buffType: 'manaCost', buffValue: 0.8,
-                effect: () => { this.manaCostMultiplier = (this.manaCostMultiplier || 1) * 0.8; } 
+                buffType: 'manaCost', buffValue: 0.2,
+                effect: () => { 
+                    // Flat -20% from base, capped at 80% reduction (0.2 multiplier minimum)
+                    this.manaCostMultiplier = Math.max(0.2, this.manaCostMultiplier - 0.2);
+                },
+                maxStacks: 4
             },
             { id: 'mana_restore', name: 'Mana Surge', icon: '✨', desc: 'Fully restore mana now & +20 max', 
                 buffType: 'maxMana', buffValue: 20,
@@ -851,9 +855,14 @@ export class BattleScene extends Phaser.Scene {
             }
         ];
         
-        // Filter out unique buffs that are already owned
+        // Filter out unique buffs that are already owned, and capped buffs
         const availableOptions = allMagicOptions.filter(opt => {
             if (opt.unique && ownedBuffTypes.has(opt.buffType)) return false;
+            // Check for max stacks (like mana cost reduction capped at 4)
+            if (opt.maxStacks) {
+                const existingBuff = this.magicBuffs.find(b => b.type === opt.buffType);
+                if (existingBuff && existingBuff.value >= opt.maxStacks * opt.buffValue) return false;
+            }
             return true;
         });
         
@@ -1187,7 +1196,8 @@ export class BattleScene extends Phaser.Scene {
             if (magicEffect.buffType) {
                 const existingBuff = this.magicBuffs.find(b => b.type === magicEffect.buffType);
                 if (existingBuff && magicEffect.buffType === 'manaCost') {
-                    existingBuff.value *= magicEffect.buffValue;
+                    // Flat addition for mana cost reduction (capped at 0.8 = 80%)
+                    existingBuff.value = Math.min(0.8, existingBuff.value + magicEffect.buffValue);
                 } else if (existingBuff && magicEffect.buffType === 'maxMana') {
                     existingBuff.value += magicEffect.buffValue;
                 } else if (existingBuff) {
