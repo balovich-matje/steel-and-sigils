@@ -170,6 +170,24 @@ export class BattleScene extends Phaser.Scene {
 
         // Make scene accessible globally for UI buttons
         window.gameScene = this;
+
+        // Keyboard controls
+        this.input.keyboard.on('keydown-S', () => {
+            this.openSpellBook();
+        });
+        
+        this.input.keyboard.on('keydown-E', () => {
+            if (this.turnSystem.currentUnit && this.turnSystem.currentUnit.isPlayer) {
+                this.endTurn();
+            }
+        });
+        
+        this.input.keyboard.on('keydown-ESC', () => {
+            if (this.spellSystem.activeSpell) {
+                this.spellSystem.clearSpell();
+                this.uiManager.showFloatingText('Spell cancelled', 400, 300, '#A68966');
+            }
+        });
     }
 
     createEnemyUnits() {

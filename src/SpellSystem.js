@@ -80,13 +80,12 @@ export class SpellSystem {
                 this.executeTileSpell(spell, gridX, gridY);
                 break;
             case 'enemy':
-                if (unit && !unit.isPlayer) {
-                    // Check if this is an AoE spell
-                    if (spell.effect === 'aoeDamage' || spell.effect === 'iceStorm' || spell.effect === 'meteor') {
-                        this.executeTileSpell(spell, gridX, gridY);
-                    } else {
-                        this.executeUnitSpell(spell, unit);
-                    }
+                // Check if this is an AoE spell - can be cast on any tile
+                if (spell.effect === 'aoeDamage' || spell.effect === 'iceStorm' || spell.effect === 'meteor') {
+                    this.executeTileSpell(spell, gridX, gridY);
+                } else if (unit && !unit.isPlayer) {
+                    // Single target spells need an enemy unit
+                    this.executeUnitSpell(spell, unit);
                 }
                 break;
             case 'ally':
