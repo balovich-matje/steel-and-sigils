@@ -279,7 +279,9 @@ export class UnitManager {
         
         if (hasImage) {
             unit.sprite = this.scene.add.image(x, y, imageKey);
-            unit.sprite.setDisplaySize(40, 40);
+            // Scale up by 1.8x while preserving original aspect ratio
+            unit.sprite.setScale(1.8);
+            unit.sprite.setOrigin(0.5, 0.8); // Center bottom so feet are on the tile
         } else {
             unit.sprite = this.scene.add.text(
                 x, y,
@@ -510,7 +512,6 @@ export class TurnSystem {
             html += `
                 <div class="initiative-unit ${activeClass}">
                     <div class="unit-emoji">${unit.emoji}</div>
-                    <div class="unit-init">${unit.initiative}</div>
                 </div>
             `;
         });
