@@ -279,9 +279,9 @@ export class UnitManager {
         
         if (hasImage) {
             unit.sprite = this.scene.add.image(x, y, imageKey);
-            // Scale up by 1.8x while preserving original aspect ratio
-            unit.sprite.setScale(1.8);
-            unit.sprite.setOrigin(0.5, 0.8); // Center bottom so feet are on the tile
+            // Scale to max 1.2x of tile size while preserving original aspect ratio
+            unit.sprite.setScale(1.2);
+            unit.sprite.setOrigin(0.5, 1.0); // Bottom center so feet are on the tile
         } else {
             unit.sprite = this.scene.add.text(
                 x, y,
