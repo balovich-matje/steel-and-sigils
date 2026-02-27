@@ -1,9 +1,9 @@
 ---
-name: rogues-of-might-and-magic
+name: steel-and-sigils
 description: Browser-based turn-based tactical RPG inspired by Heroes of Might and Magic 5. Built with Phaser 3, ES6 modules, vanilla JavaScript. Use when working on unit systems, spell mechanics, turn-based combat, UI components, buff/debuff systems, or adding new content (units, spells, enemies).
 ---
 
-# Rogues of Might and Magic - Development Skill
+# Steel and Sigils - Development Skill
 
 ## Project Overview
 

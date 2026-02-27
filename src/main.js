@@ -1,5 +1,5 @@
 // ============================================
-// MAIN ENTRY POINT - Rogues of Might and Magic
+// MAIN ENTRY POINT - Steel and Sigils
 // ============================================
 
 import { CONFIG } from './GameConfig.js';
