@@ -271,6 +271,8 @@ export class UnitManager {
         
         const x = gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
         const y = gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        // For images: position bottom 5px above tile bottom
+        const yBottom = (gridY + 1) * CONFIG.TILE_SIZE - 5;
         
         // Check if unit has an image and if it's loaded
         const template = UNIT_TYPES[type];
@@ -278,7 +280,7 @@ export class UnitManager {
         const hasImage = imageKey && this.scene.textures.exists(imageKey);
         
         if (hasImage) {
-            unit.sprite = this.scene.add.image(x, y, imageKey);
+            unit.sprite = this.scene.add.image(x, yBottom, imageKey);
             // Scale image to fit within tile size (64px) while preserving aspect ratio
             const texture = this.scene.textures.get(imageKey);
             const srcWidth = texture.getSourceImage().width;
