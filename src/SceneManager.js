@@ -991,7 +991,10 @@ export class BattleScene extends Phaser.Scene {
             card.innerHTML = `
                 <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
                 <div style="color: #A68966; font-weight: bold;">${unit.name}</div>
-                <div style="font-size: 11px; color: #B8A896;">HP: ${unit.health}/${unit.maxHealth}</div>
+                <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
+                    HP: ${unit.health}/${unit.maxHealth} | DMG: ${unit.damage}<br>
+                    MOV: ${unit.moveRange} | INIT: ${unit.initiative}
+                </div>
             `;
             
             card.onclick = () => {
@@ -1055,7 +1058,10 @@ export class BattleScene extends Phaser.Scene {
             card.innerHTML = `
                 <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
                 <div style="color: #D4A574; font-weight: bold;">${unit.name}</div>
-                <div style="font-size: 11px; color: #B8A896;">HP: ${unit.health}/${unit.maxHealth}</div>
+                <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
+                    HP: ${unit.health}/${unit.maxHealth} | DMG: ${unit.damage}<br>
+                    MOV: ${unit.moveRange} | INIT: ${unit.initiative}
+                </div>
             `;
             
             card.onclick = () => {
