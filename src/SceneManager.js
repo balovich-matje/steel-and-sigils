@@ -30,6 +30,8 @@ export class BattleScene extends Phaser.Scene {
         this.magicBuffs = [];
         this.selectedUnit = null;
         this.selectedRewards = { unit: null, buff: null, magic: null };
+        this.hasLootGoblin = false;
+        this.lootGoblinReward = false;
     }
 
     preload() {
@@ -204,6 +206,14 @@ export class BattleScene extends Phaser.Scene {
     }
 
     createEnemyUnits() {
+        // Check if this is a boss wave (every 5 rounds)
+        const isBossWave = this.battleNumber % 5 === 0;
+        
+        if (isBossWave) {
+            this.createBossWave();
+            return;
+        }
+        
         const totalPoints = 1000 + (this.battleNumber - 1) * 250;
         const enemyTypes = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER'];
         
@@ -245,6 +255,70 @@ export class BattleScene extends Phaser.Scene {
             );
         }
     }
+    
+    createBossWave() {
+        // Boss wave: Spawn a single powerful boss
+        const bossTypes = ['OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN'];
+        
+        // Loot Goblin has reduced spawn chance (30% chance if rolled, otherwise 50/50 between the other two)
+        let selectedBoss;
+        const roll = Math.random();
+        if (roll < 0.3) {
+            selectedBoss = 'LOOT_GOBLIN';
+        } else if (roll < 0.65) {
+            selectedBoss = 'OGRE_CHIEFTAIN';
+        } else {
+            selectedBoss = 'ORC_SHAMAN_KING';
+        }
+        
+        const availablePositions = this.getEnemySpawnPositions();
+        // Filter positions that can fit 2x2 bosses (need at least 2 columns from right edge)
+        const validPositions = availablePositions.filter(pos => {
+            const template = UNIT_TYPES[selectedBoss];
+            const size = template.bossSize || 1;
+            return pos.x <= CONFIG.GRID_WIDTH - size && pos.y <= CONFIG.GRID_HEIGHT - size;
+        });
+        
+        if (validPositions.length === 0) {
+            // Fallback to normal wave if no valid positions
+            this.uiManager.showFloatingText(
+                `Battle ${this.battleNumber} - No space for boss!`,
+                320, 100, '#ff0000'
+            );
+            return;
+        }
+        
+        // Sort by x (prefer right side) and pick a position
+        validPositions.sort((a, b) => b.x - a.x);
+        const pos = validPositions[0];
+        
+        const boss = this.unitManager.addUnit(selectedBoss, pos.x, pos.y);
+        
+        if (boss) {
+            // Scale boss stats based on battle number
+            const statMultiplier = 1 + (this.battleNumber - 1) * 0.1;
+            boss.maxHealth = Math.floor(boss.maxHealth * statMultiplier);
+            boss.health = boss.maxHealth;
+            boss.damage = Math.floor(boss.damage * statMultiplier);
+            boss.updateHealthBar();
+            
+            // Mark this battle as having a loot goblin for special reward
+            this.hasLootGoblin = (selectedBoss === 'LOOT_GOBLIN');
+            
+            // Show boss announcement
+            const bossName = UNIT_TYPES[selectedBoss].name;
+            const bossEmoji = UNIT_TYPES[selectedBoss].emoji;
+            
+            this.uiManager.showFloatingText(
+                `👑 BOSS WAVE! 👑`,
+                320, 80, '#FFD700'
+            );
+            this.uiManager.showFloatingText(
+                `${bossEmoji} ${bossName} Appears!`,
+                320, 120, '#ff4444'
+            );
+        }
+    }
 
     getEnemySpawnPositions() {
         const positions = [];
@@ -257,7 +331,8 @@ export class BattleScene extends Phaser.Scene {
                 }
             }
         }
-        return positions.sort(() => 0.5 - Math.random());
+        // Sort by x descending (prefer right side for bosses)
+        return positions.sort((a, b) => b.x - a.x);
     }
 
     regenerateMana() {
@@ -659,6 +734,18 @@ export class BattleScene extends Phaser.Scene {
             this.showVictoryScreen(false);
         }
     }
+    
+    // Check if loot goblin was killed (for special reward)
+    wasLootGoblinKilled() {
+        // Check if this battle had a loot goblin that is now dead
+        // We need to track this differently since the unit is removed from alive list
+        // For now, we check if hasLootGoblin was set and there are no loot goblins in enemy units
+        if (!this.hasLootGoblin) return false;
+        const lootGoblins = this.unitManager.units.filter(u => u.type === 'LOOT_GOBLIN');
+        const aliveLootGoblins = lootGoblins.filter(u => !u.isDead && u.health > 0);
+        // If there was a loot goblin but none are alive now, it was killed
+        return lootGoblins.length > 0 && aliveLootGoblins.length === 0;
+    }
 
     showVictoryScreen(playerWon) {
         const victoryScreen = document.getElementById('victory-screen');
@@ -669,13 +756,23 @@ export class BattleScene extends Phaser.Scene {
         victoryText.style.color = playerWon ? '#A68966' : '#9E4A4A';
 
         if (playerWon) {
+            // Check for Loot Goblin special reward
+            this.lootGoblinReward = this.wasLootGoblinKilled();
+            
             const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
             this.selectedRewards = { 
                 unit: canGetNewUnit ? null : { id: 'skipped', effectData: null }, 
                 buff: null, 
                 magic: null 
             };
-            this.generateRewardChoices();
+            
+            // If loot goblin was killed, show special reward screen first
+            if (this.lootGoblinReward) {
+                this.showLootGoblinReward();
+            } else {
+                this.generateRewardChoices();
+            }
+            
             confirmBtn.style.display = 'block';
             document.getElementById('rewards-container').style.display = 'flex';
             document.getElementById('defeat-message').style.display = 'none';
@@ -689,6 +786,175 @@ export class BattleScene extends Phaser.Scene {
         }
 
         victoryScreen.classList.remove('hidden');
+    }
+    
+    // Show special Loot Goblin reward - choice of 3 unit buffs
+    showLootGoblinReward() {
+        const rewardsContainer = document.getElementById('rewards-container');
+        
+        // Clear existing content
+        rewardsContainer.innerHTML = '';
+        
+        // Create loot goblin reward section
+        const lootSection = document.createElement('div');
+        lootSection.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 20px;';
+        lootSection.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 10px;">💰</div>
+            <div style="color: #FFD700; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">
+                Loot Goblin Defeated!
+            </div>
+            <div style="color: #A68966; font-size: 16px; margin-top: 10px;">
+                Choose one of these powerful buffs for your army:
+            </div>
+            <div style="margin-top: 20px; color: #4CAF50;">
+                ✨ 3 buff choices available! ✨
+            </div>
+        `;
+        rewardsContainer.appendChild(lootSection);
+        
+        // Create buff selection container
+        const buffContainer = document.createElement('div');
+        buffContainer.id = 'loot-goblin-buffs';
+        buffContainer.className = 'reward-column';
+        buffContainer.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;';
+        rewardsContainer.appendChild(buffContainer);
+        
+        // Generate 3 random buffs (from standard buffs)
+        const standardBuffs = [
+            { 
+                id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage', 
+                effect: (unit) => { 
+                    unit.damage += 10; 
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
+                } 
+            },
+            { 
+                id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP', 
+                effect: (unit) => { 
+                    unit.maxHealth += 30; unit.health += 30;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
+                    unit.updateHealthBar();
+                } 
+            },
+            { 
+                id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement', 
+                effect: (unit) => { 
+                    unit.moveRange += 1; 
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                } 
+            },
+            { 
+                id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage', 
+                effect: (unit) => { 
+                    unit.initiative += 5; unit.damage += 5; 
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+                } 
+            },
+            { 
+                id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)', 
+                effect: (unit) => { 
+                    if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2; 
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.rangedRange = unit.rangedRange;
+                } 
+            },
+            { 
+                id: 'legendary', name: 'Legendary Status', icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV', 
+                effect: (unit) => { 
+                    unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                    unit.updateHealthBar();
+                } 
+            }
+        ];
+        
+        const buffOptions = standardBuffs.sort(() => 0.5 - Math.random()).slice(0, 3);
+        
+        buffOptions.forEach(buff => {
+            const card = this.uiManager.createRewardCard('buff', buff.id, `
+                <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
+                <div style="color: #6B8B5B; font-weight: bold;">${buff.name}</div>
+                <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
+            `, buff);
+            
+            card.onclick = () => {
+                // Show unit selection for this buff
+                this.showBuffTargetSelectionForLootGoblin(buff, card);
+            };
+            
+            buffContainer.appendChild(card);
+        });
+        
+        // Skip button
+        const skipBtn = document.createElement('button');
+        skipBtn.className = 'spellbook-close';
+        skipBtn.style.cssText = 'grid-column: 1 / -1; margin-top: 20px;';
+        skipBtn.textContent = 'Skip Bonus (Continue to Normal Rewards)';
+        skipBtn.onclick = () => {
+            this.lootGoblinReward = false;
+            this.generateRewardChoices();
+        };
+        rewardsContainer.appendChild(skipBtn);
+    }
+    
+    // Show unit selection for Loot Goblin buff
+    showBuffTargetSelectionForLootGoblin(buffData, buffCard) {
+        const playerUnits = this.unitManager.getPlayerUnits();
+        if (playerUnits.length === 0) return;
+        
+        const modal = document.createElement('div');
+        modal.id = 'loot-goblin-target-modal';
+        modal.className = 'spellbook-modal';
+        modal.style.cssText = 'display: flex; z-index: 2000;';
+        modal.innerHTML = `
+            <div class="spellbook-content" style="max-width: 500px;">
+                <div class="spellbook-header">
+                    <h2>💰 Select Unit to Buff</h2>
+                    <p style="color: #FFD700;">${buffData.icon} ${buffData.name}</p>
+                    <p style="color: #8B7355; font-size: 12px;">${buffData.desc}</p>
+                </div>
+                <div class="spell-grid" id="loot-goblin-target-grid"></div>
+                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">Cancel</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const grid = document.getElementById('loot-goblin-target-grid');
+        playerUnits.forEach(unit => {
+            const card = document.createElement('div');
+            card.className = 'spell-card';
+            card.innerHTML = `
+                <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
+                <div style="color: #A68966; font-weight: bold;">${unit.name}</div>
+                <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
+                    HP: ${unit.health}/${unit.maxHealth} | DMG: ${unit.damage}<br>
+                    MOV: ${unit.moveRange} | INIT: ${unit.initiative}
+                </div>
+            `;
+            
+            card.onclick = () => {
+                modal.remove();
+                
+                // Apply the buff
+                buffData.effect(unit);
+                this.uiManager.showFloatingText(`${buffData.name} Applied!`, 400, 300, '#FFD700');
+                
+                // Mark loot goblin reward as handled and show normal rewards
+                this.lootGoblinReward = false;
+                this.generateRewardChoices();
+            };
+            
+            grid.appendChild(card);
+        });
     }
 
     // Reward system

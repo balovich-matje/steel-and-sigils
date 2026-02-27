@@ -211,6 +211,69 @@ const UNIT_TYPES = {
         initiative: 12,
         isPlayer: false,
         cost: 200
+    },
+    // Boss Units
+    OGRE_CHIEFTAIN: {
+        name: 'Ogre Chieftain',
+        emoji: '👑',
+        image: null, // Uses emoji
+        health: 500,
+        maxHealth: 500,
+        damage: 80,
+        moveRange: 3,
+        initiative: 8,
+        isPlayer: false,
+        cost: 1500,
+        isBoss: true,
+        bossSize: 2, // 2x2 cells
+        passive: {
+            name: 'Brutal Regeneration',
+            description: 'Regenerates 10% max HP per turn. Attacks slow enemies by 0.5 MOV for 2 turns.',
+            effect: 'regenerationAndSlow',
+            value: 0.1
+        }
+    },
+    ORC_SHAMAN_KING: {
+        name: 'Orc Shaman King',
+        emoji: '🔮',
+        image: null, // Uses emoji
+        health: 350,
+        maxHealth: 350,
+        damage: 40,
+        moveRange: 4,
+        rangedRange: 6,
+        initiative: 14,
+        isPlayer: false,
+        cost: 1200,
+        isBoss: true,
+        bossSize: 2, // 2x2 cells
+        passive: {
+            name: 'Arcane Mastery',
+            description: 'Casts Chain Lightning and Fireball spells. Keeps distance from enemies.',
+            effect: 'spellcaster',
+            spells: ['chain_lightning', 'fireball']
+        }
+    },
+    LOOT_GOBLIN: {
+        name: 'Loot Goblin',
+        emoji: '💰',
+        image: null, // Uses emoji
+        health: 150,
+        maxHealth: 150,
+        damage: 50,
+        moveRange: 8,
+        rangedRange: 4,
+        initiative: 18,
+        isPlayer: false,
+        cost: 800,
+        isBoss: true,
+        bossSize: 1, // 1x1 cell
+        isRare: true, // Reduced spawn chance
+        passive: {
+            name: 'Hit and Run',
+            description: 'Returns to starting position after attacking. Drops legendary loot on death.',
+            effect: 'hitAndRun'
+        }
     }
 };
 

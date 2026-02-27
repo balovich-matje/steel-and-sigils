@@ -156,19 +156,26 @@ export class GridSystem {
         this.highlightGraphics.clear();
         this.validMoves = [];
         this.selectedUnit = unit;
+        
+        const bossSize = unit.bossSize || 1;
 
-        // Highlight selected unit tile
+        // Highlight selected unit tiles (all tiles for 2x2 units)
         this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_SELECTED, 0.5);
-        this.highlightGraphics.fillRect(
-            unit.gridX * CONFIG.TILE_SIZE + 2,
-            unit.gridY * CONFIG.TILE_SIZE + 2,
-            CONFIG.TILE_SIZE - 4,
-            CONFIG.TILE_SIZE - 4
-        );
+        for (let dy = 0; dy < bossSize; dy++) {
+            for (let dx = 0; dx < bossSize; dx++) {
+                this.highlightGraphics.fillRect(
+                    (unit.gridX + dx) * CONFIG.TILE_SIZE + 2,
+                    (unit.gridY + dy) * CONFIG.TILE_SIZE + 2,
+                    CONFIG.TILE_SIZE - 4,
+                    CONFIG.TILE_SIZE - 4
+                );
+            }
+        }
 
         if (!unit.canMove()) return;
 
         // Calculate valid movement positions (BFS)
+        // For 2x2 units, we check if the entire 2x2 area is free
         const queue = [{ x: unit.gridX, y: unit.gridY, dist: 0 }];
         const visited = new Set([`${unit.gridX},${unit.gridY}`]);
 
@@ -176,16 +183,21 @@ export class GridSystem {
             const { x, y, dist } = queue.shift();
 
             if (dist > 0 && dist <= unit.moveRange) {
-                const targetUnit = this.scene.unitManager.getUnitAt(x, y);
-                if (!targetUnit) {
+                // Check if the entire boss area is free
+                if (this.scene.unitManager.isValidPlacement(x, y, bossSize)) {
                     this.validMoves.push({ x, y });
-                    this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_MOVE, 0.4);
-                    this.highlightGraphics.fillRect(
-                        x * CONFIG.TILE_SIZE + 4,
-                        y * CONFIG.TILE_SIZE + 4,
-                        CONFIG.TILE_SIZE - 8,
-                        CONFIG.TILE_SIZE - 8
-                    );
+                    // Highlight all tiles of the boss area
+                    for (let dy = 0; dy < bossSize; dy++) {
+                        for (let dx = 0; dx < bossSize; dx++) {
+                            this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_MOVE, 0.4);
+                            this.highlightGraphics.fillRect(
+                                (x + dx) * CONFIG.TILE_SIZE + 4,
+                                (y + dy) * CONFIG.TILE_SIZE + 4,
+                                CONFIG.TILE_SIZE - 8,
+                                CONFIG.TILE_SIZE - 8
+                            );
+                        }
+                    }
                 }
             }
 
@@ -196,8 +208,8 @@ export class GridSystem {
                 ];
 
                 for (const n of neighbors) {
-                    if (n.x >= 0 && n.x < CONFIG.GRID_WIDTH &&
-                        n.y >= 0 && n.y < CONFIG.GRID_HEIGHT &&
+                    if (n.x >= 0 && n.x <= CONFIG.GRID_WIDTH - bossSize &&
+                        n.y >= 0 && n.y <= CONFIG.GRID_HEIGHT - bossSize &&
                         !visited.has(`${n.x},${n.y}`)) {
                         visited.add(`${n.x},${n.y}`);
                         queue.push({ x: n.x, y: n.y, dist: dist + 1 });
@@ -206,20 +218,51 @@ export class GridSystem {
             }
         }
 
-        // Highlight attackable enemies
+        // Highlight attackable enemies (check adjacency to any part of enemy)
         const enemies = this.scene.unitManager.getEnemyUnits();
         for (const enemy of enemies) {
-            const dist = Math.abs(enemy.gridX - unit.gridX) + Math.abs(enemy.gridY - unit.gridY);
+            const dist = this.getDistanceBetweenUnits(unit, enemy);
             if (dist === 1) {
-                this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_ATTACK, 0.5);
-                this.highlightGraphics.fillRect(
-                    enemy.gridX * CONFIG.TILE_SIZE + 4,
-                    enemy.gridY * CONFIG.TILE_SIZE + 4,
-                    CONFIG.TILE_SIZE - 8,
-                    CONFIG.TILE_SIZE - 8
-                );
+                // Highlight all tiles of attackable enemy
+                const enemySize = enemy.bossSize || 1;
+                for (let dy = 0; dy < enemySize; dy++) {
+                    for (let dx = 0; dx < enemySize; dx++) {
+                        this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_ATTACK, 0.5);
+                        this.highlightGraphics.fillRect(
+                            (enemy.gridX + dx) * CONFIG.TILE_SIZE + 4,
+                            (enemy.gridY + dy) * CONFIG.TILE_SIZE + 4,
+                            CONFIG.TILE_SIZE - 8,
+                            CONFIG.TILE_SIZE - 8
+                        );
+                    }
+                }
             }
         }
+    }
+    
+    // Calculate minimum distance between two units (accounting for 2x2)
+    getDistanceBetweenUnits(unitA, unitB) {
+        const sizeA = unitA.bossSize || 1;
+        const sizeB = unitB.bossSize || 1;
+        
+        if (sizeA === 1 && sizeB === 1) {
+            return Math.abs(unitB.gridX - unitA.gridX) + Math.abs(unitB.gridY - unitA.gridY);
+        }
+        
+        // For multi-tile units, find minimum distance between any occupied tiles
+        let minDist = Infinity;
+        for (let dyA = 0; dyA < sizeA; dyA++) {
+            for (let dxA = 0; dxA < sizeA; dxA++) {
+                for (let dyB = 0; dyB < sizeB; dyB++) {
+                    for (let dxB = 0; dxB < sizeB; dxB++) {
+                        const dist = Math.abs((unitB.gridX + dxB) - (unitA.gridX + dxA)) + 
+                                     Math.abs((unitB.gridY + dyB) - (unitA.gridY + dyA));
+                        minDist = Math.min(minDist, dist);
+                    }
+                }
+            }
+        }
+        return minDist;
     }
 
     highlightRangedAttackRange(unit) {
@@ -262,5 +305,23 @@ export class GridSystem {
             return false;
         }
         return !this.scene.unitManager.getUnitAt(x, y);
+    }
+    
+    // Check if a position is valid for a unit of given size
+    isValidPlacement(x, y, bossSize = 1) {
+        for (let dy = 0; dy < bossSize; dy++) {
+            for (let dx = 0; dx < bossSize; dx++) {
+                const checkX = x + dx;
+                const checkY = y + dy;
+                if (checkX < 0 || checkX >= CONFIG.GRID_WIDTH || 
+                    checkY < 0 || checkY >= CONFIG.GRID_HEIGHT) {
+                    return false;
+                }
+                if (this.scene.unitManager.getUnitAt(checkX, checkY)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

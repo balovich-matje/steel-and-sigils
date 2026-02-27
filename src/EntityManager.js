@@ -2,7 +2,7 @@
 // ENTITY MANAGER - Units, Unit Management, Turn System
 // ============================================
 
-import { CONFIG } from './GameConfig.js';
+import { CONFIG, SPELLS } from './GameConfig.js';
 
 // Note: UNIT_TYPES is available globally from units.js (loaded as script tag)
 
@@ -31,6 +31,21 @@ export class Unit {
         this.healthBar = null;
         this.isDead = false;
         
+        // Boss properties
+        this.isBoss = template.isBoss || false;
+        this.bossSize = template.bossSize || 1; // 1 for normal, 2 for 2x2
+        this.isRare = template.isRare || false;
+        
+        // For 2x2 units, store all occupied tile positions (relative to top-left)
+        this.occupiedTiles = [];
+        if (this.bossSize > 1) {
+            for (let dy = 0; dy < this.bossSize; dy++) {
+                for (let dx = 0; dx < this.bossSize; dx++) {
+                    this.occupiedTiles.push({ x: dx, y: dy });
+                }
+            }
+        }
+        
         // Buff/debuff tracking
         this.hasteRounds = 0;
         this.shieldRounds = 0;
@@ -41,11 +56,39 @@ export class Unit {
         this.regenerateRounds = 0;
         this.regenerateAmount = 0;
         
+        // Ogre Chieftain slow debuff tracking
+        this.slowDebuffRounds = 0;
+        this.slowDebuffValue = 0;
+        
         // Permanent stat modifiers from rewards
         this.statModifiers = null;
         
         // Berserker Bloodlust stacks (permanent damage increase from kills)
         this.bloodlustStacks = 0;
+    }
+    
+    // Get all grid positions occupied by this unit (for 2x2 bosses)
+    getOccupiedPositions() {
+        if (this.bossSize === 1) {
+            return [{ x: this.gridX, y: this.gridY }];
+        }
+        const positions = [];
+        for (const offset of this.occupiedTiles) {
+            positions.push({
+                x: this.gridX + offset.x,
+                y: this.gridY + offset.y
+            });
+        }
+        return positions;
+    }
+    
+    // Check if this unit occupies a specific tile
+    occupiesTile(x, y) {
+        if (this.bossSize === 1) {
+            return this.gridX === x && this.gridY === y;
+        }
+        return x >= this.gridX && x < this.gridX + this.bossSize &&
+               y >= this.gridY && y < this.gridY + this.bossSize;
     }
 
     canMove() {
@@ -83,6 +126,22 @@ export class Unit {
         
         this.health = Math.max(0, this.health - amount);
         this.updateHealthBar();
+        
+        // Ogre Chieftain: Apply slow debuff on attack (if attacker is Ogre Chieftain)
+        if (attacker && attacker.type === 'OGRE_CHIEFTAIN' && this.health > 0) {
+            // Remove existing slow if any (doesn't stack)
+            if (this.slowDebuffRounds > 0) {
+                this.moveRange += this.slowDebuffValue;
+            }
+            // Apply new slow (0.5 movement reduction for 2 turns)
+            this.slowDebuffValue = 0.5;
+            this.moveRange = Math.max(1, this.moveRange - this.slowDebuffValue);
+            this.slowDebuffRounds = 2;
+            
+            if (this.scene && this.scene.uiManager) {
+                this.scene.uiManager.showBuffText(this, 'SLOWED!', '#8B4513');
+            }
+        }
         
         if (this.health <= 0) {
             // Track that this unit was killed by attacker (for Bloodlust)
@@ -164,9 +223,18 @@ export class Unit {
         this.hasAttacked = false;
         
         // Store starting position for Rogue's hit-and-run
-        if (this.type === 'ROGUE' || this.type === 'ORC_ROGUE') {
+        if (this.type === 'ROGUE' || this.type === 'ORC_ROGUE' || this.type === 'LOOT_GOBLIN') {
             this.turnStartX = this.gridX;
             this.turnStartY = this.gridY;
+        }
+        
+        // Ogre Chieftain: Regenerate 10% max HP at start of turn
+        if (this.type === 'OGRE_CHIEFTAIN' && !this.isDead) {
+            const regenAmount = Math.floor(this.maxHealth * 0.1);
+            this.heal(regenAmount);
+            if (this.scene && this.scene.uiManager) {
+                this.scene.uiManager.showFloatingText(`+${regenAmount} HP`, this.sprite.x, this.sprite.y - 60, '#4CAF50');
+            }
         }
         
         // Handle regenerate healing at start of turn (permanent buffs have rounds = -1)
@@ -208,6 +276,15 @@ export class Unit {
                 this.moveRange = UNIT_TYPES[this.type].moveRange;
             }
         }
+        
+        // Ogre Chieftain slow debuff decay
+        if (this.slowDebuffRounds > 0) {
+            this.slowDebuffRounds--;
+            if (this.slowDebuffRounds === 0) {
+                this.moveRange += this.slowDebuffValue;
+                this.slowDebuffValue = 0;
+            }
+        }
     }
 
     getDisplayStats() {
@@ -222,7 +299,8 @@ export class Unit {
         else if (this.blessRounds === -1) buffs.push(`Bless(∞)`);
         if (this.regenerateRounds > 0) buffs.push(`Regen(${this.regenerateRounds})`);
         else if (this.regenerateRounds === -1) buffs.push(`Regen(∞)`);
-        if (this.iceSlowRounds > 0) buffs.push(`Slow(${this.iceSlowRounds})`);
+        if (this.iceSlowRounds > 0) buffs.push(`IceSlow(${this.iceSlowRounds})`);
+        if (this.slowDebuffRounds > 0) buffs.push(`Crippled(${this.slowDebuffRounds})`);
         
         const buffDisplay = buffs.length > 0 ? `<br>✨ ${buffs.join(', ')}` : '';
         
@@ -239,7 +317,10 @@ export class Unit {
         
         const specialDisplay = template.special ? `<br>⚡ Special: Hit & Run` : '';
         
-        return `${this.emoji} ${this.name}<br>
+        // Boss indicator
+        const bossDisplay = this.isBoss ? `<br>👑 BOSS (Size: ${this.bossSize}x${this.bossSize})` : '';
+        
+        return `${this.emoji} ${this.name}${bossDisplay}<br>
                 HP: ${this.health}/${this.maxHealth}<br>
                 DMG: ${Math.floor(this.damage * this.blessValue)} | MOV: ${this.moveRange}${rangedInfo}<br>
                 INIT: ${this.initiative}${buffDisplay}${passiveDisplay}${specialDisplay}`;
@@ -267,34 +348,52 @@ export class UnitManager {
     }
 
     addUnit(type, gridX, gridY) {
+        const template = UNIT_TYPES[type];
+        const bossSize = template.bossSize || 1;
+        
+        // Check if placement is valid (especially for 2x2 units)
+        if (!this.isValidPlacement(gridX, gridY, bossSize)) {
+            return null;
+        }
+        
         const unit = new Unit(type, gridX, gridY, this.scene);
         
-        const x = gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
-        const y = gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
-        // For images: position bottom 5px above tile bottom
-        const yBottom = (gridY + 1) * CONFIG.TILE_SIZE - 5;
+        // For 2x2 units, center the sprite over the 2x2 area
+        let spriteX, spriteY;
+        if (bossSize > 1) {
+            // Center of the 2x2 block
+            spriteX = gridX * CONFIG.TILE_SIZE + (bossSize * CONFIG.TILE_SIZE) / 2;
+            spriteY = gridY * CONFIG.TILE_SIZE + (bossSize * CONFIG.TILE_SIZE) / 2;
+        } else {
+            spriteX = gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+            spriteY = gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        }
+        // For images: position bottom 5px above tile bottom (adjusted for boss size)
+        const yBottom = (gridY + bossSize) * CONFIG.TILE_SIZE - 5;
         
         // Check if unit has an image and if it's loaded
-        const template = UNIT_TYPES[type];
         const imageKey = template.image ? type.toLowerCase() + '_img' : null;
         const hasImage = imageKey && this.scene.textures.exists(imageKey);
         
         if (hasImage) {
-            unit.sprite = this.scene.add.image(x, yBottom, imageKey);
+            unit.sprite = this.scene.add.image(spriteX, yBottom, imageKey);
             // Scale image to fit within tile size (64px) while preserving aspect ratio
             const texture = this.scene.textures.get(imageKey);
             const srcWidth = texture.getSourceImage().width;
             const srcHeight = texture.getSourceImage().height;
             // Target: fit within 64px tile, but allow up to 1.3x (83px) for tall units
-            const maxSize = CONFIG.TILE_SIZE * 1.3; // 83px max
+            // For 2x2 bosses, allow larger sprites
+            const maxSize = bossSize > 1 ? CONFIG.TILE_SIZE * bossSize * 1.2 : CONFIG.TILE_SIZE * 1.3;
             const scale = Math.min(maxSize / srcWidth, maxSize / srcHeight);
             unit.sprite.setScale(scale);
             unit.sprite.setOrigin(0.5, 1.0); // Bottom center so feet are on the tile
         } else {
+            // For 2x2 bosses, use larger emoji
+            const fontSize = bossSize > 1 ? '48px' : '36px';
             unit.sprite = this.scene.add.text(
-                x, y,
+                spriteX, spriteY,
                 unit.emoji,
-                { fontSize: '36px', align: 'center' }
+                { fontSize: fontSize, align: 'center' }
             ).setOrigin(0.5);
         }
 
@@ -313,16 +412,21 @@ export class UnitManager {
             const currentUnit = this.scene.turnSystem.currentUnit;
             if (currentUnit && currentUnit.isPlayer && currentUnit.canAttack() && 
                 !unit.isPlayer && !unit.isDead) {
-                const dist = Math.abs(unit.gridX - currentUnit.gridX) + 
-                             Math.abs(unit.gridY - currentUnit.gridY);
+                // For 2x2 bosses, find distance to nearest occupied tile
+                const positions = unit.getOccupiedPositions();
+                let minDist = Infinity;
+                for (const pos of positions) {
+                    const dist = Math.abs(pos.x - currentUnit.gridX) + Math.abs(pos.y - currentUnit.gridY);
+                    minDist = Math.min(minDist, dist);
+                }
                 
                 // Ranged attack
-                if (dist > 1 && dist <= currentUnit.rangedRange && currentUnit.rangedRange > 0) {
+                if (minDist > 1 && minDist <= currentUnit.rangedRange && currentUnit.rangedRange > 0) {
                     this.scene.performRangedAttack(currentUnit, unit);
                     return;
                 }
-                // Melee attack
-                if (dist === 1) {
+                // Melee attack (adjacent to any part of the boss)
+                if (minDist === 1) {
                     this.scene.performAttack(currentUnit, unit);
                     return;
                 }
@@ -336,7 +440,27 @@ export class UnitManager {
     }
 
     getUnitAt(x, y) {
-        return this.units.find(u => u.gridX === x && u.gridY === y && !u.isDead && u.health > 0);
+        return this.units.find(u => u.occupiesTile(x, y) && !u.isDead && u.health > 0);
+    }
+    
+    // Check if a position is valid for placing a unit (considers 2x2 units)
+    isValidPlacement(x, y, bossSize = 1) {
+        for (let dy = 0; dy < bossSize; dy++) {
+            for (let dx = 0; dx < bossSize; dx++) {
+                const checkX = x + dx;
+                const checkY = y + dy;
+                // Check bounds
+                if (checkX < 0 || checkX >= CONFIG.GRID_WIDTH || 
+                    checkY < 0 || checkY >= CONFIG.GRID_HEIGHT) {
+                    return false;
+                }
+                // Check if tile is occupied
+                if (this.getUnitAt(checkX, checkY)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     getPlayerUnits() {
@@ -354,22 +478,24 @@ export class UnitManager {
     updateUnitPosition(unit, newX, newY) {
         unit.gridX = newX;
         unit.gridY = newY;
+        const bossSize = unit.bossSize || 1;
+        
         // Check if this unit uses an image (bottom-origin) or emoji (center-origin)
         const template = UNIT_TYPES[unit.type];
         const imageKey = template.image ? unit.type.toLowerCase() + '_img' : null;
         const hasImage = imageKey && this.scene.textures.exists(imageKey);
         
         if (hasImage) {
-            // Images: position at bottom of tile with 5px gap
+            // Images: position at bottom of tile block with 5px gap
             unit.sprite.setPosition(
-                newX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
-                (newY + 1) * CONFIG.TILE_SIZE - 5
+                newX * CONFIG.TILE_SIZE + (bossSize * CONFIG.TILE_SIZE) / 2,
+                (newY + bossSize) * CONFIG.TILE_SIZE - 5
             );
         } else {
-            // Emoji: position at center of tile
+            // Emoji: position at center of tile block
             unit.sprite.setPosition(
-                newX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
-                newY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2
+                newX * CONFIG.TILE_SIZE + (bossSize * CONFIG.TILE_SIZE) / 2,
+                newY * CONFIG.TILE_SIZE + (bossSize * CONFIG.TILE_SIZE) / 2
             );
         }
         unit.updateHealthBar();
@@ -445,12 +571,18 @@ export class TurnSystem {
 
         if (playerUnits.length === 0) return;
 
+        // Orc Shaman King: Try to cast spells first
+        if (unit.type === 'ORC_SHAMAN_KING') {
+            this.executeShamanKingTurn(playerUnits);
+            return;
+        }
+
         // Find nearest player unit
         let nearest = null;
         let minDist = Infinity;
 
         for (const player of playerUnits) {
-            const dist = Math.abs(player.gridX - unit.gridX) + Math.abs(player.gridY - unit.gridY);
+            const dist = this.getDistanceToUnit(unit, player);
             if (dist < minDist) {
                 minDist = dist;
                 nearest = player;
@@ -460,6 +592,17 @@ export class TurnSystem {
         // Check for ranged attack first (if within range and not adjacent)
         if (unit.rangedRange > 0 && minDist > 1 && minDist <= unit.rangedRange && unit.canAttack()) {
             this.scene.performRangedAttack(unit, nearest);
+            
+            // Loot Goblin hit-and-run
+            if (unit.type === 'LOOT_GOBLIN' && unit.turnStartX !== undefined) {
+                this.scene.time.delayedCall(600, () => {
+                    if (!unit.isDead && unit.health > 0) {
+                        this.scene.uiManager.showBuffText(unit, 'ESCAPED!', '#FFD700');
+                        this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
+                    }
+                });
+            }
+            
             this.scene.time.delayedCall(800, () => this.nextTurn());
             return;
         }
@@ -468,11 +611,13 @@ export class TurnSystem {
         if (minDist === 1) {
             this.scene.performAttack(unit, nearest);
             
-            // Orc Rogue hit-and-run
-            if (unit.type === 'ORC_ROGUE' && unit.turnStartX !== undefined) {
+            // Orc Rogue or Loot Goblin hit-and-run
+            if ((unit.type === 'ORC_ROGUE' || unit.type === 'LOOT_GOBLIN') && unit.turnStartX !== undefined) {
                 this.scene.time.delayedCall(600, () => {
                     if (!unit.isDead && unit.health > 0) {
-                        this.scene.uiManager.showBuffText(unit, 'VANISH!', '#6B5B8B');
+                        const text = unit.type === 'LOOT_GOBLIN' ? 'ESCAPED!' : 'VANISH!';
+                        const color = unit.type === 'LOOT_GOBLIN' ? '#FFD700' : '#6B5B8B';
+                        this.scene.uiManager.showBuffText(unit, text, color);
                         this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
                     }
                 });
@@ -485,7 +630,7 @@ export class TurnSystem {
         // Move towards player - use all available movement
         let movesRemaining = unit.moveRange;
         while (movesRemaining > 0 && unit.canMove()) {
-            const currentDist = Math.abs(nearest.gridX - unit.gridX) + Math.abs(nearest.gridY - unit.gridY);
+            const currentDist = this.getDistanceToUnit(unit, nearest);
             if (currentDist === 1) break;
             
             const dx = Math.sign(nearest.gridX - unit.gridX);
@@ -495,7 +640,7 @@ export class TurnSystem {
             
             if (dx !== 0) {
                 const newX = unit.gridX + dx;
-                if (this.scene.gridSystem.isValidMoveAI(newX, unit.gridY)) {
+                if (this.isValidMoveForUnit(unit, newX, unit.gridY)) {
                     this.scene.moveUnit(unit, newX, unit.gridY);
                     moved = true;
                 }
@@ -503,7 +648,7 @@ export class TurnSystem {
             
             if (!moved && dy !== 0) {
                 const newY = unit.gridY + dy;
-                if (this.scene.gridSystem.isValidMoveAI(unit.gridX, newY)) {
+                if (this.isValidMoveForUnit(unit, unit.gridX, newY)) {
                     this.scene.moveUnit(unit, unit.gridX, newY);
                     moved = true;
                 }
@@ -514,18 +659,20 @@ export class TurnSystem {
         }
 
         // Check if can attack after moving (melee or ranged)
-        const finalDist = Math.abs(nearest.gridX - unit.gridX) + Math.abs(nearest.gridY - unit.gridY);
+        const finalDist = this.getDistanceToUnit(unit, nearest);
         if (unit.canAttack()) {
             if (finalDist === 1) {
                 // Melee attack
                 this.scene.time.delayedCall(400, () => {
                     this.scene.performAttack(unit, nearest);
                     
-                    // Orc Rogue hit-and-run
-                    if (unit.type === 'ORC_ROGUE' && unit.turnStartX !== undefined) {
+                    // Orc Rogue or Loot Goblin hit-and-run
+                    if ((unit.type === 'ORC_ROGUE' || unit.type === 'LOOT_GOBLIN') && unit.turnStartX !== undefined) {
                         this.scene.time.delayedCall(600, () => {
                             if (!unit.isDead && unit.health > 0) {
-                                this.scene.uiManager.showBuffText(unit, 'VANISH!', '#6B5B8B');
+                                const text = unit.type === 'LOOT_GOBLIN' ? 'ESCAPED!' : 'VANISH!';
+                                const color = unit.type === 'LOOT_GOBLIN' ? '#FFD700' : '#6B5B8B';
+                                this.scene.uiManager.showBuffText(unit, text, color);
                                 this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
                             }
                         });
@@ -535,11 +682,276 @@ export class TurnSystem {
                 // Ranged attack after moving
                 this.scene.time.delayedCall(400, () => {
                     this.scene.performRangedAttack(unit, nearest);
+                    
+                    // Loot Goblin hit-and-run
+                    if (unit.type === 'LOOT_GOBLIN' && unit.turnStartX !== undefined) {
+                        this.scene.time.delayedCall(600, () => {
+                            if (!unit.isDead && unit.health > 0) {
+                                this.scene.uiManager.showBuffText(unit, 'ESCAPED!', '#FFD700');
+                                this.scene.unitManager.updateUnitPosition(unit, unit.turnStartX, unit.turnStartY);
+                            }
+                        });
+                    }
                 });
             }
         }
 
         this.scene.time.delayedCall(1200, () => this.nextTurn());
+    }
+    
+    // Calculate distance from a unit to another unit (accounting for 2x2 bosses)
+    getDistanceToUnit(fromUnit, toUnit) {
+        // For normal 1x1 units, use simple Manhattan distance to center
+        if (fromUnit.bossSize === 1 && toUnit.bossSize === 1) {
+            return Math.abs(toUnit.gridX - fromUnit.gridX) + Math.abs(toUnit.gridY - fromUnit.gridY);
+        }
+        
+        // For 2x2 units, find minimum distance between any occupied tiles
+        const fromPositions = fromUnit.getOccupiedPositions();
+        const toPositions = toUnit.getOccupiedPositions();
+        
+        let minDist = Infinity;
+        for (const fromPos of fromPositions) {
+            for (const toPos of toPositions) {
+                const dist = Math.abs(toPos.x - fromPos.x) + Math.abs(toPos.y - fromPos.y);
+                minDist = Math.min(minDist, dist);
+            }
+        }
+        return minDist;
+    }
+    
+    // Check if a move is valid for a unit (accounting for 2x2)
+    isValidMoveForUnit(unit, x, y) {
+        const bossSize = unit.bossSize || 1;
+        for (let dy = 0; dy < bossSize; dy++) {
+            for (let dx = 0; dx < bossSize; dx++) {
+                const checkX = x + dx;
+                const checkY = y + dy;
+                if (!this.scene.gridSystem.isValidMoveAI(checkX, checkY)) {
+                    return false;
+                }
+                // Check if occupied by another unit (not this unit)
+                const otherUnit = this.scene.unitManager.getUnitAt(checkX, checkY);
+                if (otherUnit && otherUnit !== unit) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    // Orc Shaman King AI: Cast spells and keep distance
+    executeShamanKingTurn(playerUnits) {
+        const unit = this.currentUnit;
+        const scene = this.scene;
+        
+        // Find nearest player for reference
+        let nearest = null;
+        let minDist = Infinity;
+        for (const player of playerUnits) {
+            const dist = this.getDistanceToUnit(unit, player);
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = player;
+            }
+        }
+        
+        // Try to cast chain lightning first (if mana available and units clustered)
+        const manaCost = Math.floor(SPELLS.chain_lightning.manaCost * scene.manaCostMultiplier);
+        if (scene.mana >= manaCost && unit.canAttack()) {
+            // Find best target for chain lightning (most enemies in chain range)
+            let bestTarget = null;
+            let maxChains = 0;
+            
+            for (const player of playerUnits) {
+                const dist = this.getDistanceToUnit(unit, player);
+                if (dist <= unit.rangedRange) {
+                    // Count how many other enemies are within chain range (2 tiles)
+                    let chainCount = 0;
+                    for (const other of playerUnits) {
+                        if (other !== player) {
+                            const chainDist = Math.abs(other.gridX - player.gridX) + Math.abs(other.gridY - player.gridY);
+                            if (chainDist <= 2) chainCount++;
+                        }
+                    }
+                    if (chainCount > maxChains) {
+                        maxChains = chainCount;
+                        bestTarget = player;
+                    }
+                }
+            }
+            
+            if (bestTarget && maxChains >= 1) {
+                unit.hasAttacked = true;
+                scene.uiManager.showBuffText(unit, 'CHAIN LIGHTNING!', '#9B59B6');
+                scene.spendMana(manaCost);
+                this.castChainLightning(unit, bestTarget);
+                scene.time.delayedCall(1000, () => this.nextTurn());
+                return;
+            }
+        }
+        
+        // Try fireball if chain lightning not optimal
+        const fireballCost = Math.floor(SPELLS.fireball.manaCost * scene.manaCostMultiplier);
+        if (scene.mana >= fireballCost && unit.canAttack()) {
+            // Find best AoE target
+            let bestTarget = null;
+            let maxHits = 0;
+            
+            for (const player of playerUnits) {
+                const dist = this.getDistanceToUnit(unit, player);
+                if (dist <= unit.rangedRange) {
+                    // Count enemies in 3x3 area around this target
+                    let hits = 0;
+                    for (const other of playerUnits) {
+                        const aoeDist = Math.abs(other.gridX - player.gridX) + Math.abs(other.gridY - player.gridY);
+                        if (aoeDist <= 1) hits++;
+                    }
+                    if (hits > maxHits) {
+                        maxHits = hits;
+                        bestTarget = player;
+                    }
+                }
+            }
+            
+            if (bestTarget && maxHits >= 2) {
+                unit.hasAttacked = true;
+                scene.uiManager.showBuffText(unit, 'FIREBALL!', '#E74C3C');
+                scene.spendMana(fireballCost);
+                this.castFireball(unit, bestTarget);
+                scene.time.delayedCall(1000, () => this.nextTurn());
+                return;
+            }
+        }
+        
+        // Try ranged attack if available
+        if (unit.rangedRange > 0 && minDist <= unit.rangedRange && unit.canAttack()) {
+            scene.performRangedAttack(unit, nearest);
+            scene.time.delayedCall(800, () => this.nextTurn());
+            return;
+        }
+        
+        // Move to keep distance - prefer staying at ranged range
+        if (unit.canMove()) {
+            let bestX = unit.gridX;
+            let bestY = unit.gridY;
+            let bestScore = -Infinity;
+            
+            // Check all possible positions within move range using BFS
+            const visited = new Set([`${unit.gridX},${unit.gridY}`]);
+            const queue = [{ x: unit.gridX, y: unit.gridY, moves: 0 }];
+            
+            while (queue.length > 0) {
+                const { x, y, moves } = queue.shift();
+                
+                // Calculate score for this position
+                const distToNearest = Math.abs(nearest.gridX - x) + Math.abs(nearest.gridY - y);
+                // Prefer positions at ranged range distance, away from melee
+                let score = 0;
+                if (distToNearest >= 3 && distToNearest <= unit.rangedRange) {
+                    score = 100; // Ideal range
+                } else if (distToNearest > unit.rangedRange) {
+                    score = 50; // Too far but safe
+                } else if (distToNearest > 1) {
+                    score = 10; // Suboptimal but not in melee
+                } else {
+                    score = -100; // In melee range, bad
+                }
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestX = x;
+                    bestY = y;
+                }
+                
+                // Explore neighbors if we have moves remaining
+                if (moves < unit.moveRange) {
+                    const neighbors = [
+                        { x: x + 1, y }, { x: x - 1, y },
+                        { x, y: y + 1 }, { x, y: y - 1 }
+                    ];
+                    
+                    for (const n of neighbors) {
+                        const key = `${n.x},${n.y}`;
+                        if (!visited.has(key) && this.isValidMoveForUnit(unit, n.x, n.y)) {
+                            visited.add(key);
+                            queue.push({ x: n.x, y: n.y, moves: moves + 1 });
+                        }
+                    }
+                }
+            }
+            
+            // Move towards best position
+            if (bestX !== unit.gridX || bestY !== unit.gridY) {
+                // Use simple path towards best position
+                const dx = Math.sign(bestX - unit.gridX);
+                const dy = Math.sign(bestY - unit.gridY);
+                
+                if (dx !== 0 && this.isValidMoveForUnit(unit, unit.gridX + dx, unit.gridY)) {
+                    scene.moveUnit(unit, unit.gridX + dx, unit.gridY);
+                } else if (dy !== 0 && this.isValidMoveForUnit(unit, unit.gridX, unit.gridY + dy)) {
+                    scene.moveUnit(unit, unit.gridX, unit.gridY + dy);
+                }
+            }
+        }
+        
+        // Try ranged attack again after moving
+        const newDist = this.getDistanceToUnit(unit, nearest);
+        if (unit.canAttack() && newDist <= unit.rangedRange) {
+            scene.time.delayedCall(400, () => {
+                scene.performRangedAttack(unit, nearest);
+            });
+        }
+        
+        scene.time.delayedCall(1200, () => this.nextTurn());
+    }
+    
+    // Cast chain lightning from a boss unit
+    castChainLightning(caster, target) {
+        const scene = this.scene;
+        const power = Math.floor(SPELLS.chain_lightning.power * scene.spellPowerMultiplier);
+        const chains = SPELLS.chain_lightning.chains;
+        
+        // Visual effect
+        scene.uiManager.showBuffText(target, 'ZAP!', '#9B59B6');
+        
+        // Hit primary target
+        target.takeDamage(power, true, caster);
+        scene.uiManager.showDamageText(target, power);
+        
+        // Chain to nearby enemies
+        const playerUnits = scene.unitManager.getPlayerUnits().filter(u => u !== target && !u.isDead);
+        let chained = 0;
+        
+        for (const player of playerUnits) {
+            if (chained >= chains) break;
+            const dist = Math.abs(player.gridX - target.gridX) + Math.abs(player.gridY - target.gridY);
+            if (dist <= 2) {
+                scene.time.delayedCall(200 * (chained + 1), () => {
+                    scene.uiManager.showBuffText(player, 'CHAIN!', '#9B59B6');
+                    player.takeDamage(power, true, caster);
+                    scene.uiManager.showDamageText(player, power);
+                });
+                chained++;
+            }
+        }
+    }
+    
+    // Cast fireball from a boss unit
+    castFireball(caster, target) {
+        const scene = this.scene;
+        const power = Math.floor(SPELLS.fireball.power * scene.spellPowerMultiplier);
+        
+        // Hit all enemies in 3x3 area
+        const playerUnits = scene.unitManager.getPlayerUnits();
+        
+        for (const player of playerUnits) {
+            const dist = Math.abs(player.gridX - target.gridX) + Math.abs(player.gridY - target.gridY);
+            if (dist <= 1) {
+                player.takeDamage(power, true, caster);
+                scene.uiManager.showDamageText(player, power);
+            }
+        }
     }
 
     updateTurnDisplay() {
