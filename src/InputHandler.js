@@ -63,18 +63,17 @@ export class GridSystem {
         const { gridX, gridY } = tile;
         const clickedUnit = this.scene.unitManager.getUnitAt(gridX, gridY);
 
-        // Handle spell targeting
+        // If a spell is selected, ONLY allow spell casting - block all other actions
         if (this.scene.spellSystem.activeSpell) {
             const spell = SPELLS[this.scene.spellSystem.activeSpell];
             if (spell) {
                 if (spell.targetType === 'tile' || spell.targetType === 'enemy' || spell.targetType === 'ally') {
                     this.scene.spellSystem.executeSpellAt(gridX, gridY);
-                    return;
-                } else if (spell.targetType === 'ally_then_tile' && this.scene.spellSystem.teleportUnit && !clickedUnit) {
+                } else if (spell.targetType === 'ally_then_tile') {
                     this.scene.spellSystem.executeSpellAt(gridX, gridY);
-                    return;
                 }
             }
+            return; // Block all other actions while spell is selected
         }
 
         // If clicking on an enemy unit - check for ranged attack first, then melee

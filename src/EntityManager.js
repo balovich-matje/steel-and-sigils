@@ -303,6 +303,11 @@ export class UnitManager {
 
         unit.sprite.setInteractive();
         unit.sprite.on('pointerdown', () => {
+            // Block all actions if a spell is selected - spell casting takes priority
+            if (this.scene.spellSystem.activeSpell) {
+                return;
+            }
+            
             // Check if current player unit can attack this unit
             const currentUnit = this.scene.turnSystem.currentUnit;
             if (currentUnit && currentUnit.isPlayer && currentUnit.canAttack() && 
