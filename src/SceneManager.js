@@ -795,11 +795,32 @@ export class BattleScene extends Phaser.Scene {
         victoryScreen.classList.remove('hidden');
     }
     
+    // Restore the original rewards container structure
+    restoreRewardContainerStructure() {
+        const rewardsContainer = document.getElementById('rewards-container');
+        rewardsContainer.innerHTML = `
+            <div style="width: 100%;">
+                <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;">⚔️ Recruit a New Unit</h3>
+                <div id="reward-units" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+            </div>
+            
+            <div style="width: 100%;">
+                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 10px;">💪 Buff an Existing Unit</h3>
+                <div id="reward-buffs" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+            </div>
+            
+            <div style="width: 100%;">
+                <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 10px;">🧙 Spell or Mana Enhancement</h3>
+                <div id="reward-magic" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+            </div>
+        `;
+    }
+    
     // Show special Loot Goblin reward - choice of 3 unit buffs
     showLootGoblinReward() {
         const rewardsContainer = document.getElementById('rewards-container');
         
-        // Clear existing content
+        // Clear existing content and show loot goblin reward UI
         rewardsContainer.innerHTML = '';
         
         // Create loot goblin reward section
@@ -907,6 +928,7 @@ export class BattleScene extends Phaser.Scene {
         skipBtn.textContent = 'Skip Bonus (Continue to Normal Rewards)';
         skipBtn.onclick = () => {
             this.lootGoblinReward = false;
+            this.restoreRewardContainerStructure();
             this.generateRewardChoices();
         };
         rewardsContainer.appendChild(skipBtn);
@@ -957,6 +979,7 @@ export class BattleScene extends Phaser.Scene {
                 
                 // Mark loot goblin reward as handled and show normal rewards
                 this.lootGoblinReward = false;
+                this.restoreRewardContainerStructure();
                 this.generateRewardChoices();
             };
             
