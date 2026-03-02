@@ -7,10 +7,11 @@
 ### Key Features
 - Initiative-based turn order system (HOMM5 style)
 - 9 playable unit types with unique passives and stats
-- 4 enemy unit types with scaling difficulty
+- 7 enemy unit types including 3 boss units with special abilities
 - 12 different spells with various effects (damage, healing, buffs, utility)
 - Unit progression through victory rewards (buffs, new units, magic enhancements)
 - Legendary powers for elite units (rare drops after victory)
+- Boss waves every 5 rounds with 2x2 boss units
 
 ---
 
@@ -42,17 +43,17 @@
 ├── LICENSE                 # Project license
 │
 ├── src/                    # Source code (ES6 modules)
-│   ├── main.js             # Entry point - Phaser game bootstrap
-│   ├── GameConfig.js       # Constants, CONFIG, SPELLS database
-│   ├── SceneManager.js     # BattleScene, PreGameScene - main game logic
-│   ├── EntityManager.js    # Unit class, UnitManager, TurnSystem
-│   ├── InputHandler.js     # GridSystem - input handling, tile highlights
-│   ├── SpellSystem.js      # Spell casting, effects, targeting
-│   └── UIHandler.js        # UIManager - DOM updates, floating text
+│   ├── main.js             # Entry point - Phaser game bootstrap (~26 lines)
+│   ├── GameConfig.js       # Constants, CONFIG, SPELLS database (~174 lines)
+│   ├── SceneManager.js     # BattleScene, PreGameScene - main game logic (~1758 lines)
+│   ├── EntityManager.js    # Unit class, UnitManager, TurnSystem (~1058 lines)
+│   ├── InputHandler.js     # GridSystem - input handling, tile highlights (~327 lines)
+│   ├── SpellSystem.js      # Spell casting, effects, targeting (~485 lines)
+│   └── UIHandler.js        # UIManager - DOM updates, floating text (~205 lines)
 │
 ├── images/                 # Unit sprites
 │   ├── player/             # 9 player unit PNGs
-│   └── enemy/              # 4 enemy unit PNGs
+│   └── enemy/              # 7 enemy unit PNGs (including 3 bosses)
 │
 └── .agents/
     └── skills/
@@ -87,16 +88,19 @@ main.js
 - **Unit class**: Runtime unit instances with stats, buffs, positioning
 - **UnitManager**: Creation, positioning, queries (getUnitAt, getPlayerUnits, etc.)
 - **TurnSystem**: Initiative queue, round management, AI turn execution
+- **Boss support**: 2x2 tile units with special collision and targeting logic
 
 #### 2. Grid System (`InputHandler.js`)
 - **GridSystem**: Renders 10x8 tile grid, handles clicks, movement highlighting
 - Uses BFS for valid move calculation
 - Handles both tile clicks and unit sprite clicks
+- Supports 2x2 boss units for placement validation
 
 #### 3. Spell System (`SpellSystem.js`)
 - **SpellSystem**: Casting, targeting, effect execution
 - Target types: `tile`, `enemy`, `ally`, `ally_then_tile`
 - Integrates with mana system and buff multipliers
+- **Army buffs**: When enabled, buff spells affect entire player army
 
 #### 4. UI System (`UIHandler.js`)
 - **UIManager**: DOM updates for mana, buffs, unit info
@@ -114,11 +118,13 @@ main.js
    - Turn-based combat via TurnSystem
    - Player controls: click to select, move, attack
    - AI turns: auto-executed with delays
+   - Boss waves every 5 rounds
    - Victory/Defeat → show reward screen or game over
 
 3. **Victory Rewards**
-   - Choose 1 new unit (if available), 1 unit buff, 1 magic enhancement
+   - Choose 1 new unit (every 2 rounds), 1 unit buff, 1 magic enhancement
    - Legendary buffs have 50% chance to replace regular buffs
+   - Loot Goblin kill grants special reward choice
    - `nextBattle()` transitions to next BattleScene with persisted data
 
 ---
@@ -232,8 +238,9 @@ this.manaCostMultiplier = Math.max(0.2, 1 - buff.value);
 
 ### 4. Unit Positioning
 
-- **Images**: Use `origin(0.5, 1.0)` (bottom-center), position at `y = (gridY + 1) * TILE_SIZE - 5`
-- **Emojis**: Use `origin(0.5)` (center), position at `y = gridY * TILE_SIZE + TILE_SIZE / 2`
+- **Images**: Use `origin(0.5, 1.0)` (bottom-center), position at `y = (gridY + bossSize) * TILE_SIZE - 5`
+- **Emojis**: Use `origin(0.5)` (center), position at `y = gridY * TILE_SIZE + (bossSize * TILE_SIZE) / 2`
+- **Bosses**: Center sprite over 2x2 area with adjusted positioning
 
 ### 5. Health Persistence
 
@@ -246,6 +253,32 @@ health: unit.health
 // In create()
 if (unitData.health !== undefined) {
     unit.health = Math.min(unitData.health, unit.maxHealth);
+}
+```
+
+### 6. Boss Unit Distance Calculation
+
+For 2x2 boss units, use proper distance calculation:
+
+```javascript
+// CORRECT - accounts for all occupied tiles
+const dist = this.getDistanceToUnit(unit, enemy);
+
+// WRONG - simple Manhattan distance fails for bosses
+// const dist = Math.abs(enemy.gridX - unit.gridX) + Math.abs(enemy.gridY - unit.gridY);
+```
+
+### 7. Army Buffs
+
+When `armyBuffs` is enabled, spells target entire army:
+
+```javascript
+// In SpellSystem.js
+if (this.scene.armyBuffs && isBuffSpell) {
+    const playerUnits = this.scene.unitManager.getPlayerUnits();
+    for (const targetUnit of playerUnits) {
+        // Apply buff to each unit
+    }
 }
 ```
 
@@ -271,17 +304,38 @@ if (unitData.health !== undefined) {
 
 2. Add image to `images/player/newunit.png`
 
-3. If player-recruitable, add to `recruitableUnits` in `SceneManager.js`
+3. If player-recruitable, add to `recruitableUnits` in `generateRewardChoices()`
+
+### Adding a Boss Unit
+
+1. Add to `UNIT_TYPES` with boss properties:
+   ```javascript
+   BOSS_NAME: {
+       name: 'Boss Name',
+       emoji: '👑',
+       image: 'images/enemy/boss.png',
+       health: 500, maxHealth: 500,
+       damage: 80, moveRange: 3, initiative: 8,
+       isPlayer: false, cost: 1500,
+       isBoss: true,
+       bossSize: 2,  // 2x2 tiles
+       passive: { name: 'Passive', description: '...', effect: '...' }
+   }
+   ```
+
+2. Add to `bossTypes` array in `createBossWave()`
+
+3. Implement special AI behavior in `TurnSystem` if needed
 
 ### Adding a Spell
 
 1. Add to `SPELLS` in `GameConfig.js`
 2. Implement handler in `SpellSystem.js`
-3. Add case in `executeSpellAt()`
+3. Add case in `executeTileSpell()` or `executeUnitSpell()`
 
 ### Adding a Magic Buff
 
-1. Add to `magicOptions` in `generateRewardChoices()`
+1. Add to `magicOptions` array in `generateRewardChoices()`
 2. Handle in `confirmRewards()` for application
 3. Handle in `create()` for restoration
 4. Add display in `UIHandler.js`
@@ -301,6 +355,7 @@ When adding new features, verify:
 - [ ] Buffs persist between battles if intended
 - [ ] Unit positioning correct (bottom-origin for images)
 - [ ] Initiative bar updates correctly
+- [ ] Boss units (2x2) work correctly for placement, movement, and targeting
 - [ ] No console errors in browser dev tools
 
 ### Browser Console
@@ -324,18 +379,20 @@ Check browser console for:
 
 5. **Buff State**: Inspect `gameScene.magicBuffs` for active magic enhancements
 
+6. **Boss Units**: Check `unit.bossSize` and `unit.getOccupiedPositions()` for 2x2 units
+
 ---
 
 ## File Size Reference
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| SceneManager.js | ~1200 | Main game logic, scenes, combat, rewards |
-| EntityManager.js | ~580 | Unit class, management, turn system |
-| InputHandler.js | ~265 | Grid, input, movement highlighting |
+| SceneManager.js | ~1758 | Main game logic, scenes, combat, rewards, boss waves |
+| EntityManager.js | ~1058 | Unit class, management, turn system, boss AI |
+| InputHandler.js | ~327 | Grid, input, movement highlighting |
 | GameConfig.js | ~174 | Constants, spell database |
-| SpellSystem.js | ~350 | Spell casting and effects |
-| UIHandler.js | ~180 | DOM UI updates |
+| SpellSystem.js | ~485 | Spell casting and effects |
+| UIHandler.js | ~205 | DOM UI updates |
 
 ---
 
@@ -345,3 +402,4 @@ Check browser console for:
 - **Phaser Examples**: https://phaser.io/examples
 - **Project README**: `README.md` for gameplay mechanics
 - **Refactoring Notes**: `REFACTORING.md` for architecture decisions
+- **Development Skill**: `.agents/skills/steel-and-sigils/SKILL.md` for detailed patterns

@@ -1,6 +1,6 @@
 ---
 name: steel-and-sigils
-description: Browser-based turn-based tactical RPG inspired by Heroes of Might and Magic 5. Built with Phaser 3, ES6 modules, vanilla JavaScript. Use when working on unit systems, spell mechanics, turn-based combat, UI components, buff/debuff systems, or adding new content (units, spells, enemies).
+description: Browser-based turn-based tactical RPG inspired by Heroes of Might and Magic 5. Built with Phaser 3, ES6 modules, vanilla JavaScript. Use when working on unit systems, spell mechanics, turn-based combat, UI components, buff/debuff systems, bosses, or adding new content (units, spells, enemies).
 ---
 
 # Steel and Sigils - Development Skill
@@ -9,7 +9,7 @@ description: Browser-based turn-based tactical RPG inspired by Heroes of Might a
 
 Turn-based tactical combat game with:
 - **Engine**: Phaser 3
-- **Architecture**: ES6 modules, ~2500 lines across 7 files
+- **Architecture**: ES6 modules, ~2900 lines across 7 files
 - **Style**: Grim Dark Fantasy (dark wood #2D241E, aged gold #A68966)
 - **Grid**: 10x8 tiles, 64px each
 - **Combat**: Initiative-based turn order, HOMM5-style
@@ -18,15 +18,15 @@ Turn-based tactical combat game with:
 
 ```
 src/
-├── main.js           # Game bootstrap, PreGameScene
-├── GameConfig.js     # Constants, UNIT_TYPES, SPELLS
-├── SceneManager.js   # BattleScene - main game logic (~1200 lines)
-├── EntityManager.js  # UnitManager, TurnSystem, Unit class
-├── InputHandler.js   # GridSystem - clicks, movement highlighting
-├── SpellSystem.js    # Spell casting, effects
-└── UIHandler.js      # DOM UI updates, mana, buffs
+├── main.js           # Game bootstrap (~26 lines)
+├── GameConfig.js     # Constants, SPELLS (~174 lines)
+├── SceneManager.js   # BattleScene, PreGameScene (~1758 lines)
+├── EntityManager.js  # UnitManager, TurnSystem, Unit class (~1058 lines)
+├── InputHandler.js   # GridSystem - clicks, movement (~327 lines)
+├── SpellSystem.js    # Spell casting, effects (~485 lines)
+└── UIHandler.js      # DOM UI updates, mana, buffs (~205 lines)
 
-units.js              # Global UNIT_TYPES database
+units.js              # Global UNIT_TYPES database (9 player, 7 enemy including 3 bosses)
 index.html            # UI structure
 style.css             # Styling
 ```
@@ -38,6 +38,7 @@ style.css             # Styling
 - **Runtime instance** = Unit class (EntityManager.js)
 - **Positioning**: Images use `origin(0.5, 1.0)` (bottom-center), emojis use `origin(0.5)`
 - **Scaling**: Dynamic based on source image size, max 1.3x tile (83px)
+- **Boss units**: 2x2 tile size (`bossSize: 2`), affects placement, movement, and targeting
 
 ### Turn System
 - Initiative-based queue sorted each round
@@ -48,6 +49,14 @@ style.css             # Styling
 - Spells defined in `SPELLS` constant (GameConfig.js)
 - `castSpell()` → sets `activeSpell` → click target → `executeSpellAt()`
 - **Critical**: When spell active, unit sprite clicks must call `executeSpellAt()`, not attack
+- **Army buffs**: If `armyBuffs` enabled, buff spells target entire player army
+
+### Boss System
+| Boss | Size | Special Abilities |
+|------|------|-------------------|
+| Ogre Chieftain | 2x2 | Regenerates 10% HP/turn, slows enemies on attack |
+| Orc Shaman King | 2x2 | Casts Chain Lightning and Fireball, keeps distance |
+| Loot Goblin | 1x1 | Hit-and-run, drops special reward on death |
 
 ### Buff/Debuff Mechanics
 | Buff | Storage | Decrement | Permanent |
@@ -57,16 +66,34 @@ style.css             # Styling
 | Bless | `blessRounds`, `blessValue` | Each turn | `-1` |
 | Regenerate | `regenerateRounds` | Each turn | `-1` |
 | Ice Slow | `iceSlowRounds` | Each turn | No |
+| Ogre Slow | `slowDebuffRounds`, `slowDebuffValue` | Each turn | No |
 
 **Persistence**: Buffs saved in `nextBattle()` and restored in `create()` via `unitData.buffs`
+
+### Unit Passives
+- **Knight/Paladin**: `-50%` ranged damage taken
+- **Wizard**: `+1` mana regen per wizard per turn
+- **Berserker**: `Reckless` (+50% damage taken), `Bloodlust` (+15 permanent damage on kill)
+- **Rogue/Orc Rogue/Loot Goblin**: Hit-and-run (returns to start position after attack)
+- **Sorcerer**: `+50%` spell damage
+- **Cleric/Paladin**: `+50%` healing done/received
+
+### Legendary Buffs (Rare Drops)
+| Buff | Unit | Effect |
+|------|------|--------|
+| Blood Frenzy | Berserker | Double strike per attack |
+| Divine Wrath | Paladin | 3x3 cleave attack, +40 damage |
+| Ricochet Shot | Ranger | Bounces to nearby targets (2 range, 50% dmg), +40 damage |
+| Arcane Pierce | Wizard | 20 range, shots pierce through enemies in line |
 
 ## Common Patterns & Pitfalls
 
 ### Adding New Unit Types
-1. Add to `UNIT_TYPES` in units.js with: `name`, `emoji`, `health`, `damage`, `moveRange`, `initiative`, `cost`, optional `rangedRange`, optional `passive`
-2. Add image path: `images/player/unitname.png` or `images/enemy/unitname.png`
-3. Load in `BattleScene.preload()` (already auto-loads from arrays)
-4. Add to `recruitableUnits` in `generateRewardChoices()` if player-recruitable
+1. Add to `UNIT_TYPES` in units.js with: `name`, `emoji`, `health`, `damage`, `moveRange`, `initiative`, `cost`, optional `rangedRange`, optional `passive`/`passives`
+2. For bosses: add `isBoss: true`, `bossSize: 2` (or 1)
+3. Add image path: `images/player/unitname.png` or `images/enemy/unitname.png`
+4. Load in `BattleScene.preload()` (already auto-loads from arrays)
+5. Add to `recruitableUnits` in `generateRewardChoices()` if player-recruitable
 
 ### Adding New Spells
 1. Add to `SPELLS` in GameConfig.js with: `name`, `icon`, `manaCost`, `targetType`, `effect`, `power`, `duration`
@@ -115,6 +142,10 @@ if (this.shieldRounds > 0) {
 }
 ```
 
+**5. Boss Unit Distance Calculation**
+- For 2x2 bosses, use `getDistanceToUnit()` which checks all occupied tiles
+- Don't use simple Manhattan distance for boss units
+
 ### AI Unit Behavior
 
 Located in `TurnSystem.executeAITurn()`:
@@ -127,6 +158,34 @@ Located in `TurnSystem.executeAITurn()`:
 **For ranged enemies** (Goblin Stone Thrower):
 - Must check `rangedRange` BEFORE moving
 - Must check again after moving
+
+**For boss AI** (Orc Shaman King):
+- Casts spells using player mana system
+- Tries to maintain distance at ranged range
+- Uses BFS to find optimal position
+
+## Reward System
+
+### Victory Rewards (every battle)
+1. **New Unit** - Every 2 rounds (battle 2, 4, 6...), choose 1 of 3 random units
+2. **Unit Buff** - Choose 1 of 3 buffs (50% chance for legendary class buff)
+3. **Magic Buff** - Choose 1 of 3 magic enhancements
+
+### Loot Goblin Special Reward
+- Defeating Loot Goblin boss shows special reward screen first
+- Choose 1 of 3 powerful buffs before normal rewards
+
+### Magic Buff Types
+| Buff | Effect | Unique? |
+|------|--------|---------|
+| Expanded Mana Pool | +30 Max Mana | No |
+| Mana Flow | +2 Mana Regen | No |
+| Arcane Power | +20% Spell Damage | No |
+| Efficient Casting | -20% Mana Cost (max 4 stacks) | Capped |
+| Mana Surge | Full restore +20 max | No |
+| Twin Cast | +1 spell per round | No |
+| Eternal Magic | Buffs don't expire | Yes |
+| Mass Enchantment | Spells target whole army | Yes |
 
 ## UI System
 
@@ -154,6 +213,7 @@ When adding new features, verify:
 - [ ] Buffs persist between battles if intended
 - [ ] Unit positioning correct (bottom-origin for images)
 - [ ] Initiative bar updates correctly
+- [ ] Boss units (2x2) work correctly for placement and targeting
 
 ## Extending the Game
 
@@ -171,10 +231,20 @@ When adding new features, verify:
 5. Handle in `create()` buff restoration
 6. Add display text in UIHandler.js `updateMagicBuffsDisplay()`
 
+### Adding New Boss Units
+1. Add to `UNIT_TYPES` with `isBoss: true`, `bossSize: 2`
+2. Add to `createBossWave()` bossTypes array
+3. Implement special AI in `executeAITurn()` or `executeShamanKingTurn()`
+4. Add any special effects (slow, regeneration) in `Unit.takeDamage()` or `resetTurn()`
+
 ## Known Quirks
 
 - **Orc Rogue hit-and-run**: Uses `turnStartX/Y` captured in `resetTurn()`
 - **Berserker Bloodlust**: Stacks permanently, saved via `bloodlustStacks`
 - **Wizard mana regen**: Per-wizard +1, calculated in `regenerateMana()`
 - **Enemy scaling**: `statMultiplier = 1 + (battleNumber - 1) * 0.15`
+- **Boss scaling**: `statMultiplier = 1 + (battleNumber - 1) * 0.1`
 - **Point buy system**: 1000 points start, units have `cost` in UNIT_TYPES
+- **New unit waves**: Every 2 rounds (even numbers: 2, 4, 6...)
+- **Boss waves**: Every 5 rounds
+- **Loot Goblin spawn**: 30% chance when boss wave rolls
