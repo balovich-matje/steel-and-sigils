@@ -51,9 +51,10 @@ export class PVPMatchScene extends Phaser.Scene {
         if (this.pvpManager.isOpponentConnected()) {
             const opponentData = this.pvpManager.getOpponentData();
             if (opponentData && opponentData.currentBattle >= 6) {
-                // Both ready, start placement
+                // Both ready, skip placement and go directly to battle
                 this.opponentArmy = opponentData.army;
-                this._startPlacement();
+                console.log('[PVP] Both players ready, starting battle...');
+                this._startBattle();
             }
         }
     }
@@ -73,9 +74,10 @@ export class PVPMatchScene extends Phaser.Scene {
                 if (opponentData && opponentData.army) {
                     this.opponentArmy = opponentData.army;
                     
-                    // If we're also ready, start placement
+                    // If we're also ready, start battle directly (skip placement)
                     if (!this.isWaitingForOpponent) {
-                        this._startPlacement();
+                        console.log('[PVP] Both ready, starting battle...');
+                        this._startBattle();
                     }
                 }
             }
@@ -85,8 +87,10 @@ export class PVPMatchScene extends Phaser.Scene {
         this.pvpManager.onPVPStateChange = (state, fullState) => {
             console.log('[PVP] State changed:', state);
             
-            if (state === 'pvp_placement' && this.isWaitingForOpponent) {
-                this._startPlacement();
+            if (state === 'playing' && this.isWaitingForOpponent && this.opponentArmy) {
+                // Both players have armies ready, skip placement and start battle
+                console.log('[PVP] Both armies ready, starting battle...');
+                this._startBattle();
             } else if (state === 'pvp_battle') {
                 this._startBattle();
             } else if (state === 'finished') {
@@ -199,10 +203,30 @@ export class PVPMatchScene extends Phaser.Scene {
     // BATTLE
     // ============================================
 
-    _startBattle() {
-        document.getElementById('pvp-placement-screen').classList.add('hidden');
+    async _startBattle() {
+        this.isWaitingForOpponent = false;
+        this._hideWaitingUI();
         
-        const mySide = this.pvpManager.getMySide();
+        // Make sure sides are assigned (for player 1)
+        if (this.playerNumber === 1 && this.pvpManager.network) {
+            await this.pvpManager.network.initPVPRound();
+        }
+        
+        // Wait for side assignment if needed
+        const waitForSide = () => {
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    const mySide = this.pvpManager.getMySide();
+                    if (mySide) {
+                        clearInterval(checkInterval);
+                        resolve(mySide);
+                    }
+                }, 100);
+            });
+        };
+        
+        const mySide = await waitForSide();
+        console.log(`[PVP] Starting battle - Player ${this.playerNumber} on ${mySide.toUpperCase()} side`);
         
         this.scene.start('PVPBattleScene', {
             pvpManager: this.pvpManager,
