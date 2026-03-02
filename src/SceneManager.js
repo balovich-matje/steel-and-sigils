@@ -1855,8 +1855,8 @@ export class PreGameScene extends Phaser.Scene {
                 await window.loadVPScenes();
             }
             
-            // Initialize PVP manager
-            const { PVPManager } = await import('./PVPManager.js');
+            // Initialize PVP manager (with cache busting)
+            const { PVPManager } = await import(`./PVPManager.js?v=${Date.now()}`);
             this.pvpManager = new PVPManager(this);
             this.pvpManager.setEnabled(true);
             
@@ -1936,8 +1936,8 @@ export class PreGameScene extends Phaser.Scene {
                 await window.loadVPScenes();
             }
             
-            // Initialize PVP manager
-            const { PVPManager } = await import('./PVPManager.js');
+            // Initialize PVP manager (with cache busting)
+            const { PVPManager } = await import(`./PVPManager.js?v=${Date.now()}`);
             this.pvpManager = new PVPManager(this);
             this.pvpManager.setEnabled(true);
             
