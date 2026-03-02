@@ -211,6 +211,32 @@ export class PVPBattleScene extends Phaser.Scene {
     }
 
     // ============================================
+    // MANA MANAGEMENT
+    // ============================================
+
+    regenerateMana() {
+        const wizardCount = this.unitManager.getPlayerUnits().filter(u => u.type === 'WIZARD' && this._isMyUnit(u)).length;
+        const totalRegen = this.manaRegen + wizardCount;
+        
+        if (this.mana < this.maxMana) {
+            this.mana = Math.min(this.maxMana, this.mana + totalRegen);
+            this.uiManager.updateManaDisplay();
+        }
+        
+        if (totalRegen > this.manaRegen) {
+            this.uiManager.showFloatingText(
+                `+${totalRegen} Mana (${this.manaRegen} + ${wizardCount} from Wizards)`, 
+                320, 50, '#4A729E'
+            );
+        }
+    }
+
+    spendMana(amount) {
+        this.mana = Math.max(0, this.mana - amount);
+        this.uiManager.updateManaDisplay();
+    }
+
+    // ============================================
     // UNIT SELECTION & CONTROL
     // ============================================
 
