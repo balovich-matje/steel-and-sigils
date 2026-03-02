@@ -78,6 +78,19 @@
                     ⚔️ PVP Mode
                 </button>
             </div>
+            <!-- Session Info (shown when joined) -->
+            <div id="pvp-session-info" style="display: none; background: #2D241E; border: 2px solid #FFD700; border-radius: 4px; padding: 15px; max-width: 500px; margin: 0 auto;">
+                <div style="color: #FFD700; font-weight: bold; margin-bottom: 5px;">🏆 PVP Session Active</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="color: #8B7355; font-size: 12px;">Session Key:</span>
+                        <span id="pvp-active-key" style="color: #FFD700; font-size: 18px; font-weight: bold; letter-spacing: 2px; font-family: monospace; margin-left: 8px;">------</span>
+                    </div>
+                    <button class="spell-button" onclick="gameScene.leavePVP()" style="padding: 4px 12px; font-size: 11px; background: #9E4A4A;">
+                        Leave
+                    </button>
+                </div>
+            </div>
             <div id="pvp-menu" style="display: none; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 15px; max-width: 500px; margin: 0 auto;">
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 10px;">🏆 PVP Tournament</div>
                 <div style="color: #B8A896; font-size: 12px; margin-bottom: 15px;">

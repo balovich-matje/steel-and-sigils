@@ -167,6 +167,9 @@ export class PVPMatchScene extends Phaser.Scene {
     }
 
     _showPlacementScene(mySide) {
+        // Log assigned side for debugging
+        console.log(`[PVP] Player ${this.playerNumber} assigned: ${mySide.toUpperCase()} side`);
+        
         // Show placement UI
         document.getElementById('pvp-placement-screen').classList.remove('hidden');
         document.getElementById('pvp-your-side').textContent = mySide.toUpperCase();

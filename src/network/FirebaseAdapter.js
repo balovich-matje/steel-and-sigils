@@ -248,12 +248,15 @@ export class FirebaseAdapter extends NetworkAdapter {
      */
     async initPVPRound() {
         const player1Side = Math.random() < 0.5 ? 'left' : 'right';
+        const player2Side = player1Side === 'left' ? 'right' : 'left';
+        
+        console.log(`[PVP] Random side assignment: Player 1 = ${player1Side.toUpperCase()}, Player 2 = ${player2Side.toUpperCase()}`);
         
         await this.send({
             state: 'pvp_placement',
             pvpRound: {
                 player1Side: player1Side,
-                player2Side: player1Side === 'left' ? 'right' : 'left',
+                player2Side: player2Side,
                 player1Ready: false,
                 player2Ready: false,
                 battleStarted: false,

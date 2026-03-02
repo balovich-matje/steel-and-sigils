@@ -1863,6 +1863,9 @@ export class PreGameScene extends Phaser.Scene {
             // Create session
             const sessionKey = await this.pvpManager.createSession();
             
+            // Update UI to show session info
+            this._showSessionInfo(sessionKey);
+            
             // Show waiting UI
             document.getElementById('pvp-menu').style.display = 'none';
             document.getElementById('pvp-waiting').style.display = 'block';
@@ -1883,6 +1886,17 @@ export class PreGameScene extends Phaser.Scene {
             console.error('Failed to create PVP session:', error);
             alert('Failed to create session. Please try again.');
         }
+    }
+    
+    _showSessionInfo(sessionKey) {
+        // Hide mode selector and menu
+        document.getElementById('mode-selector').style.display = 'none';
+        document.getElementById('pvp-menu').style.display = 'none';
+        
+        // Show session info
+        const sessionInfo = document.getElementById('pvp-session-info');
+        sessionInfo.style.display = 'block';
+        document.getElementById('pvp-active-key').textContent = sessionKey;
     }
 
     async joinPVPSession() {
@@ -1908,13 +1922,28 @@ export class PreGameScene extends Phaser.Scene {
             // Join session
             await this.pvpManager.joinSession(sessionKey);
             
-            // Hide menu
-            document.getElementById('pvp-menu').style.display = 'none';
+            // Update UI to show session info
+            this._showSessionInfo(sessionKey);
             
         } catch (error) {
             console.error('Failed to join session:', error);
             alert(error.message || 'Failed to join session. Check the key and try again.');
         }
+    }
+    
+    leavePVP() {
+        if (this.pvpManager) {
+            this.pvpManager.leaveSession();
+        }
+        
+        // Reset UI
+        document.getElementById('mode-selector').style.display = 'flex';
+        document.getElementById('pvp-session-info').style.display = 'none';
+        document.getElementById('pvp-menu').style.display = 'none';
+        document.getElementById('pvp-waiting').style.display = 'none';
+        
+        // Reset mode
+        this.setGameMode('pve');
     }
 
     copySessionKey(event) {
