@@ -14,19 +14,20 @@
  */
 
 export const firebaseConfig = {
-    // Replace these with your actual Firebase config
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "your-project-id.firebaseapp.com",
-    databaseURL: "https://your-project-id-default-rtdb.firebaseio.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project-id.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBUeQ81W_9iJExeqDDu3j2OZGd6EDnFI2A",
+    authDomain: "steel-and-sigils.firebaseapp.com",
+    databaseURL: "https://steel-and-sigils-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "steel-and-sigils",
+    storageBucket: "steel-and-sigils.firebasestorage.app",
+    messagingSenderId: "1078411739086",
+    appId: "1:1078411739086:web:110c1715842d296db4759f"
 };
+
+
 
 /**
  * For testing/development, you can use the Firebase emulator:
- * 
+ *
  * 1. Install Firebase CLI: npm install -g firebase-tools
  * 2. Login: firebase login
  * 3. Init: firebase init
