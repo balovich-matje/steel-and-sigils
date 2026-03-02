@@ -1634,6 +1634,10 @@ export class PreGameScene extends Phaser.Scene {
         this.isPVPMode = false;
         this.pvpManager = null;
     }
+    
+    getStartingPoints() {
+        return this.isPVPMode ? 2500 : 1000;
+    }
 
     create() {
         this.showArmySelection();
@@ -1811,6 +1815,26 @@ export class PreGameScene extends Phaser.Scene {
         const pvpWaiting = document.getElementById('pvp-waiting');
         const modePVE = document.getElementById('mode-pve');
         const modePVP = document.getElementById('mode-pvp');
+        
+        // Update points based on mode
+        this.totalPoints = this.getStartingPoints();
+        this.remainingPoints = this.totalPoints;
+        
+        // Reset unit counts when switching modes
+        this.unitCounts = { KNIGHT: 0, ARCHER: 0, WIZARD: 0, CLERIC: 0, ROGUE: 0, PALADIN: 0, RANGER: 0, BERSERKER: 0, SORCERER: 0 };
+        this.placedUnits = [];
+        
+        // Update UI
+        document.getElementById('points-remaining').textContent = this.remainingPoints;
+        document.getElementById('points-remaining').parentElement.innerHTML = 
+            `💰 Points: <span id="points-remaining">${this.remainingPoints}</span>/${this.totalPoints}`;
+        
+        // Reset all unit count displays
+        for (const type of Object.keys(this.unitCounts)) {
+            const el = document.getElementById(`count-${type}`);
+            if (el) el.textContent = '0';
+        }
+        this.updatePointsDisplay();
         
         if (this.isPVPMode) {
             pvpMenu.style.display = 'block';
