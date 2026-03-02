@@ -26,6 +26,9 @@ export class FirebaseAdapter extends NetworkAdapter {
     // ============================================
 
     async createSession() {
+        // Clean up old sessions first
+        await this._cleanupOldSessions();
+        
         const sessionKey = this.generateSessionKey();
         const sessionRef = this.database.ref(`sessions/${sessionKey}`);
         
@@ -44,6 +47,7 @@ export class FirebaseAdapter extends NetworkAdapter {
             state: 'waiting',
             createdAt: firebase.database.ServerValue.TIMESTAMP,
             updatedAt: firebase.database.ServerValue.TIMESTAMP,
+            expiresAt: Date.now() + (5 * 60 * 1000), // 5 minutes from now
             pvpRound: {
                 player1Side: null,
                 player1Ready: false,
@@ -62,10 +66,16 @@ export class FirebaseAdapter extends NetworkAdapter {
         // Set up disconnect cleanup
         this._setupDisconnectHandler(sessionRef, 1);
         
+        // Set up session timeout
+        this._scheduleSessionTimeout(sessionRef, 5 * 60 * 1000); // 5 minutes
+        
         return sessionKey;
     }
 
     async joinSession(sessionKey) {
+        // Clean up old sessions first
+        await this._cleanupOldSessions();
+        
         const normalizedKey = sessionKey.toUpperCase().trim();
         const sessionRef = this.database.ref(`sessions/${normalizedKey}`);
         
@@ -75,6 +85,12 @@ export class FirebaseAdapter extends NetworkAdapter {
         
         if (!sessionData) {
             throw new Error('Session not found');
+        }
+        
+        // Check if session expired
+        if (sessionData.expiresAt && sessionData.expiresAt < Date.now()) {
+            await sessionRef.remove();
+            throw new Error('Session has expired');
         }
         
         if (sessionData.player2) {
@@ -104,6 +120,9 @@ export class FirebaseAdapter extends NetworkAdapter {
         
         // Set up disconnect cleanup
         this._setupDisconnectHandler(sessionRef, 2);
+        
+        // Set up session timeout
+        this._scheduleSessionTimeout(sessionRef, 5 * 60 * 1000); // 5 minutes
         
         return true;
     }
@@ -169,6 +188,9 @@ export class FirebaseAdapter extends NetworkAdapter {
         };
 
         await this.sessionRef.update(updateData);
+        
+        // Extend timeout on activity
+        await this.extendSessionTimeout();
     }
 
     // ============================================
@@ -316,11 +338,96 @@ export class FirebaseAdapter extends NetworkAdapter {
         }, 30000);
     }
 
+    // ============================================
+    // SESSION TIMEOUT / CLEANUP
+    // ============================================
+
+    /**
+     * Schedule automatic session deletion after timeout
+     */
+    _scheduleSessionTimeout(sessionRef, timeoutMs) {
+        this._sessionTimeoutId = setTimeout(async () => {
+            console.log('[PVP] Session timed out, cleaning up...');
+            
+            // Check if session still exists and game hasn't finished
+            const snapshot = await sessionRef.once('value');
+            const data = snapshot.val();
+            
+            if (data && data.state !== 'finished') {
+                await sessionRef.remove();
+                console.log('[PVP] Session deleted due to timeout');
+            }
+            
+        }, timeoutMs);
+    }
+
+    /**
+     * Clean up old/expired sessions on app start
+     */
+    async _cleanupOldSessions() {
+        try {
+            const now = Date.now();
+            const sessionsRef = this.database.ref('sessions');
+            const snapshot = await sessionsRef.once('value');
+            const sessions = snapshot.val();
+            
+            if (!sessions) return;
+            
+            const cleanupPromises = [];
+            
+            for (const [key, session] of Object.entries(sessions)) {
+                // Delete if expired or older than 5 minutes with no updates
+                const isExpired = session.expiresAt && session.expiresAt < now;
+                const isOld = session.updatedAt && (now - session.updatedAt > 5 * 60 * 1000);
+                const isFinished = session.state === 'finished';
+                
+                // Also delete if both players disconnected
+                const bothDisconnected = session.player1 && !session.player1.connected &&
+                                        (!session.player2 || !session.player2.connected);
+                
+                if (isExpired || isOld || isFinished || bothDisconnected) {
+                    console.log(`[PVP] Cleaning up old session: ${key}`);
+                    cleanupPromises.push(sessionsRef.child(key).remove());
+                }
+            }
+            
+            await Promise.all(cleanupPromises);
+            
+        } catch (error) {
+            console.error('[PVP] Error cleaning up old sessions:', error);
+        }
+    }
+
+    /**
+     * Extend session timeout (call when players are active)
+     */
+    async extendSessionTimeout() {
+        if (!this.sessionRef) return;
+        
+        const newExpiry = Date.now() + (5 * 60 * 1000); // 5 more minutes
+        await this.sessionRef.update({
+            expiresAt: newExpiry,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+        
+        // Reset the timeout timer
+        if (this._sessionTimeoutId) {
+            clearTimeout(this._sessionTimeoutId);
+        }
+        this._scheduleSessionTimeout(this.sessionRef, 5 * 60 * 1000);
+    }
+
     _cleanup() {
         // Clear heartbeat
         if (this._heartbeatInterval) {
             clearInterval(this._heartbeatInterval);
             this._heartbeatInterval = null;
+        }
+        
+        // Clear session timeout
+        if (this._sessionTimeoutId) {
+            clearTimeout(this._sessionTimeoutId);
+            this._sessionTimeoutId = null;
         }
 
         // Unsubscribe from Firebase listeners
