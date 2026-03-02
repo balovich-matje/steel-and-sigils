@@ -1826,6 +1826,11 @@ export class PreGameScene extends Phaser.Scene {
 
     async createPVPSession() {
         try {
+            // Load PVP scenes first
+            if (window.loadVPScenes) {
+                await window.loadVPScenes();
+            }
+            
             // Initialize PVP manager
             const { PVPManager } = await import('./PVPManager.js');
             this.pvpManager = new PVPManager(this);
@@ -1866,6 +1871,11 @@ export class PreGameScene extends Phaser.Scene {
         }
         
         try {
+            // Load PVP scenes first
+            if (window.loadVPScenes) {
+                await window.loadVPScenes();
+            }
+            
             // Initialize PVP manager
             const { PVPManager } = await import('./PVPManager.js');
             this.pvpManager = new PVPManager(this);
