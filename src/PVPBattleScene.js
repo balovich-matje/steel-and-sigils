@@ -238,8 +238,9 @@ export class PVPBattleScene extends Phaser.Scene {
         
         // Update tracking
         this.unitPositions.delete(`${fromX},${fromY}`);
-        this.unitManager.moveUnit(unit, tx, ty);
+        this.unitManager.updateUnitPosition(unit, tx, ty);
         this.unitPositions.set(`${tx},${ty}`, unit);
+        unit.hasMoved = true;
         
         // Sync
         this._syncAction({ type: 'move', fromX, fromY, toX: tx, toY: ty });
@@ -370,7 +371,7 @@ export class PVPBattleScene extends Phaser.Scene {
         const unit = this._getUnitAt(a.fromX, a.fromY);
         if (unit) {
             this.unitPositions.delete(`${a.fromX},${a.fromY}`);
-            this.unitManager.moveUnit(unit, a.toX, a.toY);
+            this.unitManager.updateUnitPosition(unit, a.toX, a.toY);
             this.unitPositions.set(`${a.toX},${a.toY}`, unit);
         }
     }
