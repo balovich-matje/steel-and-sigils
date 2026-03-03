@@ -1,6 +1,6 @@
 ---
 name: steel-and-sigils
-description: Browser-based turn-based tactical RPG inspired by Heroes of Might and Magic 5. Built with Phaser 3, ES6 modules, vanilla JavaScript. Use when working on unit systems, spell mechanics, turn-based combat, UI components, buff/debuff systems, bosses, or adding new content (units, spells, enemies).
+description: Browser-based turn-based tactical RPG inspired by Heroes of Might and Magic 5. Built with Phaser 3, ES6 modules, vanilla JavaScript. Features PVE (vs AI) and PVP (WebRTC peer-to-peer) modes. Use when working on unit systems, spell mechanics, turn-based combat, UI components, buff/debuff systems, PVP networking, or adding new content (units, spells, enemies).
 ---
 
 # Steel and Sigils - Development Skill
@@ -9,26 +9,47 @@ description: Browser-based turn-based tactical RPG inspired by Heroes of Might a
 
 Turn-based tactical combat game with:
 - **Engine**: Phaser 3
-- **Architecture**: ES6 modules, ~2900 lines across 7 files
+- **Architecture**: ES6 modules, ~4000 lines across 10 files
 - **Style**: Grim Dark Fantasy (dark wood #2D241E, aged gold #A68966)
 - **Grid**: 10x8 tiles, 64px each
-- **Combat**: Initiative-based turn order, HOMM5-style
+- **Combat**: Initiative-based (PVE), Alternating turns (PVP)
+- **Networking**: WebRTC DataChannel for PVP
+
+## Game Modes
+
+### PVE Mode
+- Player vs AI enemies
+- Progression with victory rewards
+- Boss waves every 5 rounds
+
+### PVP Mode (WebRTC)
+- Real-time peer-to-peer multiplayer
+- Host creates session (6-char key)
+- Guest joins with key
+- Alternating turns
+- All actions synced via DataChannel
 
 ## File Structure
 
 ```
 src/
-├── main.js           # Game bootstrap (~26 lines)
-├── GameConfig.js     # Constants, SPELLS (~174 lines)
-├── SceneManager.js   # BattleScene, PreGameScene (~1758 lines)
-├── EntityManager.js  # UnitManager, TurnSystem, Unit class (~1058 lines)
-├── InputHandler.js   # GridSystem - clicks, movement (~327 lines)
-├── SpellSystem.js    # Spell casting, effects (~485 lines)
-└── UIHandler.js      # DOM UI updates, mana, buffs (~205 lines)
+├── main.js              # Game bootstrap, PVP scene loading
+├── GameConfig.js        # Constants, SPELLS
+├── SceneManager.js      # BattleScene, PreGameScene
+├── EntityManager.js     # UnitManager, TurnSystem, Unit class
+├── InputHandler.js      # GridSystem - clicks, movement
+├── SpellSystem.js       # Spell casting, effects
+├── UIHandler.js         # DOM UI updates, mana, buffs
+├── PVPManager.js        # PVP coordination, messaging
+├── PVPMatchScene.js     # PVP matchmaking
+├── PVPBattleScene.js    # PVP real-time battle
+├── firebase-config.js   # Firebase config for PVP signaling
+└── network/
+    └── WebRTCAdapter.js # WebRTC P2P implementation
 
-units.js              # Global UNIT_TYPES database (9 player, 7 enemy including 3 bosses)
-index.html            # UI structure
-style.css             # Styling
+units.js                 # Global UNIT_TYPES database (9 player, 4 enemy)
+index.html               # UI structure
+style.css                # Styling
 ```
 
 ## Core Architecture
@@ -38,10 +59,10 @@ style.css             # Styling
 - **Runtime instance** = Unit class (EntityManager.js)
 - **Positioning**: Images use `origin(0.5, 1.0)` (bottom-center), emojis use `origin(0.5)`
 - **Scaling**: Dynamic based on source image size, max 1.3x tile (83px)
-- **Boss units**: 2x2 tile size (`bossSize: 2`), affects placement, movement, and targeting
 
 ### Turn System
-- Initiative-based queue sorted each round
+- **PVE**: Initiative-based queue sorted each round
+- **PVP**: Simple alternating turns (Player 1 → Player 2)
 - `resetTurn()` called at start of each unit's turn
 - Buff durations decrement in `resetTurn()` (except permanent = -1)
 
@@ -51,30 +72,17 @@ style.css             # Styling
 - **Critical**: When spell active, unit sprite clicks must call `executeSpellAt()`, not attack
 - **Army buffs**: If `armyBuffs` enabled, buff spells target entire player army
 
-### Boss System
-| Boss | Size | Special Abilities |
-|------|------|-------------------|
-| Ogre Chieftain | 2x2 | Regenerates 10% HP/turn, slows enemies on attack |
-| Orc Shaman King | 2x2 | Casts Chain Lightning and Fireball, keeps distance |
-| Loot Goblin | 1x1 | Hit-and-run, drops special reward on death |
-
-### Buff/Debuff Mechanics
-| Buff | Storage | Decrement | Permanent |
-|------|---------|-----------|-----------|
-| Haste | `hasteRounds` | Each turn | `-1` |
-| Shield | `shieldRounds`, `shieldValue` | Each turn | `-1` |
-| Bless | `blessRounds`, `blessValue` | Each turn | `-1` |
-| Regenerate | `regenerateRounds` | Each turn | `-1` |
-| Ice Slow | `iceSlowRounds` | Each turn | No |
-| Ogre Slow | `slowDebuffRounds`, `slowDebuffValue` | Each turn | No |
-
-**Persistence**: Buffs saved in `nextBattle()` and restored in `create()` via `unitData.buffs`
+### PVP System
+- **WebRTCAdapter**: Manages RTCPeerConnection, DataChannel
+- **PVPManager**: High-level coordination, sends actions via `sendAction()`
+- **PVPMatchScene**: Session setup, army exchange
+- **PVPBattleScene**: Real-time battle with action sync
 
 ### Unit Passives
 - **Knight/Paladin**: `-50%` ranged damage taken
 - **Wizard**: `+1` mana regen per wizard per turn
 - **Berserker**: `Reckless` (+50% damage taken), `Bloodlust` (+15 permanent damage on kill)
-- **Rogue/Orc Rogue/Loot Goblin**: Hit-and-run (returns to start position after attack)
+- **Rogue**: Hit-and-run (returns to start position after attack)
 - **Sorcerer**: `+50%` spell damage
 - **Cleric/Paladin**: `+50%` healing done/received
 
@@ -89,16 +97,15 @@ style.css             # Styling
 ## Common Patterns & Pitfalls
 
 ### Adding New Unit Types
-1. Add to `UNIT_TYPES` in units.js with: `name`, `emoji`, `health`, `damage`, `moveRange`, `initiative`, `cost`, optional `rangedRange`, optional `passive`/`passives`
-2. For bosses: add `isBoss: true`, `bossSize: 2` (or 1)
-3. Add image path: `images/player/unitname.png` or `images/enemy/unitname.png`
-4. Load in `BattleScene.preload()` (already auto-loads from arrays)
-5. Add to `recruitableUnits` in `generateRewardChoices()` if player-recruitable
+1. Add to `UNIT_TYPES` in units.js with: `name`, `emoji`, `health`, `damage`, `moveRange`, `initiative`, `cost`, optional `rangedRange`, optional `passive`
+2. Add image path: `images/player/unitname.png` or `images/enemy/unitname.png`
+3. Load in `BattleScene.preload()` (already auto-loads from arrays)
+4. Add to `recruitableUnits` in `generateRewardChoices()` if player-recruitable
 
 ### Adding New Spells
 1. Add to `SPELLS` in GameConfig.js with: `name`, `icon`, `manaCost`, `targetType`, `effect`, `power`, `duration`
-2. Implement effect handler in `SpellSystem.js` (e.g., `executeMeteor()`)
-3. Add case in `executeTileSpell()` or `executeUnitSpell()`
+2. Implement effect handler in `SpellSystem.js`
+3. Add case in `executeSpellAt()`
 
 ### Target Types
 - `'tile'` - AoE spells, target any tile
@@ -127,7 +134,7 @@ if (this.scene.spellSystem.activeSpell) {
 **3. Health Persistence**
 - Always save `health` in `nextBattle()` playerUnits mapping
 - Restore in `create()` from `unitData.health`
-- Don't let units heal to full between battles unless intended (spells, regeneration)
+- Don't let units heal to full between battles unless intended
 
 **4. Buff Duration Logic**
 ```javascript
@@ -142,11 +149,43 @@ if (this.shieldRounds > 0) {
 }
 ```
 
-**5. Boss Unit Distance Calculation**
-- For 2x2 bosses, use `getDistanceToUnit()` which checks all occupied tiles
-- Don't use simple Manhattan distance for boss units
+**5. PVP Action Sync**
+```javascript
+// Always sync actions to opponent in PVP
+_tryMove(tx, ty) {
+    // ... perform move locally ...
+    this._syncAction({ type: 'move', fromX, fromY, toX: tx, toY: ty });
+}
 
-### AI Unit Behavior
+// Apply opponent actions when received
+_applyOpponentAction(action) {
+    switch (action.type) {
+        case 'move': this._applyMove(action); break;
+        case 'attack': this._applyAttack(action); break;
+        case 'spell': this._applySpell(action); break;
+        case 'end_turn': this._advanceTurn(); break;
+    }
+}
+```
+
+**6. WebRTC Connection**
+```javascript
+// Firebase is ONLY for signaling (SDP exchange)
+// All game data flows through DataChannel after connection
+
+// Host flow:
+const offer = await pc.createOffer();
+await pc.setLocalDescription(offer);
+// Send offer to Firebase
+// Wait for guest's answer from Firebase
+await pc.setRemoteDescription(answer);
+// DataChannel opens - now use send() for all game data
+
+// Cleanup Firebase after connected (no longer needed)
+webrtc.cleanupSignaling();
+```
+
+### AI Unit Behavior (PVE only)
 
 Located in `TurnSystem.executeAITurn()`:
 1. Find nearest enemy
@@ -155,25 +194,12 @@ Located in `TurnSystem.executeAITurn()`:
 4. Move toward enemy
 5. Attack after moving if possible
 
-**For ranged enemies** (Goblin Stone Thrower):
-- Must check `rangedRange` BEFORE moving
-- Must check again after moving
-
-**For boss AI** (Orc Shaman King):
-- Casts spells using player mana system
-- Tries to maintain distance at ranged range
-- Uses BFS to find optimal position
-
 ## Reward System
 
-### Victory Rewards (every battle)
+### Victory Rewards (PVE, every battle)
 1. **New Unit** - Every 2 rounds (battle 2, 4, 6...), choose 1 of 3 random units
 2. **Unit Buff** - Choose 1 of 3 buffs (50% chance for legendary class buff)
 3. **Magic Buff** - Choose 1 of 3 magic enhancements
-
-### Loot Goblin Special Reward
-- Defeating Loot Goblin boss shows special reward screen first
-- Choose 1 of 3 powerful buffs before normal rewards
 
 ### Magic Buff Types
 | Buff | Effect | Unique? |
@@ -192,8 +218,11 @@ Located in `TurnSystem.executeAITurn()`:
 ### HTML Overlays
 - `spellbook-modal` - Spell selection grid
 - `victory-screen` - Reward selection
-- `initiative-bar` - Turn order display
+- `initiative-bar` - Turn order display (PVE)
 - `magic-buffs-panel` - Active magic buffs
+- `pvp-menu` - PVP mode selection
+- `pvp-waiting` - Waiting for opponent (PVP)
+- `pvp-session-info` - Active session display (PVP)
 
 ### Hotkeys
 - **S** - Open spell book
@@ -212,8 +241,11 @@ When adding new features, verify:
 - [ ] Spell book doesn't let clicks pass through to game board
 - [ ] Buffs persist between battles if intended
 - [ ] Unit positioning correct (bottom-origin for images)
-- [ ] Initiative bar updates correctly
-- [ ] Boss units (2x2) work correctly for placement and targeting
+- [ ] Initiative bar updates correctly (PVE)
+- [ ] **PVP**: WebRTC connects successfully
+- [ ] **PVP**: Actions sync correctly between players
+- [ ] **PVP**: Turn alternates properly (Player 1 → Player 2)
+- [ ] **PVP**: Session cleanup works after connection
 
 ## Extending the Game
 
@@ -231,11 +263,11 @@ When adding new features, verify:
 5. Handle in `create()` buff restoration
 6. Add display text in UIHandler.js `updateMagicBuffsDisplay()`
 
-### Adding New Boss Units
-1. Add to `UNIT_TYPES` with `isBoss: true`, `bossSize: 2`
-2. Add to `createBossWave()` bossTypes array
-3. Implement special AI in `executeAITurn()` or `executeShamanKingTurn()`
-4. Add any special effects (slow, regeneration) in `Unit.takeDamage()` or `resetTurn()`
+### Adding PVP Features
+1. Add action type to `_syncAction()` in PVPBattleScene.js
+2. Add handler in `_applyOpponentAction()`
+3. Add corresponding apply method (e.g., `_applyNewFeature()`)
+4. Test with two browser instances
 
 ## Known Quirks
 
@@ -243,8 +275,7 @@ When adding new features, verify:
 - **Berserker Bloodlust**: Stacks permanently, saved via `bloodlustStacks`
 - **Wizard mana regen**: Per-wizard +1, calculated in `regenerateMana()`
 - **Enemy scaling**: `statMultiplier = 1 + (battleNumber - 1) * 0.15`
-- **Boss scaling**: `statMultiplier = 1 + (battleNumber - 1) * 0.1`
-- **Point buy system**: 1000 points start, units have `cost` in UNIT_TYPES
-- **New unit waves**: Every 2 rounds (even numbers: 2, 4, 6...)
-- **Boss waves**: Every 5 rounds
-- **Loot Goblin spawn**: 30% chance when boss wave rolls
+- **Point buy system**: 1000 points start (PVE), 2500 points (PVP)
+- **New unit waves**: Every 2 rounds
+- **PVP Side assignment**: Host = left (columns 0-1), Guest = right (columns 8-9)
+- **PVP Turn order**: Player 1 always starts

@@ -2,16 +2,17 @@
 
 ## Project Overview
 
-**Steel and Sigils** is a browser-based turn-based tactical combat game inspired by Heroes of Might and Magic 5. Players control an army of units on a grid-based battlefield, taking turns with AI-controlled enemies to defeat each other.
+**Steel and Sigils** is a browser-based turn-based tactical combat game inspired by Heroes of Might and Magic 5. Players control an army of units on a grid-based battlefield, taking turns with AI-controlled enemies (PVE) or other players (PVP) to defeat each other.
 
 ### Key Features
-- Initiative-based turn order system (HOMM5 style)
+- **Two Game Modes**: PVE (vs AI) and PVP (player vs player via WebRTC)
+- Initiative-based turn order system (HOMM5 style) for PVE
+- Alternating turns for PVP (Player 1 → Player 2)
 - 9 playable unit types with unique passives and stats
-- 7 enemy unit types including 3 boss units with special abilities
-- 12 different spells with various effects (damage, healing, buffs, utility)
-- Unit progression through victory rewards (buffs, new units, magic enhancements)
-- Legendary powers for elite units (rare drops after victory)
-- Boss waves every 5 rounds with 2x2 boss units
+- 4 enemy unit types (PVE only)
+- 12 different spells with various effects
+- Unit progression through victory rewards (PVE)
+- Legendary powers for elite units (rare drops)
 
 ---
 
@@ -24,7 +25,9 @@
 | Module System | ES6 `import`/`export` |
 | Styling | Vanilla CSS (Grim Dark Fantasy theme) |
 | Build Step | None - runs directly in browser |
-| Dependencies | Phaser 3 only |
+| PVP Networking | WebRTC DataChannel (P2P) |
+| PVP Signaling | Firebase Realtime Database (short-lived sessions) |
+| Dependencies | Phaser 3, Firebase SDK |
 
 **No build tools, no bundlers, no package managers.** This is a pure browser-based project that runs by simply opening `index.html`.
 
@@ -36,24 +39,28 @@
 ├── index.html              # Main HTML file, UI structure, game container
 ├── style.css               # Styling - Grim Dark Fantasy theme
 ├── units.js                # Global UNIT_TYPES database (loaded as script tag)
-├── script.js.backup        # Original monolithic file (backup, not used)
-├── REFACTORING.md          # Notes from refactoring to ES6 modules
 ├── README.md               # User-facing documentation
 ├── AGENTS.md               # This file - AI agent guide
 ├── LICENSE                 # Project license
 │
 ├── src/                    # Source code (ES6 modules)
-│   ├── main.js             # Entry point - Phaser game bootstrap (~26 lines)
-│   ├── GameConfig.js       # Constants, CONFIG, SPELLS database (~174 lines)
-│   ├── SceneManager.js     # BattleScene, PreGameScene - main game logic (~1758 lines)
-│   ├── EntityManager.js    # Unit class, UnitManager, TurnSystem (~1058 lines)
-│   ├── InputHandler.js     # GridSystem - input handling, tile highlights (~327 lines)
-│   ├── SpellSystem.js      # Spell casting, effects, targeting (~485 lines)
-│   └── UIHandler.js        # UIManager - DOM updates, floating text (~205 lines)
+│   ├── main.js             # Entry point - Phaser game bootstrap
+│   ├── GameConfig.js       # Constants, CONFIG, SPELLS database
+│   ├── SceneManager.js     # BattleScene, PreGameScene - main game logic
+│   ├── EntityManager.js    # Unit class, UnitManager, TurnSystem
+│   ├── InputHandler.js     # GridSystem - input handling, tile highlights
+│   ├── SpellSystem.js      # Spell casting, effects, targeting
+│   ├── UIHandler.js        # UIManager - DOM updates, floating text
+│   ├── PVPManager.js       # PVP coordination and messaging
+│   ├── PVPMatchScene.js    # PVP matchmaking and waiting UI
+│   ├── PVPBattleScene.js   # PVP real-time battle scene
+│   ├── firebase-config.js  # Firebase configuration
+│   └── network/
+│       └── WebRTCAdapter.js # WebRTC P2P implementation
 │
 ├── images/                 # Unit sprites
 │   ├── player/             # 9 player unit PNGs
-│   └── enemy/              # 7 enemy unit PNGs (including 3 bosses)
+│   └── enemy/              # 4 enemy unit PNGs
 │
 └── .agents/
     └── skills/
@@ -87,45 +94,64 @@ main.js
 #### 1. Unit System (`EntityManager.js`)
 - **Unit class**: Runtime unit instances with stats, buffs, positioning
 - **UnitManager**: Creation, positioning, queries (getUnitAt, getPlayerUnits, etc.)
-- **TurnSystem**: Initiative queue, round management, AI turn execution
-- **Boss support**: 2x2 tile units with special collision and targeting logic
+- **TurnSystem**: Initiative queue (PVE), round management, AI turn execution
 
 #### 2. Grid System (`InputHandler.js`)
 - **GridSystem**: Renders 10x8 tile grid, handles clicks, movement highlighting
 - Uses BFS for valid move calculation
 - Handles both tile clicks and unit sprite clicks
-- Supports 2x2 boss units for placement validation
 
 #### 3. Spell System (`SpellSystem.js`)
 - **SpellSystem**: Casting, targeting, effect execution
 - Target types: `tile`, `enemy`, `ally`, `ally_then_tile`
 - Integrates with mana system and buff multipliers
-- **Army buffs**: When enabled, buff spells affect entire player army
 
 #### 4. UI System (`UIHandler.js`)
 - **UIManager**: DOM updates for mana, buffs, unit info
 - Floating text effects using Phaser tweens
 - Reward card creation for victory screen
 
+#### 5. PVP System (`PVPManager.js`, `WebRTCAdapter.js`)
+- **PVPManager**: High-level PVP coordination, action messaging
+- **WebRTCAdapter**: WebRTC peer connection, DataChannel management
+- **PVPMatchScene**: Session creation/joining, army exchange
+- **PVPBattleScene**: Real-time PVP battle with turn sync
+
 ### Game Flow
 
+#### PVE Mode
 1. **PreGameScene** (Army Selection)
    - Player spends 1000 points to buy units
    - Units placed in left 2 columns
    - Confirm → transitions to BattleScene
 
 2. **BattleScene** (Combat)
-   - Turn-based combat via TurnSystem
+   - Turn-based combat via TurnSystem (initiative-based)
    - Player controls: click to select, move, attack
    - AI turns: auto-executed with delays
-   - Boss waves every 5 rounds
    - Victory/Defeat → show reward screen or game over
 
 3. **Victory Rewards**
-   - Choose 1 new unit (every 2 rounds), 1 unit buff, 1 magic enhancement
+   - Choose 1 new unit (if available), 1 unit buff, 1 magic enhancement
    - Legendary buffs have 50% chance to replace regular buffs
-   - Loot Goblin kill grants special reward choice
    - `nextBattle()` transitions to next BattleScene with persisted data
+
+#### PVP Mode
+1. **PreGameScene** (Session Setup)
+   - Host creates session → gets 6-character key
+   - Guest joins with key
+   - WebRTC P2P connection established
+   - Both players place units (host=left, guest=right)
+
+2. **PVPMatchScene** (Waiting/Connection)
+   - Waits for WebRTC connection
+   - Exchanges army data between players
+   - Transitions to PVPBattleScene
+
+3. **PVPBattleScene** (Real-time Combat)
+   - Alternating turns (Player 1 → Player 2)
+   - All actions synced via WebRTC DataChannel
+   - Victory/Defeat → shows result, option to play again
 
 ---
 
@@ -238,9 +264,8 @@ this.manaCostMultiplier = Math.max(0.2, 1 - buff.value);
 
 ### 4. Unit Positioning
 
-- **Images**: Use `origin(0.5, 1.0)` (bottom-center), position at `y = (gridY + bossSize) * TILE_SIZE - 5`
-- **Emojis**: Use `origin(0.5)` (center), position at `y = gridY * TILE_SIZE + (bossSize * TILE_SIZE) / 2`
-- **Bosses**: Center sprite over 2x2 area with adjusted positioning
+- **Images**: Use `origin(0.5, 1.0)` (bottom-center), position at `y = (gridY + 1) * TILE_SIZE - 5`
+- **Emojis**: Use `origin(0.5)` (center), position at `y = gridY * TILE_SIZE + TILE_SIZE / 2`
 
 ### 5. Health Persistence
 
@@ -256,30 +281,35 @@ if (unitData.health !== undefined) {
 }
 ```
 
-### 6. Boss Unit Distance Calculation
+### 6. PVP Action Sync
 
-For 2x2 boss units, use proper distance calculation:
-
-```javascript
-// CORRECT - accounts for all occupied tiles
-const dist = this.getDistanceToUnit(unit, enemy);
-
-// WRONG - simple Manhattan distance fails for bosses
-// const dist = Math.abs(enemy.gridX - unit.gridX) + Math.abs(enemy.gridY - unit.gridY);
-```
-
-### 7. Army Buffs
-
-When `armyBuffs` is enabled, spells target entire army:
+All player actions in PVP must be synced to opponent:
 
 ```javascript
-// In SpellSystem.js
-if (this.scene.armyBuffs && isBuffSpell) {
-    const playerUnits = this.scene.unitManager.getPlayerUnits();
-    for (const targetUnit of playerUnits) {
-        // Apply buff to each unit
+// In PVPBattleScene
+_syncAction(action) {
+    this.pvpManager.sendAction(action);
+}
+
+// Apply opponent's action when received
+_applyOpponentAction(action) {
+    switch (action.type) {
+        case 'move': /* ... */ break;
+        case 'attack': /* ... */ break;
+        case 'spell': /* ... */ break;
+        case 'end_turn': /* ... */ break;
     }
 }
+```
+
+### 7. WebRTC Connection Flow
+
+```
+Host: createSession() → createOffer → send to Firebase
+Guest: joinSession() → getOffer → createAnswer → send to Firebase
+Host: getAnswer → setRemoteDescription
+Both: exchange ICE candidates → DataChannel opens
+Both: cleanupSignaling() → delete Firebase session
 ```
 
 ---
@@ -306,36 +336,15 @@ if (this.scene.armyBuffs && isBuffSpell) {
 
 3. If player-recruitable, add to `recruitableUnits` in `generateRewardChoices()`
 
-### Adding a Boss Unit
-
-1. Add to `UNIT_TYPES` with boss properties:
-   ```javascript
-   BOSS_NAME: {
-       name: 'Boss Name',
-       emoji: '👑',
-       image: 'images/enemy/boss.png',
-       health: 500, maxHealth: 500,
-       damage: 80, moveRange: 3, initiative: 8,
-       isPlayer: false, cost: 1500,
-       isBoss: true,
-       bossSize: 2,  // 2x2 tiles
-       passive: { name: 'Passive', description: '...', effect: '...' }
-   }
-   ```
-
-2. Add to `bossTypes` array in `createBossWave()`
-
-3. Implement special AI behavior in `TurnSystem` if needed
-
 ### Adding a Spell
 
 1. Add to `SPELLS` in `GameConfig.js`
 2. Implement handler in `SpellSystem.js`
-3. Add case in `executeTileSpell()` or `executeUnitSpell()`
+3. Add case in `executeSpellAt()`
 
 ### Adding a Magic Buff
 
-1. Add to `magicOptions` array in `generateRewardChoices()`
+1. Add to `magicOptions` in `generateRewardChoices()`
 2. Handle in `confirmRewards()` for application
 3. Handle in `create()` for restoration
 4. Add display in `UIHandler.js`
@@ -355,8 +364,10 @@ When adding new features, verify:
 - [ ] Buffs persist between battles if intended
 - [ ] Unit positioning correct (bottom-origin for images)
 - [ ] Initiative bar updates correctly
-- [ ] Boss units (2x2) work correctly for placement, movement, and targeting
 - [ ] No console errors in browser dev tools
+- [ ] **PVP**: Actions sync correctly between players
+- [ ] **PVP**: Turn alternates properly (Player 1 → Player 2)
+- [ ] **PVP**: Session cleanup works after connection
 
 ### Browser Console
 
@@ -364,6 +375,7 @@ Check browser console for:
 - Module loading errors
 - Undefined variable errors
 - Phaser texture loading issues
+- WebRTC connection errors (in PVP mode)
 
 ---
 
@@ -379,7 +391,10 @@ Check browser console for:
 
 5. **Buff State**: Inspect `gameScene.magicBuffs` for active magic enhancements
 
-6. **Boss Units**: Check `unit.bossSize` and `unit.getOccupiedPositions()` for 2x2 units
+6. **PVP Debugging**:
+   - Check `gameScene.pvpManager.isConnected` for WebRTC status
+   - Inspect `gameScene.pvpManager.sessionKey` for session ID
+   - WebRTC connection state in browser's `about:webrtc` page
 
 ---
 
@@ -387,12 +402,16 @@ Check browser console for:
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| SceneManager.js | ~1758 | Main game logic, scenes, combat, rewards, boss waves |
-| EntityManager.js | ~1058 | Unit class, management, turn system, boss AI |
-| InputHandler.js | ~327 | Grid, input, movement highlighting |
-| GameConfig.js | ~174 | Constants, spell database |
-| SpellSystem.js | ~485 | Spell casting and effects |
-| UIHandler.js | ~205 | DOM UI updates |
+| SceneManager.js | ~1750 | Main game logic, scenes, combat, rewards |
+| EntityManager.js | ~1050 | Unit class, management, turn system |
+| InputHandler.js | ~320 | Grid, input, movement highlighting |
+| GameConfig.js | ~170 | Constants, spell database |
+| SpellSystem.js | ~480 | Spell casting and effects |
+| UIHandler.js | ~200 | DOM UI updates |
+| PVPBattleScene.js | ~420 | PVP real-time battle |
+| PVPMatchScene.js | ~170 | PVP matchmaking |
+| PVPManager.js | ~130 | PVP coordination |
+| WebRTCAdapter.js | ~220 | WebRTC P2P implementation |
 
 ---
 
@@ -401,5 +420,4 @@ Check browser console for:
 - **Phaser 3 Docs**: https://photonstorm.github.io/phaser3-docs/
 - **Phaser Examples**: https://phaser.io/examples
 - **Project README**: `README.md` for gameplay mechanics
-- **Refactoring Notes**: `REFACTORING.md` for architecture decisions
 - **Development Skill**: `.agents/skills/steel-and-sigils/SKILL.md` for detailed patterns
