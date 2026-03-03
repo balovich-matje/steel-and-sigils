@@ -1885,19 +1885,182 @@ export class PreGameScene extends Phaser.Scene {
             const { PVPManager } = await import(`./PVPManager.js?v=${Date.now()}`);
             this.pvpManager = new PVPManager(this);
             
+            // Set up manual signaling callbacks
+            this.pvpManager.onManualCodeReady = (code) => {
+                this._showManualSignalingUI(code, 'host');
+            };
+            this.pvpManager.onConnected = () => {
+                this._onPVPConnected();
+            };
+            
             const sessionKey = await this.pvpManager.createSession();
             
-            this._showSessionInfo(sessionKey);
-            document.getElementById('pvp-menu').style.display = 'none';
-            document.getElementById('pvp-waiting').style.display = 'block';
-            document.getElementById('pvp-session-key').textContent = sessionKey;
-            document.getElementById('pvp-assigned-side').textContent = 'LEFT';
-            document.getElementById('pvp-assigned-side').style.color = '#4a7cd9';
+            // If not using manual signaling, show regular waiting UI
+            if (!this.pvpManager.useManualSignaling) {
+                this._showSessionInfo(sessionKey);
+                document.getElementById('pvp-menu').style.display = 'none';
+                document.getElementById('pvp-waiting').style.display = 'block';
+                document.getElementById('pvp-session-key').textContent = sessionKey;
+                document.getElementById('pvp-assigned-side').textContent = 'LEFT';
+                document.getElementById('pvp-assigned-side').style.color = '#4a7cd9';
+            }
+            // If manual signaling, the callback will handle the UI
             
         } catch (error) {
             console.error('Failed to create session:', error);
-            alert('Failed to create session. Please try again.');
+            alert('Failed to create session: ' + error.message);
         }
+    }
+
+    _showManualSignalingUI(code, role) {
+        // Hide other UI
+        document.getElementById('mode-selector').style.display = 'none';
+        document.getElementById('pvp-menu').style.display = 'none';
+        document.getElementById('pvp-waiting').style.display = 'none';
+        document.getElementById('pvp-session-info').style.display = 'none';
+        
+        // Create manual signaling UI
+        let existing = document.getElementById('manual-signaling-ui');
+        if (existing) existing.remove();
+        
+        const div = document.createElement('div');
+        div.id = 'manual-signaling-ui';
+        div.style.cssText = `
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 28, 30, 0.98);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 4000; color: #E3D5B8;
+            padding: 20px;
+            box-sizing: border-box;
+        `;
+        
+        if (role === 'host') {
+            div.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 20px;">📋</div>
+                <h2 style="color: #A68966; margin-bottom: 10px;">Manual Connection</h2>
+                <p style="color: #8B7355; margin-bottom: 20px; max-width: 500px; text-align: center;">
+                    Firebase is unavailable. Using manual signaling.<br>
+                    Copy this code and send it to your opponent:
+                </p>
+                <div style="background: #2D241E; border: 2px solid #A68966; border-radius: 8px; padding: 15px; max-width: 90%; word-break: break-all;">
+                    <textarea id="manual-offer-code" readonly style="
+                        background: #1A1C1E; color: #4CAF50; font-family: monospace;
+                        font-size: 12px; padding: 10px; border: 1px solid #4a4a4a;
+                        border-radius: 4px; width: 500px; max-width: 100%; height: 120px;
+                        resize: none; box-sizing: border-box;
+                    ">${code}</textarea>
+                </div>
+                <button onclick="window.gameScene._copyManualCode('manual-offer-code')" 
+                        style="margin-top: 15px; padding: 10px 20px; background: #A68966; border: none; 
+                               color: #1A1C1E; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    📋 Copy Code
+                </button>
+                <p style="color: #8B7355; margin-top: 30px; margin-bottom: 10px;">
+                    Then paste your opponent's response code here:
+                </p>
+                <textarea id="manual-answer-input" placeholder="Paste opponent's code here..." style="
+                    background: #1A1C1E; color: #E3D5B8; font-family: monospace;
+                    font-size: 12px; padding: 10px; border: 1px solid #4a4a4a;
+                    border-radius: 4px; width: 500px; max-width: 100%; height: 120px;
+                    resize: none; box-sizing: border-box; margin-bottom: 15px;
+                "></textarea>
+                <button onclick="window.gameScene._submitManualAnswer()" 
+                        style="padding: 12px 30px; background: #4a7cd9; border: none; 
+                               color: white; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    Connect
+                </button>
+                <button onclick="window.gameScene._cancelManualSignaling()" 
+                        style="margin-top: 20px; padding: 10px 20px; background: transparent; border: 1px solid #9E4A4A; 
+                               color: #9E4A4A; border-radius: 4px; cursor: pointer;">
+                    Cancel
+                </button>
+            `;
+        } else if (role === 'guest') {
+            div.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 20px;">📋</div>
+                <h2 style="color: #A68966; margin-bottom: 10px;">Manual Connection</h2>
+                <p style="color: #4CAF50; margin-bottom: 20px; font-weight: bold;">
+                    ✓ Connected! Send this response code back to the host:
+                </p>
+                <div style="background: #2D241E; border: 2px solid #4CAF50; border-radius: 8px; padding: 15px; max-width: 90%; word-break: break-all;">
+                    <textarea id="manual-answer-code" readonly style="
+                        background: #1A1C1E; color: #4CAF50; font-family: monospace;
+                        font-size: 12px; padding: 10px; border: 1px solid #4a4a4a;
+                        border-radius: 4px; width: 500px; max-width: 100%; height: 120px;
+                        resize: none; box-sizing: border-box;
+                    ">${code}</textarea>
+                </div>
+                <button onclick="window.gameScene._copyManualCode('manual-answer-code')" 
+                        style="margin-top: 15px; padding: 10px 20px; background: #A68966; border: none; 
+                               color: #1A1C1E; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    📋 Copy Response
+                </button>
+                <p style="color: #8B7355; margin-top: 20px;">
+                    Waiting for host to complete connection...
+                </p>
+                <div style="margin-top: 20px; color: #ff9800;">
+                    ⏳ Establishing P2P connection...
+                </div>
+            `;
+        }
+        
+        document.body.appendChild(div);
+    }
+
+    _copyManualCode(textareaId) {
+        const textarea = document.getElementById(textareaId);
+        textarea.select();
+        document.execCommand('copy');
+        
+        // Visual feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = originalText, 1500);
+    }
+
+    async _submitManualAnswer() {
+        const answerCode = document.getElementById('manual-answer-input').value.trim();
+        if (!answerCode) {
+            alert('Please paste the response code from your opponent');
+            return;
+        }
+        
+        try {
+            await this.pvpManager.completeManualConnection(answerCode);
+            // Connection will establish, onConnected callback will handle next steps
+        } catch (error) {
+            alert('Failed to connect: ' + error.message);
+        }
+    }
+
+    _cancelManualSignaling() {
+        if (this.pvpManager) {
+            this.pvpManager.disconnect();
+        }
+        
+        const ui = document.getElementById('manual-signaling-ui');
+        if (ui) ui.remove();
+        
+        document.getElementById('mode-selector').style.display = 'flex';
+    }
+
+    _onPVPConnected() {
+        // Hide manual signaling UI if present
+        const manualUI = document.getElementById('manual-signaling-ui');
+        if (manualUI) {
+            manualUI.remove();
+        }
+        
+        // Proceed to PVP match scene
+        this.scene.start('PVPMatchScene', {
+            pvpManager: this.pvpManager,
+            sessionKey: this.pvpManager.getSessionKey(),
+            playerNumber: this.pvpManager.getPlayerNumber(),
+            army: []
+        });
     }
     
     _showAssignedSide(side) {
@@ -1925,10 +2088,11 @@ export class PreGameScene extends Phaser.Scene {
 
     async joinPVPSession() {
         const keyInput = document.getElementById('pvp-join-key');
-        const sessionKey = keyInput.value.trim().toUpperCase();
+        const sessionKey = keyInput.value.trim();
         
-        if (!sessionKey || sessionKey.length !== 6) {
-            alert('Please enter a valid 6-character session key');
+        // Allow both short keys (Firebase) and long codes (manual)
+        if (!sessionKey) {
+            alert('Please enter a session key or connection code');
             return;
         }
         
@@ -1938,11 +2102,23 @@ export class PreGameScene extends Phaser.Scene {
             const { PVPManager } = await import(`./PVPManager.js?v=${Date.now()}`);
             this.pvpManager = new PVPManager(this);
             
+            // Set up manual signaling callback for guest
+            this.pvpManager.onManualAnswerReady = (answerCode) => {
+                this._showManualSignalingUI(answerCode, 'guest');
+            };
+            this.pvpManager.onConnected = () => {
+                this._onPVPConnected();
+            };
+            
             await this.pvpManager.joinSession(sessionKey);
             
-            this._showSessionInfo(sessionKey);
-            document.getElementById('pvp-assigned-side').textContent = 'RIGHT';
-            document.getElementById('pvp-assigned-side').style.color = '#d94a4a';
+            // If not using manual signaling, show regular UI
+            if (!this.pvpManager.useManualSignaling) {
+                this._showSessionInfo(sessionKey);
+                document.getElementById('pvp-assigned-side').textContent = 'RIGHT';
+                document.getElementById('pvp-assigned-side').style.color = '#d94a4a';
+            }
+            // If manual signaling, the callback will show the answer code UI
             
         } catch (error) {
             console.error('Failed to join session:', error);

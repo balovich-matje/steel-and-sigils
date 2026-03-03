@@ -1,7 +1,8 @@
 // ============================================
 // PVP MANAGER - WebRTC Peer-to-Peer
 // ============================================
-// Firebase is used ONLY for initial signaling (SDP exchange)
+// Firebase is used ONLY for initial signaling (SDP exchange) if available
+// Falls back to manual copy-paste signaling
 // All game data flows through WebRTC DataChannel
 
 import { WebRTCAdapter } from './network/WebRTCAdapter.js';
@@ -15,6 +16,7 @@ export class PVPManager {
         this.playerNumber = null;
         this.isHost = false;
         this.isConnected = false;
+        this.useManualSignaling = false;
         
         // Game data
         this.myArmy = [];
@@ -25,6 +27,8 @@ export class PVPManager {
         this.onDisconnected = null;
         this.onOpponentAction = null;
         this.onOpponentArmyReceived = null;
+        this.onManualCodeReady = null;  // For manual signaling: host offer code ready
+        this.onManualAnswerReady = null;  // For manual signaling: guest answer code ready
     }
 
     // ============================================
@@ -34,21 +38,39 @@ export class PVPManager {
     async createSession() {
         this._initFirebase();
         
-        this.webrtc = new WebRTCAdapter(firebase.database());
+        this.webrtc = new WebRTCAdapter(firebase.apps.length ? firebase.database() : null);
         this._setupCallbacks();
         
-        this.sessionKey = await this.webrtc.createSession();
-        this.playerNumber = 1;
-        this.isHost = true;
-        
-
-        return this.sessionKey;
+        try {
+            this.sessionKey = await this.webrtc.createSession();
+            
+            // Check if using manual signaling
+            if (this.webrtc.useManualSignaling) {
+                this.useManualSignaling = true;
+                this.playerNumber = 1;
+                this.isHost = true;
+                
+                // Notify UI to show the manual code
+                if (this.onManualCodeReady) {
+                    this.onManualCodeReady(this.sessionKey);
+                }
+                
+                return this.sessionKey;
+            }
+            
+            this.playerNumber = 1;
+            this.isHost = true;
+            
+            return this.sessionKey;
+        } catch (error) {
+            throw new Error('Failed to create session: ' + error.message);
+        }
     }
 
     async joinSession(sessionKey) {
         this._initFirebase();
         
-        this.webrtc = new WebRTCAdapter(firebase.database());
+        this.webrtc = new WebRTCAdapter(firebase.apps.length ? firebase.database() : null);
         this._setupCallbacks();
         
         await this.webrtc.joinSession(sessionKey);
@@ -56,19 +78,35 @@ export class PVPManager {
         this.playerNumber = 2;
         this.isHost = false;
         
-
+        // Check if using manual signaling
+        if (this.webrtc.useManualSignaling) {
+            this.useManualSignaling = true;
+        }
+        
         return true;
     }
 
+    // Complete manual connection (host receives answer from guest)
+    async completeManualConnection(answerCode) {
+        if (!this.webrtc || !this.isHost) {
+            throw new Error('Not in host mode');
+        }
+        return await this.webrtc.completeManualConnection(answerCode);
+    }
+
     _initFirebase() {
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+            } catch (e) {
+                console.log('Firebase initialization failed:', e.message);
+            }
         }
     }
 
     _setupCallbacks() {
+        // Set up WebRTC callbacks
         this.webrtc.onConnected(() => {
-
             this.isConnected = true;
             
             // Clean up Firebase signaling session (we don't need it anymore)
@@ -78,12 +116,18 @@ export class PVPManager {
         });
         
         this.webrtc.onDisconnected(() => {
-
             this.isConnected = false;
             if (this.onDisconnected) this.onDisconnected();
         });
         
         this.webrtc.onMessage((data) => this._handleMessage(data));
+        
+        // Set up manual signaling callback
+        this.webrtc.onManualAnswerReady = (answerCode) => {
+            if (this.onManualAnswerReady) {
+                this.onManualAnswerReady(answerCode);
+            }
+        };
     }
 
     // ============================================
@@ -91,8 +135,6 @@ export class PVPManager {
     // ============================================
 
     _handleMessage(data) {
-
-        
         switch (data.type) {
             case 'army':
                 this.opponentArmy = data.army;
@@ -119,7 +161,6 @@ export class PVPManager {
 
     send(data) {
         if (!this.isConnected) {
-
             return false;
         }
         return this.webrtc.send(data);

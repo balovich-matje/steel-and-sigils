@@ -129,18 +129,26 @@ export class PVPMatchScene extends Phaser.Scene {
             z-index: 3000; color: #E3D5B8;
         `;
         
+        // For manual signaling, session key is a long code - don't display it fully
+        const isLongCode = this.sessionKey.length > 20;
+        const displayKey = isLongCode 
+            ? `${this.sessionKey.substring(0, 12)}...${this.sessionKey.substring(this.sessionKey.length - 4)}`
+            : this.sessionKey;
+        
         div.innerHTML = `
             <div style="font-size: 48px; margin-bottom: 20px;">⚔️</div>
             <h2 style="color: #A68966; margin-bottom: 10px;">PVP Battle</h2>
             <p style="color: #8B7355; margin-bottom: 20px;">
                 ${this.pvpManager.isHostPlayer() ? 'Waiting for opponent to join...' : 'Connecting to host...'}
             </p>
+            ${isLongCode ? '' : `
             <div style="background: #2D241E; border: 2px solid #A68966; border-radius: 8px; padding: 20px;">
                 <div style="color: #8B7355; font-size: 12px; margin-bottom: 8px;">Session Key:</div>
                 <div style="color: #FFD700; font-size: 32px; font-weight: bold; letter-spacing: 4px;">
-                    ${this.sessionKey}
+                    ${displayKey}
                 </div>
             </div>
+            `}
             <div id="pvp-connection-status" style="margin-top: 20px; color: #ff9800;">
                 ${this.pvpManager.isConnected ? '✓ Connected' : '⏳ Establishing P2P connection...'}
             </div>
