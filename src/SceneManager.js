@@ -1820,7 +1820,11 @@ export class PreGameScene extends Phaser.Scene {
         this.placementMode = false;
         document.getElementById('placement-bar').classList.add('hidden');
         
+        console.log('[PreGameScene] confirmPlacement called, placedUnits:', this.placedUnits);
+        console.log('[PreGameScene] isPVPMode:', this.isPVPMode, 'pvpManager:', !!this.pvpManager);
+        
         if (this.isPVPMode && this.pvpManager) {
+            console.log('[PreGameScene] Starting PVPMatchScene with army:', this.placedUnits);
             this.scene.start('PVPMatchScene', {
                 pvpManager: this.pvpManager,
                 sessionKey: this.pvpManager.getSessionKey(),

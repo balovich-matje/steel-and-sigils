@@ -30,8 +30,12 @@ export class PVPMatchScene extends Phaser.Scene {
     create() {
         window.gameScene = this;
         
-        console.log('[PVPMatchScene] Created, player:', this.playerNumber, 'army size:', this.myArmy.length);
-        console.log('[PVPMatchScene] pvpManager state - isConnected:', this.pvpManager.isConnected);
+        console.log('[PVPMatchScene] ==== CREATED ====');
+        console.log('[PVPMatchScene] Player:', this.playerNumber, 'isHost:', this.playerNumber === 1);
+        console.log('[PVPMatchScene] Army:', this.myArmy);
+        console.log('[PVPMatchScene] Army length:', this.myArmy?.length);
+        console.log('[PVPMatchScene] pvpManager.isConnected:', this.pvpManager?.isConnected);
+        console.log('[PVPMatchScene] pvpManager.opponentArmy:', this.pvpManager?.opponentArmy);
         
         // Set up callbacks
         this._setupCallbacks();
@@ -40,11 +44,11 @@ export class PVPMatchScene extends Phaser.Scene {
         this._showWaitingUI();
         
         // Send army once connected
-        if (this.pvpManager.isConnected) {
-            console.log('[PVPMatchScene] Already connected, triggering _onConnected');
+        if (this.pvpManager?.isConnected) {
+            console.log('[PVPMatchScene] Already connected, calling _onConnected');
             this._onConnected();
         } else {
-            console.log('[PVPMatchScene] Waiting for connection...');
+            console.log('[PVPMatchScene] Not connected yet, will wait for callback');
         }
     }
 
@@ -63,7 +67,9 @@ export class PVPMatchScene extends Phaser.Scene {
     // ============================================
 
     _onConnected() {
-        console.log('[PVPMatchScene] _onConnected called, player:', this.playerNumber);
+        console.log('[PVPMatchScene] ==== _onConnected CALLED ====');
+        console.log('[PVPMatchScene] Player:', this.playerNumber);
+        console.log('[PVPMatchScene] isConnected:', this.pvpManager?.isConnected);
         
         // Update UI
         const statusEl = document.getElementById('pvp-connection-status');
@@ -73,11 +79,15 @@ export class PVPMatchScene extends Phaser.Scene {
         }
         
         // Start the army exchange handshake
+        console.log('[PVPMatchScene] About to call _startArmyExchange');
         this._startArmyExchange();
     }
 
     _startArmyExchange() {
-        console.log('[PVPMatchScene] Starting army exchange, my army:', this.myArmy);
+        console.log('[PVPMatchScene] ==== STARTING ARMY EXCHANGE ====');
+        console.log('[PVPMatchScene] My army:', JSON.stringify(this.myArmy));
+        console.log('[PVPMatchScene] My army length:', this.myArmy?.length);
+        console.log('[PVPMatchScene] Have opponent army?:', !!this.opponentArmy);
         let sendCount = 0;
         
         // Send army and retry until we receive opponent's army
