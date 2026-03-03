@@ -1745,7 +1745,8 @@ export class PreGameScene extends Phaser.Scene {
         // Update placement hint
         const hintText = placementBar.querySelector('.placement-hint');
         if (hintText && this.isPVPMode) {
-            hintText.textContent = `Click on the ${mySide.toUpperCase()} 2 columns to place units`;
+            const side = this.pvpManager?.isHostPlayer() ? 'LEFT' : 'RIGHT';
+            hintText.textContent = `Click on the ${side} 2 columns to place units`;
         }
         
         this.updatePlacementDisplay();
