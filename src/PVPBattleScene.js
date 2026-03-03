@@ -25,7 +25,7 @@ export class PVPBattleScene extends Phaser.Scene {
         // PVP state
         this.pvpManager = null;
         this.playerNumber = null;
-        this.currentTurn = 1; // Player 1 starts
+        this.currentTurn = null; // Will be set based on initiative
         
         // Game state
         this.units = [];
@@ -95,7 +95,36 @@ export class PVPBattleScene extends Phaser.Scene {
             this._spawnUnit(u.type, u.x, u.y, opponentNumber);
         }
         
-
+        // Determine first turn based on highest initiative
+        this._determineFirstTurn();
+    }
+    
+    _determineFirstTurn() {
+        // Get all units for each player
+        const player1Units = this.units.filter(u => u.owner === 1);
+        const player2Units = this.units.filter(u => u.owner === 2);
+        
+        // Find highest initiative for each player
+        const getMaxInitiative = (units) => {
+            if (units.length === 0) return 0;
+            return Math.max(...units.map(u => u.initiative || 0));
+        };
+        
+        const p1MaxInitiative = getMaxInitiative(player1Units);
+        const p2MaxInitiative = getMaxInitiative(player2Units);
+        
+        // Player with higher initiative goes first
+        if (p1MaxInitiative > p2MaxInitiative) {
+            this.currentTurn = 1;
+            console.log('[PVPBattleScene] Player 1 goes first (initiative:', p1MaxInitiative, 'vs', p2MaxInitiative, ')');
+        } else if (p2MaxInitiative > p1MaxInitiative) {
+            this.currentTurn = 2;
+            console.log('[PVPBattleScene] Player 2 goes first (initiative:', p2MaxInitiative, 'vs', p1MaxInitiative, ')');
+        } else {
+            // Tie - player 1 goes first
+            this.currentTurn = 1;
+            console.log('[PVPBattleScene] Player 1 goes first (tie, both have initiative:', p1MaxInitiative, ')');
+        }
     }
 
     _spawnUnit(type, x, y, owner) {
@@ -172,20 +201,8 @@ export class PVPBattleScene extends Phaser.Scene {
         
         if (unit.sprite) unit.sprite.setTint(0xFFFF00);
         
-        // Show move range
-        this.gridSystem.clearHighlights();
-        for (let dy = -unit.moveRange; dy <= unit.moveRange; dy++) {
-            for (let dx = -unit.moveRange; dx <= unit.moveRange; dx++) {
-                if (Math.abs(dx) + Math.abs(dy) <= unit.moveRange) {
-                    const nx = unit.gridX + dx, ny = unit.gridY + dy;
-                    if (nx >= 0 && nx < CONFIG.GRID_WIDTH && ny >= 0 && ny < CONFIG.GRID_HEIGHT) {
-                        if (!this._getUnitAt(nx, ny)) {
-                            this.gridSystem.highlightTile(nx, ny, CONFIG.COLORS.HIGHLIGHT_MOVE);
-                        }
-                    }
-                }
-            }
-        }
+        // Show move range using GridSystem's built-in method
+        this.gridSystem.highlightValidMoves(unit);
     }
 
     _deselect() {
