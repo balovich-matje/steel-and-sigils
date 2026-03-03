@@ -43,6 +43,12 @@ export class PVPMatchScene extends Phaser.Scene {
         // Show waiting UI
         this._showWaitingUI();
         
+        // Check if we already have opponent's army (received before scene was created)
+        if (this.pvpManager?.opponentArmy && !this.opponentArmy) {
+            console.log('[PVPMatchScene] Army was already received before scene created!');
+            this._onOpponentArmy(this.pvpManager.opponentArmy);
+        }
+        
         // Send army once connected
         if (this.pvpManager?.isConnected) {
             console.log('[PVPMatchScene] Already connected, calling _onConnected');
