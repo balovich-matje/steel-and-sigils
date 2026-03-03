@@ -94,6 +94,12 @@ export class PVPMatchScene extends Phaser.Scene {
         console.log('[PVPMatchScene] My army:', JSON.stringify(this.myArmy));
         console.log('[PVPMatchScene] My army length:', this.myArmy?.length);
         console.log('[PVPMatchScene] Have opponent army?:', !!this.opponentArmy);
+        
+        if (!this.myArmy || this.myArmy.length === 0) {
+            console.error('[PVPMatchScene] ERROR: My army is empty! Cannot exchange armies.');
+            return;
+        }
+        
         let sendCount = 0;
         
         // Send army and retry until we receive opponent's army
