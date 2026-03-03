@@ -49,6 +49,18 @@ export class PVPBattleScene extends Phaser.Scene {
         this.pvpManager.onOpponentAction = (action) => this._applyOpponentAction(action);
     }
 
+    preload() {
+        // Load player unit images (same as PreGameScene)
+        const playerUnits = ['KNIGHT', 'ARCHER', 'WIZARD', 'PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
+        for (const unitType of playerUnits) {
+            const template = UNIT_TYPES[unitType];
+            if (template && template.image) {
+                const imageKey = unitType.toLowerCase() + '_img';
+                this.load.image(imageKey, template.image);
+            }
+        }
+    }
+
     create() {
         console.log('[PVPBattleScene] ==== CREATED ====');
         console.log('[PVPBattleScene] Player:', this.playerNumber, 'isHost:', this.playerNumber === 1);
