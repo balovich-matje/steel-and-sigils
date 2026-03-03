@@ -1,821 +1,710 @@
 Error with Permissions-Policy header: Unrecognized feature: 'browsing-topics'.
-main.js:6 Steel and Sigils v0.26
+main.js:6 Steel and Sigils v0.27
 phaser.min.js:1      Phaser v3.70.0 (WebGL | Web Audio)  https://phaser.io
+phaser.min.js:1 The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio
+i @ phaser.min.js:1
 WebRTCAdapter.js:336 [WebRTCAdapter] Setting up data channel, label: game id: 1
 WebRTCAdapter.js:340 [WebRTCAdapter] Data channel opened! label: game
 WebRTCAdapter.js:343 [WebRTCAdapter] Calling onConnectedCallback
-WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
-WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
-WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
-WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:155 [PVPManager] No callback set - buffering army message
-WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
-WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
-WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
-WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:155 [PVPManager] No callback set - buffering army message
-WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
-WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
-WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
-WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:155 [PVPManager] No callback set - buffering army message
-WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
-WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
-WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
-WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:155 [PVPManager] No callback set - buffering army message
 SceneManager.js:1823 [PreGameScene] confirmPlacement called, placedUnits: [{…}]
 SceneManager.js:1824 [PreGameScene] isPVPMode: true pvpManager: true
 SceneManager.js:1827 [PreGameScene] Starting PVPMatchScene with army: [{…}]
-PVPMatchScene.js?v=1772523162284:33 [PVPMatchScene] ==== CREATED ====
-PVPMatchScene.js?v=1772523162284:34 [PVPMatchScene] Player: 2 isHost: false
-PVPMatchScene.js?v=1772523162284:35 [PVPMatchScene] Army: [{…}]
-PVPMatchScene.js?v=1772523162284:36 [PVPMatchScene] Army length: 1
-PVPMatchScene.js?v=1772523162284:37 [PVPMatchScene] pvpManager.isConnected: true
-PVPMatchScene.js?v=1772523162284:38 [PVPMatchScene] pvpManager.opponentArmy: [{…}]
-PVPMatchScene.js?v=1772523162284:66 [PVPMatchScene] Setting up callbacks
-PVPManager.js?v=1772523162425:187 [PVPManager] Processing 4 buffered messages
-PVPManager.js?v=1772523162425:190 [PVPManager] Processing buffered message: army
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:181 [PVPMatchScene] _tryStartBattle called
-PVPMatchScene.js?v=1772523162284:182 [PVPMatchScene] battleStarted: false
-PVPMatchScene.js?v=1772523162284:183 [PVPMatchScene] isConnected: true
-PVPMatchScene.js?v=1772523162284:184 [PVPMatchScene] opponentArmy: [{…}]
-PVPMatchScene.js?v=1772523162284:199 [PVPMatchScene] All conditions met - starting battle!
-PVPMatchScene.js?v=1772523162284:206 [PVPMatchScene] About to start PVPBattleScene
-PVPMatchScene.js?v=1772523162284:215 [PVPMatchScene] PVPBattleScene.start() called successfully
-PVPManager.js?v=1772523162425:190 [PVPManager] Processing buffered message: army
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
-PVPManager.js?v=1772523162425:190 [PVPManager] Processing buffered message: army
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
-PVPManager.js?v=1772523162425:190 [PVPManager] Processing buffered message: army
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
-PVPMatchScene.js?v=1772523162284:54 [PVPMatchScene] Already connected, calling _onConnected
-PVPMatchScene.js?v=1772523162284:80 [PVPMatchScene] ==== _onConnected CALLED ====
-PVPMatchScene.js?v=1772523162284:81 [PVPMatchScene] Player: 2
-PVPMatchScene.js?v=1772523162284:82 [PVPMatchScene] isConnected: true
-PVPMatchScene.js?v=1772523162284:92 [PVPMatchScene] About to call _startArmyExchange
-PVPMatchScene.js?v=1772523162284:97 [PVPMatchScene] ==== STARTING ARMY EXCHANGE ====
-PVPMatchScene.js?v=1772523162284:98 [PVPMatchScene] My army: [{"type":"BERSERKER","x":8,"y":3}]
-PVPMatchScene.js?v=1772523162284:99 [PVPMatchScene] My army length: 1
-PVPMatchScene.js?v=1772523162284:100 [PVPMatchScene] Have opponent army?: true
-PVPBattleScene.js?v=1772523162357:53 [PVPBattleScene] ==== CREATED ====
-PVPBattleScene.js?v=1772523162357:54 [PVPBattleScene] Player: 2 isHost: false
-PVPBattleScene.js?v=1772523162357:55 [PVPBattleScene] My army: 1 units
-PVPBattleScene.js?v=1772523162357:56 [PVPBattleScene] Opponent army: 1 units
-WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+PVPMatchScene.js?v=1772523592727:33 [PVPMatchScene] ==== CREATED ====
+PVPMatchScene.js?v=1772523592727:34 [PVPMatchScene] Player: 2 isHost: false
+PVPMatchScene.js?v=1772523592727:35 [PVPMatchScene] Army: [{…}]
+PVPMatchScene.js?v=1772523592727:36 [PVPMatchScene] Army length: 1
+PVPMatchScene.js?v=1772523592727:37 [PVPMatchScene] pvpManager.isConnected: true
+PVPMatchScene.js?v=1772523592727:38 [PVPMatchScene] pvpManager.opponentArmy: null
+PVPMatchScene.js?v=1772523592727:66 [PVPMatchScene] Setting up callbacks
+PVPManager.js?v=1772523593003:187 [PVPManager] Processing 0 buffered messages
+PVPMatchScene.js?v=1772523592727:54 [PVPMatchScene] Already connected, calling _onConnected
+PVPMatchScene.js?v=1772523592727:80 [PVPMatchScene] ==== _onConnected CALLED ====
+PVPMatchScene.js?v=1772523592727:81 [PVPMatchScene] Player: 2
+PVPMatchScene.js?v=1772523592727:82 [PVPMatchScene] isConnected: true
+PVPMatchScene.js?v=1772523592727:92 [PVPMatchScene] About to call _startArmyExchange
+PVPMatchScene.js?v=1772523592727:97 [PVPMatchScene] ==== STARTING ARMY EXCHANGE ====
+PVPMatchScene.js?v=1772523592727:98 [PVPMatchScene] My army: [{"type":"ROGUE","x":8,"y":3}]
+PVPMatchScene.js?v=1772523592727:99 [PVPMatchScene] My army length: 1
+PVPMatchScene.js?v=1772523592727:100 [PVPMatchScene] Have opponent army?: false
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 1 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
-PVPMatchScene.js?v=1772523162284:118 [PVPMatchScene] Battle already started, stopping retry
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 2 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 3 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 4 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 5 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 6 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 7 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 8 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 9 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 10 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 11 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 12 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 13 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 14 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 15 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 16 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 17 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 18 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 19 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:139 [PVPMatchScene] Sending army (attempt 20 )
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPMatchScene.js?v=1772523592727:141 [PVPMatchScene] Continuing to send army (logging suppressed)
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
 WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
-WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
-WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army
-PVPManager.js?v=1772523162425:141 [PVPManager] Received message: army {type: 'army', army: Array(1)}
-PVPManager.js?v=1772523162425:145 [PVPManager] Army received, length: 1
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
 WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
 WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
-WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
 WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772523162425:210 [PVPManager] Send result: true type: army_ack
-PVPManager.js?v=1772523162425:152 [PVPManager] Calling onOpponentArmyReceived callback
-PVPMatchScene.js?v=1772523162284:167 [PVPMatchScene] Received opponent army: [{…}]
-PVPMatchScene.js?v=1772523162284:172 [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
- [WebRTCAdapter] onmessage received from label: game
- [WebRTCAdapter] data: {"type":"army","army":[{"type":"RANGER","x":1,"y":3}]}
- [WebRTCAdapter] Parsed message type: army
- [PVPManager] Received message: army {type: 'army', army: Array(1)}
- [PVPManager] Army received, length: 1
- [WebRTCAdapter] send called, isConnected: true
- [WebRTCAdapter] dataChannel: game readyState: open
- [WebRTCAdapter] Sending on channel game : {"type":"army_ack"}
- [WebRTCAdapter] Data sent successfully
- [PVPManager] Send result: true type: army_ack
- [PVPManager] Calling onOpponentArmyReceived callback
- [PVPMatchScene] Received opponent army: [{…}]
- [PVPMatchScene] Already have opponent army, ignoring duplicate
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received
+PVPManager.js?v=1772523593003:215 [PVPManager] sendArmy called with 1 units
+WebRTCAdapter.js:382 [WebRTCAdapter] send called, isConnected: true
+WebRTCAdapter.js:383 [WebRTCAdapter] dataChannel: game readyState: open
+WebRTCAdapter.js:394 [WebRTCAdapter] Sending on channel game : {"type":"army","army":[{"type":"ROGUE","x":8,"y":3}]}
+WebRTCAdapter.js:396 [WebRTCAdapter] Data sent successfully
+PVPManager.js?v=1772523593003:210 [PVPManager] Send result: true type: army
+PVPMatchScene.js?v=1772523592727:151 [PVPMatchScene] Timeout - failed to start battle
+WebRTCAdapter.js:361 [WebRTCAdapter] onmessage received from label: game
+WebRTCAdapter.js:362 [WebRTCAdapter] data: {"type":"army_ack"}
+WebRTCAdapter.js:365 [WebRTCAdapter] Parsed message type: army_ack
+PVPManager.js?v=1772523593003:141 [PVPManager] Received message: army_ack {type: 'army_ack'}
+PVPManager.js?v=1772523593003:163 [PVPManager] Army acknowledgment received

@@ -60,6 +60,12 @@ export class PVPMatchScene extends Phaser.Scene {
         // Set up acknowledgment tracking
         this.armyAckReceived = false;
         this.pvpManager.armyAckReceived = false;
+        
+        // Send army immediately (don't wait for interval)
+        if (this.myArmy && this.myArmy.length > 0) {
+            console.log('[PVPMatchScene] Sending army immediately on create');
+            this.pvpManager.sendArmy(this.myArmy);
+        }
     }
 
     _setupCallbacks() {
@@ -106,7 +112,7 @@ export class PVPMatchScene extends Phaser.Scene {
         
         let sendCount = 0;
         
-        // Send army and retry until we receive opponent's army
+        // Send army and retry until battle starts
         this._sendArmyInterval = setInterval(() => {
             if (!this.pvpManager.isConnected) {
                 console.log('[PVPMatchScene] Not connected, stopping retry');
@@ -122,25 +128,25 @@ export class PVPMatchScene extends Phaser.Scene {
                 return;
             }
             
+            // Always send our army first (to ensure other player gets it)
+            sendCount++;
+            if (sendCount <= 10) {  // Only log first 10 attempts
+                console.log('[PVPMatchScene] Sending army (attempt', sendCount, ')');
+            } else if (sendCount === 11) {
+                console.log('[PVPMatchScene] Continuing to send army (logging suppressed)');
+            }
+            this.pvpManager.sendArmy(this.myArmy);
+            
+            // Then check if we can start the battle
             if (this.opponentArmy) {
-                console.log('[PVPMatchScene] Received opponent army, attempting to start battle');
+                console.log('[PVPMatchScene] Have opponent army, attempting to start battle');
                 this._tryStartBattle();
-                // Don't stop - keep sending until battle actually starts
                 if (this.battleStarted) {
                     clearInterval(this._sendArmyInterval);
                     this._sendArmyInterval = null;
                     return;
                 }
             }
-            
-            // Send our army
-            sendCount++;
-            if (sendCount <= 20) {  // Only log first 20 attempts
-                console.log('[PVPMatchScene] Sending army (attempt', sendCount, ')');
-            } else if (sendCount === 21) {
-                console.log('[PVPMatchScene] Continuing to send army (logging suppressed)');
-            }
-            this.pvpManager.sendArmy(this.myArmy);
         }, 500); // Retry every 500ms
         
         // Stop retrying after 30 seconds (60 attempts) - increased timeout
