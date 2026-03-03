@@ -299,9 +299,8 @@ export class BattleScene extends Phaser.Scene {
             return;
         }
         
-        // Sort by x (prefer right side) and pick a position
-        validPositions.sort((a, b) => b.x - a.x);
-        const pos = validPositions[0];
+        // Pick a random position from valid positions
+        const pos = validPositions[Math.floor(Math.random() * validPositions.length)];
         
         const boss = this.unitManager.addUnit(selectedBoss, pos.x, pos.y);
         

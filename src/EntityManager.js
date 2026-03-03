@@ -569,13 +569,19 @@ export class TurnSystem {
     }
 
     executeAITurn() {
+        console.log('[AI Turn] Starting AI turn for:', this.currentUnit?.name, 'Type:', this.currentUnit?.type);
+        
         if (!this.currentUnit || this.currentUnit.isDead) {
+            console.log('[AI Turn] Unit is null or dead, skipping');
             this.nextTurn();
             return;
         }
 
         const unit = this.currentUnit;
         const playerUnits = this.scene.unitManager.getPlayerUnits();
+        
+        console.log('[AI Turn] Player units found:', playerUnits.length);
+        console.log('[AI Turn] Unit stats - hasMoved:', unit.hasMoved, 'hasAttacked:', unit.hasAttacked, 'isPlayer:', unit.isPlayer);
 
         if (playerUnits.length === 0) return;
 
