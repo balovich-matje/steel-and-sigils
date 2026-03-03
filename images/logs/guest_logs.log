@@ -1,167 +1,37 @@
 Error with Permissions-Policy header: Unrecognized feature: 'browsing-topics'.
-main.js:6 Steel and Sigils v0.23
+main.js:6 Steel and Sigils v0.25
 phaser.min.js:1      Phaser v3.70.0 (WebGL | Web Audio)  https://phaser.io
-WebRTCAdapter.js:336 [WebRTCAdapter] Setting up data channel
-WebRTCAdapter.js:339 [WebRTCAdapter] Data channel opened!
-WebRTCAdapter.js:342 [WebRTCAdapter] Calling onConnectedCallback
-SceneManager.js:1823 [PreGameScene] confirmPlacement called, placedUnits: (2) [{…}, {…}]
-SceneManager.js:1824 [PreGameScene] isPVPMode: true pvpManager: true
-SceneManager.js:1827 [PreGameScene] Starting PVPMatchScene with army: (2) [{…}, {…}]
-PVPMatchScene.js?v=1772522015109:33 [PVPMatchScene] ==== CREATED ====
-PVPMatchScene.js?v=1772522015109:34 [PVPMatchScene] Player: 2 isHost: false
-PVPMatchScene.js?v=1772522015109:35 [PVPMatchScene] Army: (2) [{…}, {…}]
-PVPMatchScene.js?v=1772522015109:36 [PVPMatchScene] Army length: 2
-PVPMatchScene.js?v=1772522015109:37 [PVPMatchScene] pvpManager.isConnected: true
-PVPMatchScene.js?v=1772522015109:38 [PVPMatchScene] pvpManager.opponentArmy: null
-PVPMatchScene.js?v=1772522015109:62 [PVPMatchScene] Setting up callbacks
-PVPManager.js?v=1772522015382:177 [PVPManager] Processing 0 buffered messages
-PVPMatchScene.js?v=1772522015109:54 [PVPMatchScene] Already connected, calling _onConnected
-PVPMatchScene.js?v=1772522015109:76 [PVPMatchScene] ==== _onConnected CALLED ====
-PVPMatchScene.js?v=1772522015109:77 [PVPMatchScene] Player: 2
-PVPMatchScene.js?v=1772522015109:78 [PVPMatchScene] isConnected: true
-PVPMatchScene.js?v=1772522015109:88 [PVPMatchScene] About to call _startArmyExchange
-PVPMatchScene.js?v=1772522015109:93 [PVPMatchScene] ==== STARTING ARMY EXCHANGE ====
-PVPMatchScene.js?v=1772522015109:94 [PVPMatchScene] My army: [{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]
-PVPMatchScene.js?v=1772522015109:95 [PVPMatchScene] My army length: 2
-PVPMatchScene.js?v=1772522015109:96 [PVPMatchScene] Have opponent army?: false
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 1 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 2 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 3 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 4 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 5 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 6 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 7 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 8 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 9 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 10 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 11 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 12 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 13 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 14 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 15 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 16 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 17 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 18 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 19 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:122 [PVPMatchScene] Sending army (attempt 20 )
-PVPManager.js?v=1772522015382:205 [PVPManager] sendArmy called with 2 units
-WebRTCAdapter.js:376 [WebRTCAdapter] send called, isConnected: true dataChannel: true
-WebRTCAdapter.js:383 [WebRTCAdapter] Sending data: {"type":"army","army":[{"type":"RANGER","x":9,"y":0},{"type":"RANGER","x":9,"y":7}]}
-WebRTCAdapter.js:385 [WebRTCAdapter] Data sent successfully
-PVPManager.js?v=1772522015382:200 [PVPManager] Send result: true type: army
-PVPMatchScene.js?v=1772522015109:124 [PVPMatchScene] sendArmy returned: true
-PVPMatchScene.js?v=1772522015109:131 [PVPMatchScene] Timeout - failed to receive opponent army
+console.log('WebRTC supported:', typeof RTCPeerConnection !== 'undefined');
+console.log('Data channel test...');
+
+const pc1 = new RTCPeerConnection({iceServers: [{urls: 'stun:stun.l.google.com:19302'}]});
+const pc2 = new RTCPeerConnection({iceServers: [{urls: 'stun:stun.l.google.com:19302'}]});
+
+const ch1 = pc1.createDataChannel('test');
+ch1.onopen = () => {
+  console.log('Ch1 open, sending...');
+  ch1.send('Hello from PC1');
+};
+ch1.onmessage = (e) => console.log('Ch1 received:', e.data);
+
+pc2.ondatachannel = (e) => {
+  const ch2 = e.channel;
+  ch2.onopen = () => console.log('Ch2 open');
+  ch2.onmessage = (e) => {
+    console.log('Ch2 received:', e.data);
+    ch2.send('Hello from PC2');
+  };
+};
+
+// Exchange offers
+pc1.createOffer().then(offer => {
+  pc1.setLocalDescription(offer);
+  pc2.setRemoteDescription(offer);
+  return pc2.createAnswer();
+}).then(answer => {
+  pc2.setLocalDescription(answer);
+  pc1.setRemoteDescription(answer);
+});
+VM2446:1 WebRTC supported: true
+VM2446:2 Data channel test...
+Promise {<pending>}[[Prototype]]: Promise[[PromiseState]]: "fulfilled"[[PromiseResult]]: undefined

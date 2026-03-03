@@ -333,10 +333,11 @@ export class WebRTCAdapter {
     // ============================================
 
     _setupDataChannel(channel) {
-        console.log('[WebRTCAdapter] Setting up data channel');
+        console.log('[WebRTCAdapter] Setting up data channel, label:', channel.label, 'id:', channel.id);
+        this.dataChannel = channel;  // Ensure we're tracking the right channel
         
         channel.onopen = () => {
-            console.log('[WebRTCAdapter] Data channel opened!');
+            console.log('[WebRTCAdapter] Data channel opened! label:', channel.label);
             this.isConnected = true;
             if (this.onConnectedCallback) {
                 console.log('[WebRTCAdapter] Calling onConnectedCallback');
@@ -347,13 +348,18 @@ export class WebRTCAdapter {
         };
         
         channel.onclose = () => {
-            console.log('[WebRTCAdapter] Data channel closed');
+            console.log('[WebRTCAdapter] Data channel closed, label:', channel.label);
             this.isConnected = false;
             if (this.onDisconnectedCallback) this.onDisconnectedCallback();
         };
         
+        channel.onerror = (error) => {
+            console.log('[WebRTCAdapter] Data channel error:', error);
+        };
+        
         channel.onmessage = (event) => {
-            console.log('[WebRTCAdapter] onmessage received:', event.data?.substring(0, 100));
+            console.log('[WebRTCAdapter] onmessage received from label:', channel.label);
+            console.log('[WebRTCAdapter] data:', event.data?.substring(0, 100));
             try {
                 const data = JSON.parse(event.data);
                 console.log('[WebRTCAdapter] Parsed message type:', data.type);
@@ -373,14 +379,19 @@ export class WebRTCAdapter {
     // ============================================
 
     send(data) {
-        console.log('[WebRTCAdapter] send called, isConnected:', this.isConnected, 'dataChannel:', !!this.dataChannel);
+        console.log('[WebRTCAdapter] send called, isConnected:', this.isConnected);
+        console.log('[WebRTCAdapter] dataChannel:', this.dataChannel?.label, 'readyState:', this.dataChannel?.readyState);
         if (!this.isConnected || !this.dataChannel) {
             console.log('[WebRTCAdapter] Send failed - not connected or no dataChannel');
             return false;
         }
+        if (this.dataChannel.readyState !== 'open') {
+            console.log('[WebRTCAdapter] Send failed - data channel not open, state:', this.dataChannel.readyState);
+            return false;
+        }
         try {
             const json = JSON.stringify(data);
-            console.log('[WebRTCAdapter] Sending data:', json?.substring(0, 100));
+            console.log('[WebRTCAdapter] Sending on channel', this.dataChannel.label, ':', json?.substring(0, 100));
             this.dataChannel.send(json);
             console.log('[WebRTCAdapter] Data sent successfully');
             return true;
