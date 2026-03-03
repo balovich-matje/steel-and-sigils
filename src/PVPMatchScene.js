@@ -1,14 +1,12 @@
 // ============================================
-// PVP MATCH SCENE - Coordinates PVP battle flow
+// PVP MATCH SCENE - WebRTC P2P
 // ============================================
 
-import { CONFIG } from './GameConfig.js';
+import { PVPManager } from './PVPManager.js';
 
 /**
- * PVPMatchScene manages the PVP flow:
- * - Both players connect
- * - Go directly to unit placement
- * - Start PVP battle
+ * PVPMatchScene coordinates P2P PVP battles.
+ * Handles: session setup → WebRTC connection → army exchange → battle start
  */
 export class PVPMatchScene extends Phaser.Scene {
     constructor() {
@@ -17,14 +15,9 @@ export class PVPMatchScene extends Phaser.Scene {
         this.pvpManager = null;
         this.sessionKey = null;
         this.playerNumber = null;
-        
-        // Army data
         this.myArmy = [];
         this.opponentArmy = null;
-        this.magicBuffs = [];
-        
-        // State
-        this.isWaitingForOpponent = true;
+        this.battleStarted = false;
     }
 
     init(data) {
@@ -32,220 +25,146 @@ export class PVPMatchScene extends Phaser.Scene {
         this.sessionKey = data.sessionKey;
         this.playerNumber = data.playerNumber;
         this.myArmy = data.army || [];
-        this.magicBuffs = data.magicBuffs || [];
-        
-        // Set up callbacks
-        this._setupCallbacks();
     }
 
     create() {
         window.gameScene = this;
         
-        // Save army to Firebase
-        this.pvpManager.updateProgress(6, this.myArmy);
-        
-        console.log(`[PVP] Player ${this.playerNumber} created PVPMatchScene`);
-        console.log(`[PVP] Opponent connected: ${this.pvpManager.isOpponentConnected()}`);
-        
-        // Check if both players are already connected
-        if (this.pvpManager.isOpponentConnected()) {
-            const opponentData = this.pvpManager.getOpponentData();
-            console.log(`[PVP] Opponent data:`, opponentData);
-            if (opponentData && opponentData.currentBattle >= 6) {
-                // Both ready, skip placement and go directly to battle
-                this.opponentArmy = opponentData.army;
-                console.log('[PVP] Both players ready at create(), starting battle...');
-                this._startBattle();
-                return;
-            }
-        }
-        
-        // Show waiting UI only if not starting battle immediately
-        console.log('[PVP] Showing waiting UI...');
-        this._showWaitingUI();
-    }
 
-    // ============================================
-    // CALLBACK SETUP
-    // ============================================
+        
+        // Set up callbacks
+        this._setupCallbacks();
+        
+        // Show waiting UI
+        this._showWaitingUI();
+        
+        // Send army once connected
+        if (this.pvpManager.isConnected) {
+            this._onConnected();
+        }
+    }
 
     _setupCallbacks() {
-        // Opponent connected or updated
-        this.pvpManager.onOpponentProgressUpdate = (progress) => {
-            console.log('[PVP] Opponent progress update:', progress);
-            console.log(`[PVP] isWaitingForOpponent: ${this.isWaitingForOpponent}`);
-            
-            if (progress >= 6) {
-                // Opponent has their army ready
-                const opponentData = this.pvpManager.getOpponentData();
-                console.log('[PVP] Opponent data:', opponentData);
-                if (opponentData && opponentData.army) {
-                    this.opponentArmy = opponentData.army;
-                    
-                    // Start battle immediately when both have armies
-                    console.log('[PVP] Both have armies, starting battle...');
-                    this._startBattle();
-                }
-            }
-        };
-
-        // PVP state change
-        this.pvpManager.onPVPStateChange = (state, fullState) => {
-            console.log('[PVP] State changed:', state);
-            
-            if (state === 'playing' && this.isWaitingForOpponent && this.opponentArmy) {
-                // Both players have armies ready, skip placement and start battle
-                console.log('[PVP] Both armies ready, starting battle...');
-                this._startBattle();
-            } else if (state === 'pvp_battle') {
-                this._startBattle();
-            } else if (state === 'finished') {
-                this._showMatchResult(fullState.pvpRound?.winner);
-            }
-        };
-
-        // Match end
-        this.pvpManager.onMatchEnd = (winner) => {
-            this._showMatchResult(winner);
-        };
+        this.pvpManager.onConnected = () => this._onConnected();
+        this.pvpManager.onDisconnected = () => this._onDisconnected();
+        this.pvpManager.onOpponentArmyReceived = (army) => this._onOpponentArmy(army);
     }
 
     // ============================================
-    // WAITING UI
+    // CONNECTION HANDLERS
+    // ============================================
+
+    _onConnected() {
+
+        
+        // Send our army
+        this.pvpManager.sendArmy(this.myArmy);
+        
+        // Update UI
+        const statusEl = document.getElementById('pvp-connection-status');
+        if (statusEl) {
+            statusEl.textContent = '✓ Connected - Exchanging armies...';
+            statusEl.style.color = '#4CAF50';
+        }
+        
+        // Check if we can start
+        this._tryStartBattle();
+    }
+
+    _onDisconnected() {
+
+        const statusEl = document.getElementById('pvp-connection-status');
+        if (statusEl) {
+            statusEl.textContent = '✗ Disconnected';
+            statusEl.style.color = '#f44336';
+        }
+    }
+
+    _onOpponentArmy(army) {
+
+        this.opponentArmy = army;
+        this._tryStartBattle();
+    }
+
+    // ============================================
+    // BATTLE START
+    // ============================================
+
+    _tryStartBattle() {
+        if (this.battleStarted) return;
+        if (!this.pvpManager.isConnected) return;
+        if (!this.opponentArmy) return;
+        
+        this.battleStarted = true;
+        
+        // Hide waiting UI
+        this._hideWaitingUI();
+        
+        // Start battle scene
+        this.scene.start('PVPBattleScene', {
+            pvpManager: this.pvpManager,
+            playerNumber: this.playerNumber,
+            myArmy: this.myArmy,
+            opponentArmy: this.opponentArmy,
+            onComplete: (winner) => this._handleBattleEnd(winner)
+        });
+    }
+
+    // ============================================
+    // UI
     // ============================================
 
     _showWaitingUI() {
-        // Create a simple waiting overlay
-        const waitingDiv = document.createElement('div');
-        waitingDiv.id = 'pvp-waiting-overlay';
-        waitingDiv.style.cssText = `
+        const existing = document.getElementById('pvp-waiting-overlay');
+        if (existing) existing.remove();
+        
+        const div = document.createElement('div');
+        div.id = 'pvp-waiting-overlay';
+        div.style.cssText = `
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(26, 28, 30, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            color: #E3D5B8;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 3000; color: #E3D5B8;
         `;
-        waitingDiv.innerHTML = `
+        
+        div.innerHTML = `
             <div style="font-size: 48px; margin-bottom: 20px;">⚔️</div>
-            <h2 style="color: #A68966; margin-bottom: 15px;">Waiting for Opponent</h2>
-            <p style="color: #8B7355; margin-bottom: 30px;">Your army is ready. Waiting for opponent...</p>
-            <div style="background: #2D241E; border: 2px solid #A68966; border-radius: 8px; padding: 20px; text-align: center;">
+            <h2 style="color: #A68966; margin-bottom: 10px;">PVP Battle</h2>
+            <p style="color: #8B7355; margin-bottom: 20px;">
+                ${this.pvpManager.isHostPlayer() ? 'Waiting for opponent to join...' : 'Connecting to host...'}
+            </p>
+            <div style="background: #2D241E; border: 2px solid #A68966; border-radius: 8px; padding: 20px;">
                 <div style="color: #8B7355; font-size: 12px; margin-bottom: 8px;">Session Key:</div>
-                <div style="color: #FFD700; font-size: 32px; font-weight: bold; letter-spacing: 4px; font-family: monospace;">${this.sessionKey}</div>
+                <div style="color: #FFD700; font-size: 32px; font-weight: bold; letter-spacing: 4px;">
+                    ${this.sessionKey}
+                </div>
             </div>
-            <button onclick="this.closest('#pvp-waiting-overlay').remove(); window.gameScene._cancelPVP();" 
-                    style="margin-top: 30px; padding: 10px 20px; background: #5D4E3E; border: none; color: #E3D5B8; border-radius: 4px; cursor: pointer;">
+            <div id="pvp-connection-status" style="margin-top: 20px; color: #ff9800;">
+                ${this.pvpManager.isConnected ? '✓ Connected' : '⏳ Establishing P2P connection...'}
+            </div>
+            <button onclick="window.gameScene?._cancelPVP()" 
+                    style="margin-top: 30px; padding: 10px 20px; background: #9E4A4A; border: none; 
+                           color: #E3D5B8; border-radius: 4px; cursor: pointer;">
                 Cancel
             </button>
         `;
-        document.body.appendChild(waitingDiv);
+        
+        document.body.appendChild(div);
     }
 
     _hideWaitingUI() {
-        const waitingDiv = document.getElementById('pvp-waiting-overlay');
-        if (waitingDiv) waitingDiv.remove();
+        const div = document.getElementById('pvp-waiting-overlay');
+        if (div) div.remove();
     }
 
     // ============================================
-    // PLACEMENT
+    // BATTLE END
     // ============================================
 
-    // NOTE: This function is deprecated - we now skip placement and go directly to battle
-    // Keeping for reference but should not be called
-    async _startPlacement() {
-        console.warn('[PVP] _startPlacement() called but deprecated - use _startBattle() instead');
-        this.isWaitingForOpponent = false;
-        this._hideWaitingUI();
-        
-        // Go directly to battle instead
-        this._startBattle();
-    }
+    _handleBattleEnd(winner) {
 
-    _showPlacementScene(mySide) {
-        // Log assigned side for debugging
-        console.log(`[PVP] Player ${this.playerNumber} assigned: ${mySide.toUpperCase()} side`);
-        
-        // Show placement UI
-        document.getElementById('pvp-placement-screen').classList.remove('hidden');
-        document.getElementById('pvp-your-side').textContent = mySide.toUpperCase();
-        document.getElementById('pvp-units-to-place').textContent = this.myArmy.length;
-        
-        // Start placement phase
-        this.scene.start('PVPPlacementScene', {
-            pvpManager: this.pvpManager,
-            mySide: mySide,
-            myArmy: this.myArmy,
-            opponentArmy: this.opponentArmy,
-            onComplete: () => this._onPlacementComplete()
-        });
-    }
-
-    async _onPlacementComplete() {
-        // Mark as ready
-        await this.pvpManager.setReady(true);
-        
-        // Check if both ready
-        if (this.pvpManager.bothPlayersReady()) {
-            await this.pvpManager.network.startPVPBattle();
-        }
-    }
-
-    // ============================================
-    // BATTLE
-    // ============================================
-
-    async _startBattle() {
-        this.isWaitingForOpponent = false;
-        this._hideWaitingUI();
-        
-        // Make sure sides are assigned (for player 1)
-        if (this.playerNumber === 1 && this.pvpManager.network) {
-            await this.pvpManager.network.initPVPRound();
-        }
-        
-        // Wait for side assignment if needed
-        const waitForSide = () => {
-            return new Promise((resolve) => {
-                const checkInterval = setInterval(() => {
-                    const mySide = this.pvpManager.getMySide();
-                    if (mySide) {
-                        clearInterval(checkInterval);
-                        resolve(mySide);
-                    }
-                }, 100);
-            });
-        };
-        
-        const mySide = await waitForSide();
-        console.log(`[PVP] Starting battle - Player ${this.playerNumber} on ${mySide.toUpperCase()} side`);
-        
-        this.scene.start('PVPBattleScene', {
-            pvpManager: this.pvpManager,
-            playerSide: mySide,
-            myArmy: this.myArmy,
-            opponentArmy: this.opponentArmy,
-            myMagicBuffs: this.magicBuffs,
-            onComplete: (winner) => this._handleBattleComplete(winner)
-        });
-    }
-
-    async _handleBattleComplete(winner) {
-        await this.pvpManager.reportWinner(winner);
-    }
-
-    // ============================================
-    // END GAME
-    // ============================================
-
-    _showMatchResult(winner) {
-        this._hideWaitingUI();
         
         const victoryScreen = document.getElementById('victory-screen');
         const victoryText = document.getElementById('victory-text');
@@ -254,48 +173,22 @@ export class PVPMatchScene extends Phaser.Scene {
         document.getElementById('rewards-container').style.display = 'none';
         document.getElementById('defeat-message').style.display = 'none';
         document.getElementById('confirm-rewards').style.display = 'none';
-        document.getElementById('victory-subtitle').style.display = 'none';
-
-        const myNumber = this.pvpManager.getPlayerNumber();
         
-        if (winner === myNumber) {
-            victoryText.innerHTML = '🏆 Victory! 🏆';
-            victoryText.style.color = '#FFD700';
-        } else {
-            victoryText.innerHTML = 'Defeat...';
-            victoryText.style.color = '#9E4A4A';
-        }
-
-        // Add buttons
-        const btnContainer = document.createElement('div');
-        btnContainer.style.cssText = 'margin-top: 30px; display: flex; gap: 15px; justify-content: center;';
+        const iWon = winner === this.playerNumber;
+        victoryText.innerHTML = iWon ? '🏆 Victory! 🏆' : 'Defeat...';
+        victoryText.style.color = iWon ? '#FFD700' : '#9E4A4A';
         
-        const rematchBtn = document.createElement('button');
-        rematchBtn.className = 'spell-button';
-        rematchBtn.style.cssText = 'font-size: 16px; padding: 12px 30px;';
-        rematchBtn.textContent = '⚔️ Play Again';
-        rematchBtn.onclick = () => location.reload();
-        btnContainer.appendChild(rematchBtn);
-        
-        victoryScreen.appendChild(btnContainer);
+        // Add play again button
+        const btn = document.createElement('button');
+        btn.className = 'spell-button';
+        btn.style.cssText = 'margin-top: 30px; font-size: 16px; padding: 12px 30px;';
+        btn.textContent = '⚔️ Play Again';
+        btn.onclick = () => location.reload();
+        victoryScreen.appendChild(btn);
     }
 
     _cancelPVP() {
-        if (this.pvpManager) {
-            this.pvpManager.leaveSession();
-        }
-        this.scene.start('PreGameScene');
-    }
-
-    // ============================================
-    // PUBLIC API
-    // ============================================
-
-    reportBattleComplete(victory, armyData, magicBuffs) {
-        // Not used in simplified PVP mode
-    }
-
-    getPVPManager() {
-        return this.pvpManager;
+        this.pvpManager?.disconnect();
+        location.reload();
     }
 }

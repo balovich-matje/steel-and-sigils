@@ -2,8 +2,8 @@
 // MAIN ENTRY POINT - Steel and Sigils
 // ============================================
 
-const GAME_VERSION = '0.1';
-console.log(`[Steel and Sigils] Version ${GAME_VERSION}`);
+const GAME_VERSION = '0.11';
+console.log(`Steel and Sigils v${GAME_VERSION}`);
 
 import { CONFIG } from './GameConfig.js';
 import { BattleScene, PreGameScene } from './SceneManager.js';
@@ -28,19 +28,18 @@ let pvpScenesLoaded = false;
 async function loadVPScenes() {
     if (pvpScenesLoaded) return;
     if (!window.game) {
-        console.error('Game not initialized yet');
+
         return;
     }
     
-    const { PVPMatchScene } = await import('./PVPMatchScene.js');
-    const { PVPPlacementScene } = await import('./PVPPlacementScene.js');
-    const { PVPBattleScene } = await import('./PVPBattleScene.js');
+    const { PVPMatchScene } = await import('./PVPMatchScene.js?v=' + Date.now());
+    const { PVPBattleScene } = await import('./PVPBattleScene.js?v=' + Date.now());
     
     window.game.scene.add('PVPMatchScene', PVPMatchScene);
-    window.game.scene.add('PVPPlacementScene', PVPPlacementScene);
     window.game.scene.add('PVPBattleScene', PVPBattleScene);
     
     pvpScenesLoaded = true;
+
 }
 
 // Expose load function globally for PreGameScene

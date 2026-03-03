@@ -1,334 +1,154 @@
 // ============================================
-// PVP MANAGER - High-level PVP session management
+// PVP MANAGER - WebRTC Peer-to-Peer
 // ============================================
+// Firebase is used ONLY for initial signaling (SDP exchange)
+// All game data flows through WebRTC DataChannel
 
-import { FirebaseAdapter, DEFAULT_FIREBASE_CONFIG } from './network/FirebaseAdapter.js';
+import { WebRTCAdapter } from './network/WebRTCAdapter.js';
+import { firebaseConfig } from './firebase-config.js';
 
-/**
- * PVP Manager handles the overall PVP flow:
- * - Session creation/joining
- * - Battle progress tracking
- * - Spectator mode
- * - PVP round coordination
- */
 export class PVPManager {
     constructor(scene) {
         this.scene = scene;
-        this.network = null;
+        this.webrtc = null;
         this.sessionKey = null;
         this.playerNumber = null;
-        this.sessionState = null;
-        this.isPVPEnabled = false;
+        this.isHost = false;
+        this.isConnected = false;
         
-        // Game state
-        this.myProgress = 1;  // Current battle (1-5)
-        this.opponentProgress = 0;  // 0 = not connected yet
-        this.myArmy = [];  // Persisted army through rounds
+        // Game data
+        this.myArmy = [];
         this.opponentArmy = null;
         
         // Callbacks
-        this.onOpponentConnected = null;
-        this.onOpponentProgressUpdate = null;
-        this.onOpponentReady = null;
-        this.onPVPStateChange = null;
-        this.onSpectatorData = null;
-        this.onMatchEnd = null;
+        this.onConnected = null;
+        this.onDisconnected = null;
+        this.onOpponentAction = null;
+        this.onOpponentArmyReceived = null;
     }
 
     // ============================================
-    // INITIALIZATION
-    // ============================================
-
-    /**
-     * Initialize with custom Firebase config (optional)
-     */
-    initialize(firebaseConfig = DEFAULT_FIREBASE_CONFIG) {
-        this.network = new FirebaseAdapter(firebaseConfig);
-    }
-
-    /**
-     * Enable/disable PVP mode
-     */
-    setEnabled(enabled) {
-        this.isPVPEnabled = enabled;
-    }
-
-    // ============================================
-    // SESSION MANAGEMENT
+    // SESSION CREATION / JOINING
     // ============================================
 
     async createSession() {
-        if (!this.network) {
-            this.initialize();
-        }
-
-        try {
-            this.sessionKey = await this.network.createSession();
-            this.playerNumber = 1;
-            
-            // Listen for session changes
-            this.network.onStateChange(this.sessionKey, (state) => {
-                this._handleSessionUpdate(state);
-            });
-
-            return this.sessionKey;
-        } catch (error) {
-            console.error('Failed to create session:', error);
-            throw error;
-        }
-    }
-
-    async joinSession(sessionKey) {
-        if (!this.network) {
-            this.initialize();
-        }
-
-        try {
-            await this.network.joinSession(sessionKey);
-            this.sessionKey = sessionKey.toUpperCase().trim();
-            this.playerNumber = 2;
-            
-            // Listen for session changes
-            this.network.onStateChange(this.sessionKey, (state) => {
-                this._handleSessionUpdate(state);
-            });
-
-            return true;
-        } catch (error) {
-            console.error('Failed to join session:', error);
-            throw error;
-        }
-    }
-
-    async leaveSession() {
-        if (this.network) {
-            await this.network.leaveSession();
-        }
-        this._reset();
-    }
-
-    // ============================================
-    // BATTLE PROGRESS
-    // ============================================
-
-    /**
-     * Update battle progress after completing a PVE round
-     */
-    async updateProgress(battleNumber, armyData) {
-        if (!this.isPVPEnabled || !this.network) return;
-
-        this.myProgress = battleNumber;
-        this.myArmy = armyData;
-
-        await this.network.updateBattleProgress(battleNumber, armyData);
-
-        // Check if we should start PVP round
-        if (battleNumber === 6) {
-            await this._handlePVPRoundStart();
-        }
-    }
-
-    /**
-     * Check if both players are ready for PVP round
-     */
-    bothPlayersAtPVPRound() {
-        if (!this.sessionState) return false;
-        return this.myProgress >= 6 && this.opponentProgress >= 6;
-    }
-
-    /**
-     * Check if we should enter spectator mode
-     */
-    shouldEnterSpectatorMode() {
-        return this.myProgress >= 6 && this.opponentProgress < 6;
-    }
-
-    // ============================================
-    // PVP ROUND MANAGEMENT
-    // ============================================
-
-    /**
-     * Get assigned side for PVP round
-     */
-    getMySide() {
-        if (!this.sessionState?.pvpRound) return null;
+        this._initFirebase();
         
-        // First check if sides are assigned in pvpRound
-        if (this.sessionState.pvpRound.sidesAssigned) {
-            if (this.playerNumber === 1) {
-                return this.sessionState.pvpRound.player1Side;
-            } else {
-                return this.sessionState.pvpRound.player2Side;
-            }
-        }
+        this.webrtc = new WebRTCAdapter(firebase.database());
+        this._setupCallbacks();
         
-        // Fallback: check player data directly
-        const playerKey = this.playerNumber === 1 ? 'player1' : 'player2';
-        return this.sessionState[playerKey]?.side || null;
-    }
-    
-    /**
-     * Check if sides have been assigned
-     */
-    areSidesAssigned() {
-        return this.sessionState?.pvpRound?.sidesAssigned || false;
-    }
+        this.sessionKey = await this.webrtc.createSession();
+        this.playerNumber = 1;
+        this.isHost = true;
+        
 
-    /**
-     * Check if placement phase is active
-     */
-    isPlacementPhase() {
-        return this.sessionState?.state === 'pvp_placement';
-    }
-
-    /**
-     * Check if PVP battle is active
-     */
-    isPVPBattleActive() {
-        return this.sessionState?.state === 'pvp_battle';
-    }
-
-    /**
-     * Set ready status for placement phase
-     */
-    async setReady(ready) {
-        if (!this.network) return;
-        await this.network.setReadyStatus(ready);
-    }
-
-    /**
-     * Check if both players are ready
-     */
-    bothPlayersReady() {
-        if (!this.sessionState?.pvpRound) return false;
-        return this.sessionState.pvpRound.player1Ready && this.sessionState.pvpRound.player2Ready;
-    }
-
-    /**
-     * Send battle event (for spectator/replay)
-     */
-    async sendBattleEvent(event) {
-        if (!this.network) return;
-        await this.network.sendBattleEvent(event);
-    }
-
-    /**
-     * Report match winner
-     */
-    async reportWinner(winnerPlayerNumber) {
-        if (!this.network) return;
-        await this.network.reportWinner(winnerPlayerNumber);
-    }
-
-    // ============================================
-    // SPECTATOR MODE
-    // ============================================
-
-    /**
-     * Update spectator data for opponent viewing
-     */
-    async updateSpectatorData(data) {
-        if (!this.network || !this.shouldEnterSpectatorMode()) return;
-        await this.network.updateSpectatorData(data);
-    }
-
-    /**
-     * Get opponent's current battle state (for spectator)
-     */
-    getOpponentBattleState() {
-        return this.sessionState?.spectatorData;
-    }
-
-    // ============================================
-    // UTILITY
-    // ============================================
-
-    getSessionKey() {
         return this.sessionKey;
     }
 
-    getPlayerNumber() {
-        return this.playerNumber;
+    async joinSession(sessionKey) {
+        this._initFirebase();
+        
+        this.webrtc = new WebRTCAdapter(firebase.database());
+        this._setupCallbacks();
+        
+        await this.webrtc.joinSession(sessionKey);
+        this.sessionKey = sessionKey;
+        this.playerNumber = 2;
+        this.isHost = false;
+        
+
+        return true;
     }
 
-    getOpponentData() {
-        return this.network?.getOpponentData(this.sessionState);
-    }
-
-    isOpponentConnected() {
-        return this.sessionState?.player2?.connected || false;
-    }
-
-    // ============================================
-    // PRIVATE METHODS
-    // ============================================
-
-    _handleSessionUpdate(state) {
-        this.sessionState = state;
-
-        if (!state) return;
-
-        // Track opponent connection
-        const wasConnected = this.opponentProgress > 0;
-        const nowConnected = state.player2?.connected;
-
-        if (!wasConnected && nowConnected && this.playerNumber === 1) {
-            this.opponentProgress = state.player2.currentBattle || 1;
-            if (this.onOpponentConnected) {
-                this.onOpponentConnected(state.player2);
-            }
+    _initFirebase() {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
+    }
 
-        // Track opponent progress
-        const opponentData = this.network?.getOpponentData(state);
-        if (opponentData) {
-            const oldProgress = this.opponentProgress;
-            this.opponentProgress = opponentData.currentBattle || 0;
+    _setupCallbacks() {
+        this.webrtc.onConnected(() => {
+
+            this.isConnected = true;
             
-            if (this.opponentProgress !== oldProgress && this.onOpponentProgressUpdate) {
-                this.onOpponentProgressUpdate(this.opponentProgress);
-            }
+            // Clean up Firebase signaling session (we don't need it anymore)
+            this.webrtc.cleanupSignaling();
+            
+            if (this.onConnected) this.onConnected();
+        });
+        
+        this.webrtc.onDisconnected(() => {
 
-            // Store opponent army for PVP round
-            if (opponentData.army && opponentData.army.length > 0) {
-                this.opponentArmy = opponentData.army;
-            }
-        }
+            this.isConnected = false;
+            if (this.onDisconnected) this.onDisconnected();
+        });
+        
+        this.webrtc.onMessage((data) => this._handleMessage(data));
+    }
 
-        // Handle state changes
-        if (this.onPVPStateChange) {
-            this.onPVPStateChange(state.state, state);
-        }
+    // ============================================
+    // MESSAGE HANDLING
+    // ============================================
 
-        // Handle spectator data
-        if (state.spectatorData && this.onSpectatorData) {
-            this.onSpectatorData(state.spectatorData);
-        }
+    _handleMessage(data) {
 
-        // Handle match end
-        if (state.state === 'finished' && state.pvpRound?.winner && this.onMatchEnd) {
-            this.onMatchEnd(state.pvpRound.winner);
+        
+        switch (data.type) {
+            case 'army':
+                this.opponentArmy = data.army;
+                if (this.onOpponentArmyReceived) {
+                    this.onOpponentArmyReceived(data.army);
+                }
+                break;
+                
+            case 'action':
+                if (this.onOpponentAction) {
+                    this.onOpponentAction(data.action);
+                }
+                break;
+                
+            case 'ping':
+                this.send({ type: 'pong', time: data.time });
+                break;
         }
     }
 
-    async _handlePVPRoundStart() {
-        // Only player 1 initializes the PVP round
-        if (this.playerNumber !== 1) return;
+    // ============================================
+    // SEND METHODS
+    // ============================================
 
-        // Wait for opponent to also reach round 6
-        if (!this.bothPlayersAtPVPRound()) return;
+    send(data) {
+        if (!this.isConnected) {
 
-        // Initialize PVP round with random sides
-        await this.network.initPVPRound();
+            return false;
+        }
+        return this.webrtc.send(data);
     }
 
-    _reset() {
-        this.sessionKey = null;
-        this.playerNumber = null;
-        this.sessionState = null;
-        this.myProgress = 1;
-        this.opponentProgress = 0;
-        this.myArmy = [];
-        this.opponentArmy = null;
+    sendArmy(army) {
+        this.myArmy = army;
+        return this.send({ type: 'army', army: army });
+    }
+
+    sendAction(action) {
+        return this.send({ type: 'action', action: action });
+    }
+
+    // ============================================
+    // GETTERS
+    // ============================================
+
+    getSessionKey() { return this.sessionKey; }
+    getPlayerNumber() { return this.playerNumber; }
+    isHostPlayer() { return this.isHost; }
+
+    // ============================================
+    // CLEANUP
+    // ============================================
+
+    disconnect() {
+        if (this.webrtc) {
+            this.webrtc.disconnect();
+        }
     }
 }

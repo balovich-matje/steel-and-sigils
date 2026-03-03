@@ -417,7 +417,7 @@ export class BattleScene extends Phaser.Scene {
     
     // Move unit for AI without setting hasMoved (for multi-cell movement)
     moveUnitAI(unit, newX, newY) {
-        console.log(`[AI Movement] ${unit.name} moving from (${unit.gridX},${unit.gridY}) to (${newX},${newY})`);
+
         this.unitManager.updateUnitPosition(unit, newX, newY);
         // Note: hasMoved is NOT set here - AI handles that separately after all movement
     }
@@ -1649,13 +1649,12 @@ export class PreGameScene extends Phaser.Scene {
     drawGrid() {
         this.gridGraphics.clear();
         
-        // Determine placement zone based on PVP side
+        // Determine placement zone (host=left columns 0-1, guest=right columns 8-9)
         let placementStartX = 0;
         let placementEndX = 2;
         
         if (this.isPVPMode && this.pvpManager) {
-            const mySide = this.pvpManager.getMySide() || 'left';
-            if (mySide === 'right') {
+            if (!this.pvpManager.isHostPlayer()) {
                 placementStartX = CONFIG.GRID_WIDTH - 2;
                 placementEndX = CONFIG.GRID_WIDTH;
             }
@@ -1729,18 +1728,15 @@ export class PreGameScene extends Phaser.Scene {
         this.placementMode = true;
         this.placedUnits = [];
         
-        // Determine placement columns based on PVP side
+        // Placement columns (host=left 0-1, guest=right 8-9)
         let placementStartX = 0;
         let placementEndX = 2;
-        let mySide = 'left';
         
         if (this.isPVPMode && this.pvpManager) {
-            mySide = this.pvpManager.getMySide() || 'left';
-            if (mySide === 'right') {
+            if (!this.pvpManager.isHostPlayer()) {
                 placementStartX = CONFIG.GRID_WIDTH - 2;
                 placementEndX = CONFIG.GRID_WIDTH;
             }
-            console.log(`[PVP] Placement: Player on ${mySide.toUpperCase()} side, columns ${placementStartX}-${placementEndX-1}`);
         }
         
         const placementBar = document.getElementById('placement-bar');
@@ -1824,16 +1820,13 @@ export class PreGameScene extends Phaser.Scene {
         document.getElementById('placement-bar').classList.add('hidden');
         
         if (this.isPVPMode && this.pvpManager) {
-            // Start PVP tournament
             this.scene.start('PVPMatchScene', {
                 pvpManager: this.pvpManager,
                 sessionKey: this.pvpManager.getSessionKey(),
                 playerNumber: this.pvpManager.getPlayerNumber(),
-                army: this.placedUnits,
-                magicBuffs: []
+                army: this.placedUnits
             });
         } else {
-            // Normal PVE mode
             this.scene.start('BattleScene', {
                 placedUnits: this.placedUnits,
                 battleNumber: 1
@@ -1887,56 +1880,28 @@ export class PreGameScene extends Phaser.Scene {
 
     async createPVPSession() {
         try {
-            // Load PVP scenes first
-            if (window.loadVPScenes) {
-                await window.loadVPScenes();
-            }
+            if (window.loadVPScenes) await window.loadVPScenes();
             
-            // Initialize PVP manager (with cache busting)
             const { PVPManager } = await import(`./PVPManager.js?v=${Date.now()}`);
             this.pvpManager = new PVPManager(this);
-            this.pvpManager.setEnabled(true);
             
-            // Create session
             const sessionKey = await this.pvpManager.createSession();
             
-            // Update UI to show session info
             this._showSessionInfo(sessionKey);
-            
-            // Show waiting UI
             document.getElementById('pvp-menu').style.display = 'none';
             document.getElementById('pvp-waiting').style.display = 'block';
             document.getElementById('pvp-session-key').textContent = sessionKey;
-            
-            // Listen for opponent and side assignment
-            this.pvpManager.onOpponentConnected = (opponent) => {
-                document.getElementById('pvp-player-status').textContent = `${opponent.name} connected! Starting...`;
-                document.getElementById('pvp-player-status').style.color = '#4CAF50';
-                
-                // Auto-hide waiting screen after a moment
-                setTimeout(() => {
-                    document.getElementById('pvp-waiting').style.display = 'none';
-                }, 1500);
-            };
-            
-            // Listen for side assignment
-            this.pvpManager.onPVPStateChange = (state, fullState) => {
-                if (state === 'playing' && fullState?.pvpRound?.sidesAssigned) {
-                    const mySide = this.pvpManager.getMySide();
-                    if (mySide) {
-                        this._showAssignedSide(mySide);
-                    }
-                }
-            };
+            document.getElementById('pvp-assigned-side').textContent = 'LEFT';
+            document.getElementById('pvp-assigned-side').style.color = '#4a7cd9';
             
         } catch (error) {
-            console.error('Failed to create PVP session:', error);
+            console.error('Failed to create session:', error);
             alert('Failed to create session. Please try again.');
         }
     }
     
     _showAssignedSide(side) {
-        console.log(`[PVP] Assigned side: ${side.toUpperCase()}`);
+
         const sideInfo = document.getElementById('pvp-side-info');
         const sideText = document.getElementById('pvp-assigned-side');
         
@@ -1968,39 +1933,16 @@ export class PreGameScene extends Phaser.Scene {
         }
         
         try {
-            // Load PVP scenes first
-            if (window.loadVPScenes) {
-                await window.loadVPScenes();
-            }
+            if (window.loadVPScenes) await window.loadVPScenes();
             
-            // Initialize PVP manager (with cache busting)
             const { PVPManager } = await import(`./PVPManager.js?v=${Date.now()}`);
             this.pvpManager = new PVPManager(this);
-            this.pvpManager.setEnabled(true);
             
-            // Join session
             await this.pvpManager.joinSession(sessionKey);
             
-            // Update UI to show session info
             this._showSessionInfo(sessionKey);
-            
-            // Check if sides are already assigned and show them
-            if (this.pvpManager.areSidesAssigned()) {
-                const mySide = this.pvpManager.getMySide();
-                if (mySide) {
-                    this._showAssignedSide(mySide);
-                }
-            }
-            
-            // Listen for side assignment (if not already assigned)
-            this.pvpManager.onPVPStateChange = (state, fullState) => {
-                if (state === 'playing' && fullState?.pvpRound?.sidesAssigned) {
-                    const mySide = this.pvpManager.getMySide();
-                    if (mySide) {
-                        this._showAssignedSide(mySide);
-                    }
-                }
-            };
+            document.getElementById('pvp-assigned-side').textContent = 'RIGHT';
+            document.getElementById('pvp-assigned-side').style.color = '#d94a4a';
             
         } catch (error) {
             console.error('Failed to join session:', error);
@@ -2010,7 +1952,7 @@ export class PreGameScene extends Phaser.Scene {
     
     leavePVP() {
         if (this.pvpManager) {
-            this.pvpManager.leaveSession();
+            this.pvpManager.disconnect();
         }
         
         // Reset UI
