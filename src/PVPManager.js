@@ -145,6 +145,9 @@ export class PVPManager {
             console.log('[PVPManager] Army received, length:', data.army?.length);
             this.opponentArmy = data.army;
             
+            // Send acknowledgment
+            this.send({ type: 'army_ack' });
+            
             if (this.onOpponentArmyReceived) {
                 console.log('[PVPManager] Calling onOpponentArmyReceived callback');
                 this.onOpponentArmyReceived(data.army);
@@ -152,6 +155,13 @@ export class PVPManager {
                 console.log('[PVPManager] No callback set - buffering army message');
                 this._messageBuffer.push(data);
             }
+            return;
+        }
+        
+        // Handle army acknowledgment
+        if (data.type === 'army_ack') {
+            console.log('[PVPManager] Army acknowledgment received');
+            this.armyAckReceived = true;
             return;
         }
         

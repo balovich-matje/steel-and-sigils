@@ -56,6 +56,10 @@ export class PVPMatchScene extends Phaser.Scene {
         } else {
             console.log('[PVPMatchScene] Not connected yet, will wait for callback');
         }
+        
+        // Set up acknowledgment tracking
+        this.armyAckReceived = false;
+        this.pvpManager.armyAckReceived = false;
     }
 
     _setupCallbacks() {
@@ -110,32 +114,44 @@ export class PVPMatchScene extends Phaser.Scene {
                 return;
             }
             
-            if (this.opponentArmy) {
-                console.log('[PVPMatchScene] Received opponent army, stopping retry');
+            if (this.battleStarted) {
+                console.log('[PVPMatchScene] Battle already started, stopping retry');
                 clearInterval(sendArmyInterval);
-                this._tryStartBattle();
                 return;
+            }
+            
+            if (this.opponentArmy) {
+                console.log('[PVPMatchScene] Received opponent army, attempting to start battle');
+                this._tryStartBattle();
+                // Don't stop - keep sending until battle actually starts
+                if (this.battleStarted) {
+                    clearInterval(sendArmyInterval);
+                    return;
+                }
             }
             
             // Send our army
             sendCount++;
-            console.log('[PVPMatchScene] Sending army (attempt', sendCount, ')');
-            const sent = this.pvpManager.sendArmy(this.myArmy);
-            console.log('[PVPMatchScene] sendArmy returned:', sent);
+            if (sendCount <= 20) {  // Only log first 20 attempts
+                console.log('[PVPMatchScene] Sending army (attempt', sendCount, ')');
+            } else if (sendCount === 21) {
+                console.log('[PVPMatchScene] Continuing to send army (logging suppressed)');
+            }
+            this.pvpManager.sendArmy(this.myArmy);
         }, 500); // Retry every 500ms
         
-        // Stop retrying after 10 seconds (20 attempts)
+        // Stop retrying after 30 seconds (60 attempts) - increased timeout
         setTimeout(() => {
             clearInterval(sendArmyInterval);
-            if (!this.opponentArmy) {
-                console.log('[PVPMatchScene] Timeout - failed to receive opponent army');
+            if (!this.battleStarted) {
+                console.log('[PVPMatchScene] Timeout - failed to start battle');
                 const statusEl = document.getElementById('pvp-connection-status');
                 if (statusEl) {
-                    statusEl.textContent = '✗ Failed to exchange armies';
+                    statusEl.textContent = '✗ Failed to exchange armies - connection issue';
                     statusEl.style.color = '#f44336';
                 }
             }
-        }, 10000);
+        }, 30000);
     }
 
     _onDisconnected() {
