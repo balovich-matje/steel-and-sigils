@@ -107,16 +107,18 @@ export class PVPMatchScene extends Phaser.Scene {
         let sendCount = 0;
         
         // Send army and retry until we receive opponent's army
-        const sendArmyInterval = setInterval(() => {
+        this._sendArmyInterval = setInterval(() => {
             if (!this.pvpManager.isConnected) {
                 console.log('[PVPMatchScene] Not connected, stopping retry');
-                clearInterval(sendArmyInterval);
+                clearInterval(this._sendArmyInterval);
+                this._sendArmyInterval = null;
                 return;
             }
             
             if (this.battleStarted) {
                 console.log('[PVPMatchScene] Battle already started, stopping retry');
-                clearInterval(sendArmyInterval);
+                clearInterval(this._sendArmyInterval);
+                this._sendArmyInterval = null;
                 return;
             }
             
@@ -125,7 +127,8 @@ export class PVPMatchScene extends Phaser.Scene {
                 this._tryStartBattle();
                 // Don't stop - keep sending until battle actually starts
                 if (this.battleStarted) {
-                    clearInterval(sendArmyInterval);
+                    clearInterval(this._sendArmyInterval);
+                    this._sendArmyInterval = null;
                     return;
                 }
             }
@@ -142,7 +145,8 @@ export class PVPMatchScene extends Phaser.Scene {
         
         // Stop retrying after 30 seconds (60 attempts) - increased timeout
         setTimeout(() => {
-            clearInterval(sendArmyInterval);
+            clearInterval(this._sendArmyInterval);
+            this._sendArmyInterval = null;
             if (!this.battleStarted) {
                 console.log('[PVPMatchScene] Timeout - failed to start battle');
                 const statusEl = document.getElementById('pvp-connection-status');
@@ -198,6 +202,13 @@ export class PVPMatchScene extends Phaser.Scene {
         
         console.log('[PVPMatchScene] All conditions met - starting battle!');
         this.battleStarted = true;
+        
+        // Clear the retry interval if it exists
+        if (this._sendArmyInterval) {
+            console.log('[PVPMatchScene] Clearing send army interval');
+            clearInterval(this._sendArmyInterval);
+            this._sendArmyInterval = null;
+        }
         
         // Hide waiting UI
         this._hideWaitingUI();
