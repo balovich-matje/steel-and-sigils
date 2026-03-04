@@ -149,6 +149,7 @@ export class BattleScene extends Phaser.Scene {
                     if (unitData.statModifiers.hasCleave) unit.hasCleave = true;
                     if (unitData.statModifiers.hasRicochet) unit.hasRicochet = true;
                     if (unitData.statModifiers.hasPiercing) unit.hasPiercing = true;
+                    if (unitData.statModifiers.hasBackstab) unit.hasBackstab = true;
 
                     unit.updateHealthBar();
                 }
@@ -444,6 +445,13 @@ export class BattleScene extends Phaser.Scene {
         if (this.selectedUnit === unit) {
             this.gridSystem.highlightValidMoves(unit);
         }
+
+        // Auto-end turn if unit has moved and attacked
+        if (unit.hasMoved && unit.hasAttacked && unit.isPlayer && this.turnSystem.currentUnit === unit) {
+            this.time.delayedCall(300, () => {
+                this.endTurn();
+            });
+        }
     }
 
     // Move unit for AI without setting hasMoved (for multi-cell movement)
@@ -477,7 +485,22 @@ export class BattleScene extends Phaser.Scene {
             duration: 100,
             yoyo: true,
             onComplete: () => {
-                const damage = Math.floor(attacker.damage * attacker.blessValue);
+                let damage = Math.floor(attacker.damage * attacker.blessValue);
+
+                // Rogue legendary perk: Backstab (4x damage if attacking from behind)
+                if (attacker.type === 'ROGUE' && attacker.hasBackstab) {
+                    // Check if attacking from behind (same X but behind in Y relative to center of board, or same Y but behind in X)
+                    // Simplified: check if attacker's direction matches target's forward direction (usually right to left for enemies)
+                    // Enemies face left, so behind them is to their right (attacker.gridX > defender.gridX)
+                    const isBehindEnemy = (!defender.isPlayer && attacker.gridX > defender.gridX);
+                    // Players face right, so behind them is to their left (attacker.gridX < defender.gridX)
+                    const isBehindPlayer = (defender.isPlayer && attacker.gridX < defender.gridX);
+
+                    if (isBehindEnemy || isBehindPlayer) {
+                        damage *= 4;
+                        this.uiManager.showBuffText(attacker, 'BACKSTAB!', '#6B5B8B');
+                    }
+                }
 
                 // Paladin Cleave: 3x3 area damage
                 if (attacker.hasCleave) {
@@ -513,7 +536,19 @@ export class BattleScene extends Phaser.Scene {
                         if (!attacker.isDead && attacker.health > 0) {
                             this.uiManager.showBuffText(attacker, 'VANISH!', '#6B5B8B');
                             this.unitManager.updateUnitPosition(attacker, attacker.turnStartX, attacker.turnStartY);
+
+                            // Auto-end turn if unit has moved and attacked (checked again since Vanish moves them)
+                            if (attacker.hasMoved && attacker.hasAttacked && attacker.isPlayer && this.turnSystem.currentUnit === attacker) {
+                                this.time.delayedCall(300, () => {
+                                    this.endTurn();
+                                });
+                            }
                         }
+                    });
+                } else if (attacker.hasMoved && attacker.hasAttacked && attacker.isPlayer && this.turnSystem.currentUnit === attacker) {
+                    // Normal auto-end turn 
+                    this.time.delayedCall(300, () => {
+                        this.endTurn();
                     });
                 }
 
@@ -1496,6 +1531,21 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
+        if (playerUnits.some(u => u.type === 'ROGUE') && !hasBuff('ROGUE', 'hasBackstab')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_backstab',
+                name: 'Shadow Strike',
+                icon: '🗡️',
+                desc: 'Rogue: 4x damage when attacking from behind (or side)',
+                unitType: 'ROGUE',
+                effect: (unit) => {
+                    unit.hasBackstab = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasBackstab = true;
+                }
+            });
+        }
+
         if (availableLegendaryBuffs.length === 0) {
             return null;
         }
@@ -1601,7 +1651,8 @@ export class BattleScene extends Phaser.Scene {
             'BERSERKER': 'hasDoubleStrike',
             'PALADIN': 'hasCleave',
             'RANGER': 'hasRicochet',
-            'WIZARD': 'hasPiercing'
+            'WIZARD': 'hasPiercing',
+            'ROGUE': 'hasBackstab'
         };
         const buffProperty = buffPropertyMap[buffData.unitType];
 
