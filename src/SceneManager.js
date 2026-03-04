@@ -32,6 +32,7 @@ export class BattleScene extends Phaser.Scene {
         this.selectedRewards = { unit: null, buff: null, magic: null };
         this.hasLootGoblin = false;
         this.lootGoblinReward = false;
+        this.spellHotkeyListeners = [];
 
         // PVP context
         this.isPVPContext = false;
@@ -753,6 +754,16 @@ export class BattleScene extends Phaser.Scene {
         document.getElementById('spellbook-modal').classList.add('hidden');
         this.input.keyboard.off('keydown-LEFT', this.prevSpellPage, this);
         this.input.keyboard.off('keydown-RIGHT', this.nextSpellPage, this);
+        this._clearSpellHotkeys();
+    }
+
+    _clearSpellHotkeys() {
+        if (this.spellHotkeyListeners && this.spellHotkeyListeners.length > 0) {
+            this.spellHotkeyListeners.forEach(key => {
+                this.input.keyboard.off(`keydown-${key}`);
+            });
+        }
+        this.spellHotkeyListeners = [];
     }
 
     prevSpellPage() {
@@ -774,6 +785,9 @@ export class BattleScene extends Phaser.Scene {
         const page = this.spellBookPages[this.currentSpellPage];
 
         grid.innerHTML = '';
+
+        // Clear any hotkeys from the previous page
+        this._clearSpellHotkeys();
 
         // Remove old navigation bar if it exists to prevent duplication
         const oldNav = document.getElementById('spellbook-nav');
@@ -829,6 +843,8 @@ export class BattleScene extends Phaser.Scene {
 
         // Filter and render spells
         let spellCount = 0;
+        const usedHotkeys = new Set(); // Prevent duplicate hotkeys on the same page
+
         for (const [key, spell] of Object.entries(SPELLS)) {
             if (page.filter(spell)) {
                 spellCount++;
@@ -840,9 +856,28 @@ export class BattleScene extends Phaser.Scene {
                     card.classList.add('disabled');
                 }
 
+                let displayName = spell.name;
+                const hotkey = spell.name.charAt(0).toUpperCase();
+
+                // Assign hotkey if affordable and not already used on this page
+                if (canAfford && /^[A-Z]$/.test(hotkey) && !usedHotkeys.has(hotkey)) {
+                    usedHotkeys.add(hotkey);
+                    displayName = `(${hotkey})${spell.name.substring(1)}`;
+
+                    // Register listener
+                    this.input.keyboard.on(`keydown-${hotkey}`, () => {
+                        // Double-check if spellbook is open and mana is sufficient
+                        const modal = document.getElementById('spellbook-modal');
+                        if (!modal.classList.contains('hidden') && this.mana >= Math.floor(spell.manaCost * this.manaCostMultiplier)) {
+                            this.spellSystem.castSpell(key);
+                        }
+                    });
+                    this.spellHotkeyListeners.push(hotkey);
+                }
+
                 card.innerHTML = `
                     <div style="font-size: 32px; margin-bottom: 5px;">${spell.icon}</div>
-                    <div style="color: ${page.style.header}; font-weight: bold;">${spell.name}</div>
+                    <div style="color: ${page.style.header}; font-weight: bold;">${displayName}</div>
                     <div class="spell-type">${spell.type}</div>
                     <div class="spell-desc">${spell.description}</div>
                     <div class="spell-cost ${!canAfford ? 'too-expensive' : ''}">💧 ${Math.floor(spell.manaCost * this.manaCostMultiplier)} Mana</div>
