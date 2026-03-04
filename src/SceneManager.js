@@ -447,10 +447,44 @@ export class BattleScene extends Phaser.Scene {
         }
 
         // Auto-end turn if unit has moved and attacked
-        if (unit.hasMoved && unit.hasAttacked && unit.isPlayer && this.turnSystem.currentUnit === unit) {
-            this.time.delayedCall(300, () => {
-                this.endTurn();
-            });
+        if (unit.hasMoved && unit.isPlayer && this.turnSystem.currentUnit === unit) {
+            let shouldEndTurn = false;
+
+            if (unit.hasAttacked) {
+                shouldEndTurn = true;
+            } else {
+                // Check if unit has any valid attacks
+                const enemies = this.unitManager.getEnemyUnits();
+                let hasValidTarget = false;
+
+                for (const enemy of enemies) {
+                    const dist = this.gridSystem.getDistanceBetweenUnits(unit, enemy);
+                    // Can melee attack
+                    if (dist === 1) {
+                        hasValidTarget = true;
+                        break;
+                    }
+                    // Can ranged attack
+                    if (unit.rangedRange > 0 && dist <= unit.rangedRange && dist > 1) {
+                        hasValidTarget = true;
+                        break;
+                    }
+                }
+
+                // Check for unused abilities (like Octo pull)
+                const hasUnusedAbility = (unit.type === 'OCTO' && !unit.hasPulled) ||
+                    (unit.type === 'CLERIC' && !unit.hasHealed);
+
+                if (!hasValidTarget && !hasUnusedAbility) {
+                    shouldEndTurn = true;
+                }
+            }
+
+            if (shouldEndTurn) {
+                this.time.delayedCall(300, () => {
+                    this.endTurn();
+                });
+            }
         }
     }
 
