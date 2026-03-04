@@ -28,14 +28,13 @@
     <!-- Placement Bar (shown during placement phase, above UI panel) -->
     <div id="placement-bar" class="hidden">
         <div class="placement-title">📍 Army Placement</div>
-        <div class="placement-hint">Click a unit to move it. Click 'Start Battle' when ready.</div>
         <div class="action-divider"></div>
-        <div id="placement-info">
-            <span id="current-placement-unit">Reposition your army</span>
+        <div style="display: flex; gap: 10px;">
+            <button id="randomize-placement" class="spell-button" onclick="gameScene.randomizePlacement()">🎲
+                Randomize</button>
+            <button id="confirm-placement" class="spell-button" onclick="gameScene.confirmPlacement()">Start
+                Battle</button>
         </div>
-        <button id="confirm-placement" class="spell-button" onclick="gameScene.confirmPlacement()">
-            Start Battle
-        </button>
     </div>
 
     <!-- UI Panel -->

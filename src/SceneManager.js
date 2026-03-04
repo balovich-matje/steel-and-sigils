@@ -62,6 +62,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     create(data) {
+        document.getElementById('ui-panel').classList.remove('hidden');
         // Initialize systems
         this.gridSystem = new GridSystem(this);
         this.unitManager = new UnitManager(this);
@@ -1854,6 +1855,7 @@ export class PreGameScene extends Phaser.Scene {
     }
 
     startPlacementPhase() {
+        document.getElementById('ui-panel').classList.add('hidden');
         this.placementMode = true;
         this.placedUnits = [];
         this.selectedPlacementUnit = null;
@@ -1894,10 +1896,6 @@ export class PreGameScene extends Phaser.Scene {
         const placementBar = document.getElementById('placement-bar');
         placementBar.classList.remove('hidden');
 
-        // Update placement hint
-        const hintText = placementBar.querySelector('.placement-hint');
-        const sideText = (this.isPVPMode && this.pvpManager?.isHostPlayer() === false) ? 'RIGHT' : 'LEFT';
-        hintText.textContent = `Click a unit to move it within the ${sideText} 2 columns.`;
         document.getElementById('confirm-placement').disabled = false;
 
         this.input.on('pointerdown', (pointer) => {
@@ -1966,6 +1964,53 @@ export class PreGameScene extends Phaser.Scene {
                 );
             }
         });
+    }
+
+    randomizePlacement() {
+        if (!this.placementMode || !this.placedUnits.length) return;
+
+        // Determine placement zone
+        let placementStartX = 0;
+        let placementEndX = 2;
+
+        if (this.isPVPMode && this.pvpManager && !this.pvpManager.isHostPlayer()) {
+            placementStartX = CONFIG.GRID_WIDTH - 2;
+            placementEndX = CONFIG.GRID_WIDTH;
+        }
+
+        // Get all available cells in the zone
+        const availableCells = [];
+        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+            for (let x = placementStartX; x < placementEndX; x++) {
+                availableCells.push({ x, y });
+            }
+        }
+
+        // Shuffle the cells (Fisher-Yates shuffle)
+        for (let i = availableCells.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [availableCells[i], availableCells[j]] = [availableCells[j], availableCells[i]];
+        }
+
+        // Assign each unit a new random cell
+        this.placedUnits.forEach((unit, index) => {
+            if (availableCells[index]) {
+                const newPos = availableCells[index];
+                unit.x = newPos.x;
+                unit.y = newPos.y;
+                unit.sprite.setPosition(
+                    newPos.x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+                    newPos.y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2
+                );
+            }
+        });
+
+        // If a unit was selected, deselect it
+        if (this.selectedPlacementUnit) {
+            this.selectedPlacementUnit.sprite.setAlpha(1.0);
+            this.selectedPlacementUnit = null;
+        }
+        this.drawGrid(); // Redraw grid to clear any highlights
     }
 
     confirmPlacement() {
