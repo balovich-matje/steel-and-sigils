@@ -512,8 +512,10 @@ export class UnitManager {
                     return;
                 }
             }
-            // Otherwise just select the unit
-            this.scene.selectUnit(unit);
+            // Otherwise, only select if it's a player unit and it's the player's turn
+            if (unit.isPlayer && currentUnit && currentUnit.isPlayer) {
+                this.scene.selectUnit(unit);
+            }
         });
 
         this.units.push(unit);
