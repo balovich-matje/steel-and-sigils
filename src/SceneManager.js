@@ -784,8 +784,8 @@ export class BattleScene extends Phaser.Scene {
 
     _clearSpellHotkeys() {
         if (this.spellHotkeyListeners && this.spellHotkeyListeners.length > 0) {
-            this.spellHotkeyListeners.forEach(key => {
-                this.input.keyboard.off(`keydown-${key}`);
+            this.spellHotkeyListeners.forEach(listener => {
+                this.input.keyboard.off(`keydown-${listener.key}`, listener.callback);
             });
         }
         this.spellHotkeyListeners = [];
@@ -889,15 +889,17 @@ export class BattleScene extends Phaser.Scene {
                     usedHotkeys.add(hotkey);
                     displayName = `(${hotkey})${spell.name.substring(1)}`;
 
-                    // Register listener
-                    this.input.keyboard.on(`keydown-${hotkey}`, () => {
+                    // Register listener with a specific callback function
+                    const spellKey = key; // Capture key for the closure
+                    const hotkeyCallback = () => {
                         // Double-check if spellbook is open and mana is sufficient
                         const modal = document.getElementById('spellbook-modal');
-                        if (!modal.classList.contains('hidden') && this.mana >= Math.floor(spell.manaCost * this.manaCostMultiplier)) {
-                            this.spellSystem.castSpell(key);
+                        if (!modal.classList.contains('hidden') && this.mana >= Math.floor(SPELLS[spellKey].manaCost * this.manaCostMultiplier)) {
+                            this.spellSystem.castSpell(spellKey);
                         }
-                    });
-                    this.spellHotkeyListeners.push(hotkey);
+                    };
+                    this.input.keyboard.on(`keydown-${hotkey}`, hotkeyCallback);
+                    this.spellHotkeyListeners.push({ key: hotkey, callback: hotkeyCallback });
                 }
 
                 card.innerHTML = `

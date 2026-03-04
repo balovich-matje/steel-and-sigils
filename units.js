@@ -274,6 +274,110 @@ const UNIT_TYPES = {
             description: 'Returns to starting position after attacking. Drops legendary loot on death.',
             effect: 'hitAndRun'
         }
+    },
+    SUMMONER_LICH: {
+        name: 'Summoner Lich',
+        emoji: '💀👑',
+        image: 'images/enemy/dungeon/summoner_lich.png',
+        health: 300, maxHealth: 300,
+        damage: 10, moveRange: 1, rangedRange: 6, initiative: 7,
+        isPlayer: false, cost: 2000,
+        isBoss: true, bossSize: 2,
+        passives: [{ name: 'Summon Undead', description: 'Summons 1 undead ally per turn (2 on first turn).' }]
+    },
+    OCTOTH_HROARATH: {
+        name: "Octo'th Hroa'rath",
+        emoji: '🦑',
+        image: 'images/enemy/cultist/octoth_hroarath.png',
+        health: 250, maxHealth: 250,
+        damage: 75, moveRange: 4, initiative: 10,
+        isPlayer: false, cost: 2500,
+        isBoss: true, bossSize: 2,
+        passives: [
+            { name: 'Otherworldly Aura', description: 'Deals 15 damage to adjacent units at start of turn.' },
+            { name: 'Tendril Pull', description: 'Pulls distant enemies into melee range.' }
+        ]
+    },
+    // ============================================
+    // NEW FACTION: DUNGEON DWELLERS
+    // ============================================
+    ANIMATED_ARMOR: {
+        name: 'Animated Armor',
+        emoji: '🤖',
+        image: 'images/enemy/dungeon/animated_armor.png',
+        health: 220, maxHealth: 220,
+        damage: 45, moveRange: 2, initiative: 5,
+        isPlayer: false, cost: 550,
+        isBoss: false
+    },
+    SKELETON_ARCHER: {
+        name: 'Skeleton Archer',
+        emoji: '💀🏹',
+        image: 'images/enemy/dungeon/skeleton_archer.png',
+        health: 50, maxHealth: 50,
+        damage: 30, moveRange: 2, initiative: 14,
+        isPlayer: false, cost: 300,
+        rangedRange: 6
+    },
+    SKELETON_SOLDIER: {
+        name: 'Skeleton Soldier',
+        emoji: '💀⚔️',
+        image: 'images/enemy/dungeon/skeleton_soldier.png',
+        health: 90, maxHealth: 90,
+        damage: 25, moveRange: 4, initiative: 11,
+        isPlayer: false, cost: 250,
+        passive: { name: 'Shielded', description: 'Takes 50% less damage from ranged attacks.', effect: 'rangedDefense', value: 0.5 }
+    },
+    LOST_SPIRIT: {
+        name: 'Lost Spirit',
+        emoji: '👻',
+        image: 'images/enemy/dungeon/lost_spirit.png',
+        health: 70, maxHealth: 70,
+        damage: 50, moveRange: 6, initiative: 15,
+        isPlayer: false, cost: 800,
+        isRare: true,
+        passives: [
+            { name: 'Ethereal', description: 'Takes 75% less damage from physical attacks.' },
+            { name: 'Arcane Weakness', description: 'Takes 50% more damage from spells.' }
+        ]
+    },
+
+    // ============================================
+    // NEW FACTION: OLD GOD WORSHIPPERS
+    // ============================================
+    CULTIST_ACOLYTE: {
+        name: 'Cultist Acolyte',
+        emoji: '👤',
+        image: 'images/enemy/cultist/acolyte.png',
+        health: 40, maxHealth: 40,
+        damage: 20, moveRange: 4, initiative: 10,
+        isPlayer: false, cost: 150
+    },
+    CULTIST_NEOPHYTE: {
+        name: 'Cultist Neophyte',
+        emoji: '🤫',
+        image: 'images/enemy/cultist/neophyte.png',
+        health: 35, maxHealth: 35,
+        damage: 15, moveRange: 3, initiative: 9,
+        isPlayer: false, cost: 200,
+        rangedRange: 4
+    },
+    GIBBERING_HORROR: {
+        name: 'Gibbering Horror',
+        emoji: '🐙',
+        image: 'images/enemy/cultist/gibbering_horror.png',
+        health: 80, maxHealth: 80,
+        damage: 40, moveRange: 3, initiative: 11,
+        isPlayer: false, cost: 500,
+        rangedRange: 5
+    },
+    FLESH_WARPED_STALKER: {
+        name: 'Flesh-warped Stalker',
+        emoji: '🦎',
+        image: 'images/enemy/cultist/flesh_warped_stalker.png',
+        health: 70, maxHealth: 70,
+        damage: 40, moveRange: 7, initiative: 16,
+        isPlayer: false, cost: 550
     }
 };
 
