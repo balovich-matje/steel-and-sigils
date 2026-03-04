@@ -2,7 +2,7 @@
 // MAIN ENTRY POINT - Steel and Sigils
 // ============================================
 
-const GAME_VERSION = '0.40';
+const GAME_VERSION = '0.43';
 console.log(`Steel and Sigils v${GAME_VERSION}`);
 
 import { CONFIG } from './GameConfig.js';
@@ -31,13 +31,13 @@ async function loadVPScenes() {
 
         return;
     }
-    
+
     const { PVPMatchScene } = await import('./PVPMatchScene.js?v=' + Date.now());
     const { PVPBattleScene } = await import('./PVPBattleScene.js?v=' + Date.now());
-    
+
     window.game.scene.add('PVPMatchScene', PVPMatchScene);
     window.game.scene.add('PVPBattleScene', PVPBattleScene);
-    
+
     pvpScenesLoaded = true;
 
 }
@@ -48,7 +48,7 @@ window.loadVPScenes = loadVPScenes;
 // Initialize the game when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     game = new Phaser.Game(config);
-    
+
     // Expose for debugging
     window.game = game;
 });

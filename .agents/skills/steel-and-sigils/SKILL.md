@@ -26,6 +26,7 @@ Turn-based tactical combat game with:
 - Real-time peer-to-peer multiplayer
 - Host creates session (6-char key)
 - Guest joins with key
+- **Manual Signaling**: Fallback mode using copy/paste codes if Firebase unavailable
 - Alternating turns
 - All actions synced via DataChannel
 
@@ -36,6 +37,7 @@ src/
 ├── main.js              # Game bootstrap, PVP scene loading
 ├── GameConfig.js        # Constants, SPELLS
 ├── SceneManager.js      # BattleScene, PreGameScene
+├── BaseBattleScene.js   # Shared battle logic
 ├── EntityManager.js     # UnitManager, TurnSystem, Unit class
 ├── InputHandler.js      # GridSystem - clicks, movement
 ├── SpellSystem.js       # Spell casting, effects
@@ -183,6 +185,110 @@ await pc.setRemoteDescription(answer);
 
 // Cleanup Firebase after connected (no longer needed)
 webrtc.cleanupSignaling();
+
+// Manual Signaling (Fallback):
+// 1. Host generates Offer (SDP) -> Copies to clipboard
+// 2. Guest pastes Offer -> Generates Answer (SDP) -> Copies to clipboard
+// 3. Host pastes Answer -> Connection established
+```
+
+### AI Unit Behavior (PVE only)
+
+Located in `TurnSystem.executeAITurn()`:
+1. Find nearest enemy
+2. Check ranged attack (if `rangedRange > 0` and in range)
+3. Check melee (adjacent)
+4. Move toward enemy
+5. Attack after moving if possible
+
+## Reward System
+
+### Victory Rewards (PVE, every battle)
+1. **New Unit** - Every 2 rounds (battle 2, 4, 6...), choose 1 of 3 random units
+2. **Unit Buff** - Choose 1 of 3 buffs (50% chance for legendary class buff)
+3. **Magic Buff** - Choose 1 of 3 magic enhancements
+4. **Loot Goblin Reward** - If Loot Goblin killed, choose 1 of 3 buffs for specific unit
+
+### Magic Buff Types
+| Buff | Effect | Unique? |
+|------|--------|---------|
+| Expanded Mana Pool | +30 Max Mana | No |
+| Mana Flow | +2 Mana Regen | No |
+| Arcane Power | +20% Spell Damage | No |
+| Efficient Casting | -20% Mana Cost (max 4 stacks) | Capped |
+| Mana Surge | Full restore +20 max | No |
+| Twin Cast | +1 spell per round | No |
+| Eternal Magic | Buffs don't expire | Yes |
+| Mass Enchantment | Spells target whole army | Yes |
+
+## UI System
+
+### HTML Overlays
+- `spellbook-modal` - Spell selection grid
+- `victory-screen` - Reward selection
+- `initiative-bar` - Turn order display (PVE)
+- `magic-buffs-panel` - Active magic buffs
+- `pvp-menu` - PVP mode selection
+- `pvp-waiting` - Waiting for opponent (PVP)
+- `pvp-session-info` - Active session display (PVP)
+- `manual-signaling-ui` - Copy/paste connection codes
+
+### Hotkeys
+- **S** - Open spell book
+- **E** - End turn
+- **Esc** - Close spell book OR cancel spell selection
+
+### Adding UI Elements
+- Use existing CSS classes: `spell-button`, `spell-card`, `mana-display`
+- Follow color scheme: `#2D241E` (wood), `#A68966` (gold), `#E3D5B8` (parchment)
+
+## Testing Checklist
+
+When adding new features, verify:
+- [ ] Works in both single-player and progression (nextBattle)
+- [ ] Keyboard shortcuts work (S, E, Esc)
+- [ ] Spell book doesn't let clicks pass through to game board
+- [ ] Buffs persist between battles if intended
+- [ ] Unit positioning correct (bottom-origin for images)
+- [ ] Initiative bar updates correctly (PVE)
+- [ ] **PVP**: WebRTC connects successfully (Firebase or Manual)
+- [ ] **PVP**: Actions sync correctly between players
+- [ ] **PVP**: Turn alternates properly (Player 1 → Player 2)
+- [ ] **PVP**: Session cleanup works after connection
+
+## Extending the Game
+
+### Adding Legendary Buffs
+1. Add buff definition in `tryGenerateLegendaryBuff()`
+2. Add effect check in attack handling (SceneManager.js)
+3. Add persistence in `statModifiers`
+4. Add restoration logic in `create()`
+
+### Adding Magic Buff Types
+1. Add to magicOptions array in `generateRewardChoices()`
+2. Set `unique: true` if shouldn't stack
+3. Set `maxStacks: N` if capped
+4. Handle in `confirmRewards()` buff application
+5. Handle in `create()` buff restoration
+6. Add display text in UIHandler.js `updateMagicBuffsDisplay()`
+
+### Adding PVP Features
+1. Add action type to `_syncAction()` in PVPBattleScene.js
+2. Add handler in `_applyOpponentAction()`
+3. Add corresponding apply method (e.g., `_applyNewFeature()`)
+4. Test with two browser instances
+
+## Known Quirks
+
+- **Orc Rogue hit-and-run**: Uses `turnStartX/Y` captured in `resetTurn()`
+- **Berserker Bloodlust**: Stacks permanently, saved via `bloodlustStacks`
+- **Wizard mana regen**: Per-wizard +1, calculated in `regenerateMana()`
+- **Enemy scaling**: `statMultiplier = 1 + (battleNumber - 1) * 0.15`
+- **Point buy system**: 1000 points start (PVE), 2500 points (PVP)
+- **New unit waves**: Every 2 rounds
+- **Boss waves**: Every 5 rounds (Ogre Chieftain, Orc Shaman King, or Loot Goblin)
+- **PVP Side assignment**: Host = left (columns 0-1), Guest = right (columns 8-9)
+- **PVP Turn order**: Player 1 always starts
 ```
 
 ### AI Unit Behavior (PVE only)

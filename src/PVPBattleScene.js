@@ -299,8 +299,7 @@ export class PVPBattleScene extends Phaser.Scene {
         // Sync
         this._syncAction({ type: 'move', fromX, fromY, toX: tx, toY: ty });
         
-        // Update highlights or auto-end turn
-        this._updateActionHighlights(unit);
+        this._deselect();
     }
 
     // ============================================
@@ -332,9 +331,6 @@ export class PVPBattleScene extends Phaser.Scene {
             this._killUnit(target);
         }
         
-        // Mark as attacked
-        attacker.hasAttacked = true;
-        
         // Sync
         this._syncAction({
             type: 'attack',
@@ -343,9 +339,7 @@ export class PVPBattleScene extends Phaser.Scene {
             damage
         });
         
-        // Update highlights or auto-end turn
-        this._updateActionHighlights(attacker);
-        
+        this._deselect();
         this._checkWin();
     }
 
@@ -531,42 +525,6 @@ export class PVPBattleScene extends Phaser.Scene {
     // ============================================
     // WIN/LOSS
     // ============================================
-
-    /**
-     * Update highlights based on remaining actions
-     * Shows move range if can move, attack range if can attack
-     * Auto-ends turn if no actions remain
-     */
-    _updateActionHighlights(unit) {
-        // Check if unit has any actions remaining
-        const canMove = unit.canMove();
-        const canAttack = unit.canAttack();
-        
-        if (!canMove && !canAttack) {
-            // No actions left - auto end turn (only for current unit on player's turn)
-            if (this.currentUnit === unit && unit.owner === this.playerNumber) {
-                console.log(`[Auto Turn] ${unit.name} has no actions left, ending turn`);
-                this.time.delayedCall(800, () => this.endTurn());
-            }
-            return;
-        }
-        
-        // Clear previous highlights
-        this.gridSystem.clearHighlights();
-        
-        // Keep unit selected and show appropriate highlights
-        this.selectedUnit = unit;
-        if (unit.sprite) unit.sprite.setTint(0xFFFF00);
-        
-        // Show appropriate highlights based on remaining actions
-        if (canMove) {
-            // Show move range
-            this.gridSystem.highlightValidMoves(unit);
-        } else if (canAttack) {
-            // Can't move but can attack - show attack range
-            this.gridSystem.highlightRangedAttackRange(unit);
-        }
-    }
 
     _checkWin() {
         const myUnits = this.units.filter(u => u.owner === this.playerNumber && u.alive);

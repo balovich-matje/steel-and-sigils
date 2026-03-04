@@ -1693,7 +1693,6 @@ export class PreGameScene extends Phaser.Scene {
     }
 
     create() {
-        console.log('Steel and Sigils v0.42');
         this.showArmySelection();
         this.gridGraphics = this.add.graphics();
         this.drawGrid();

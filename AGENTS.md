@@ -14,7 +14,6 @@
 - Unit progression through victory rewards (PVE)
 - Legendary powers for elite units (rare drops)
 
----
 
 ## Technology Stack
 
@@ -405,6 +404,7 @@ Check browser console for:
 | SceneManager.js | ~1750 | Main game logic, scenes, combat, rewards |
 | EntityManager.js | ~1050 | Unit class, management, turn system |
 | InputHandler.js | ~320 | Grid, input, movement highlighting |
+| BaseBattleScene.js | ~280 | Shared battle logic |
 | GameConfig.js | ~170 | Constants, spell database |
 | SpellSystem.js | ~480 | Spell casting and effects |
 | UIHandler.js | ~200 | DOM UI updates |
