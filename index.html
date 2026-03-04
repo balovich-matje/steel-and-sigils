@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,16 +14,17 @@
     <!-- units.js provides UNIT_TYPES globally -->
     <script src="units.js"></script>
 </head>
+
 <body>
     <h1>⚔️ Steel and Sigils 🛡️</h1>
-    
+
     <!-- Initiative Bar (HOMM5 style) -->
     <div id="initiative-bar">
         <div id="initiative-queue"></div>
     </div>
-    
+
     <div id="game-container"></div>
-    
+
     <!-- Placement Bar (shown during placement phase, above UI panel) -->
     <div id="placement-bar" class="hidden">
         <div class="placement-title">📍 Unit Placement</div>
@@ -35,7 +37,7 @@
             Start Battle
         </button>
     </div>
-    
+
     <!-- UI Panel -->
     <div id="ui-panel">
         <div class="turn-indicator">
@@ -58,7 +60,7 @@
             </button>
         </div>
     </div>
-    
+
     <!-- Unit Info Panel (positioned on right side) -->
     <div class="unit-info" id="unit-info">
         <em>Select a unit to view details</em>
@@ -67,11 +69,13 @@
     <!-- Pre-game Army Selection -->
     <div id="pregame-screen" class="victory-screen">
         <h2 style="color: #A68966;">⚔️ Army Selection ⚔️</h2>
-        
+
         <!-- PVP Mode Toggle -->
         <div style="margin-bottom: 20px;">
-            <div id="mode-selector" style="display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 15px;">
-                <button id="mode-pve" class="spell-button" style="background: #4a7c59;" onclick="gameScene.setGameMode('pve')">
+            <div id="mode-selector"
+                style="display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 15px;">
+                <button id="mode-pve" class="spell-button" style="background: #4a7c59;"
+                    onclick="gameScene.setGameMode('pve')">
                     🎮 PVE Mode
                 </button>
                 <button id="mode-pvp" class="spell-button" onclick="gameScene.setGameMode('pvp')">
@@ -79,24 +83,30 @@
                 </button>
             </div>
             <!-- Session Info (shown when joined) -->
-            <div id="pvp-session-info" style="display: none; background: #2D241E; border: 2px solid #FFD700; border-radius: 4px; padding: 15px; max-width: 500px; margin: 0 auto;">
+            <div id="pvp-session-info"
+                style="display: none; background: #2D241E; border: 2px solid #FFD700; border-radius: 4px; padding: 15px; max-width: 500px; margin: 0 auto;">
                 <div style="color: #FFD700; font-weight: bold; margin-bottom: 5px;">🏆 PVP Session Active</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div>
                         <span style="color: #8B7355; font-size: 12px;">Session Key:</span>
-                        <span id="pvp-active-key" style="color: #FFD700; font-size: 18px; font-weight: bold; letter-spacing: 2px; font-family: monospace; margin-left: 8px;">------</span>
+                        <span id="pvp-active-key"
+                            style="color: #FFD700; font-size: 18px; font-weight: bold; letter-spacing: 2px; font-family: monospace; margin-left: 8px;">------</span>
                     </div>
-                    <button class="spell-button" onclick="gameScene.leavePVP()" style="padding: 4px 12px; font-size: 11px; background: #9E4A4A;">
+                    <button class="spell-button" onclick="gameScene.leavePVP()"
+                        style="padding: 4px 12px; font-size: 11px; background: #9E4A4A;">
                         Leave
                     </button>
                 </div>
-                <div id="pvp-side-info" style="display: none; background: #1A1C1E; border-radius: 4px; padding: 10px; text-align: center;">
+                <div id="pvp-side-info"
+                    style="display: none; background: #1A1C1E; border-radius: 4px; padding: 10px; text-align: center;">
                     <span style="color: #8B7355; font-size: 12px;">Your Side:</span>
-                    <span id="pvp-assigned-side" style="color: #4a7cd9; font-size: 20px; font-weight: bold; margin-left: 10px;">Waiting...</span>
+                    <span id="pvp-assigned-side"
+                        style="color: #4a7cd9; font-size: 20px; font-weight: bold; margin-left: 10px;">Waiting...</span>
                     <div style="color: #8B7355; font-size: 11px; margin-top: 5px;">Place your units on this side</div>
                 </div>
             </div>
-            <div id="pvp-menu" style="display: none; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 15px; max-width: 500px; margin: 0 auto;">
+            <div id="pvp-menu"
+                style="display: none; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 15px; max-width: 500px; margin: 0 auto;">
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 10px;">🏆 PVP Tournament</div>
                 <div style="color: #B8A896; font-size: 12px; margin-bottom: 15px;">
                     Battle through 5 rounds, then face your opponent in the final round!
@@ -106,20 +116,26 @@
                         📋 Create Session
                     </button>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="pvp-join-key" placeholder="Enter Key or Paste Code" style="flex: 1; padding: 8px; background: #1A1C1E; border: 1px solid #5D4E3E; color: #E3D5B8; border-radius: 4px; text-transform: uppercase;">
+                        <input type="text" id="pvp-join-key" placeholder="Enter Key or Paste Code"
+                            style="flex: 1; padding: 8px; background: #1A1C1E; border: 1px solid #5D4E3E; color: #E3D5B8; border-radius: 4px; text-transform: uppercase;">
                         <button class="spell-button" onclick="gameScene.joinPVPSession()" style="padding: 8px 16px;">
                             🔗 Join
                         </button>
                     </div>
                 </div>
             </div>
-            <div id="pvp-waiting" style="display: none; background: #2D241E; border: 2px solid #4a7cd9; border-radius: 4px; padding: 15px; max-width: 500px; margin: 0 auto;">
+            <div id="pvp-waiting"
+                style="display: none; background: #2D241E; border: 2px solid #4a7cd9; border-radius: 4px; padding: 15px; max-width: 500px; margin: 0 auto;">
                 <div style="color: #4a7cd9; font-weight: bold; margin-bottom: 10px;">⏳ Waiting for opponent...</div>
-                <div style="background: #1A1C1E; border: 1px solid #5D4E3E; border-radius: 4px; padding: 10px; margin-bottom: 10px;">
-                    <div style="color: #8B7355; font-size: 11px; margin-bottom: 5px;">Share this key with your opponent:</div>
+                <div
+                    style="background: #1A1C1E; border: 1px solid #5D4E3E; border-radius: 4px; padding: 10px; margin-bottom: 10px;">
+                    <div style="color: #8B7355; font-size: 11px; margin-bottom: 5px;">Share this key with your opponent:
+                    </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <span id="pvp-session-key" style="color: #FFD700; font-size: 24px; font-weight: bold; letter-spacing: 4px; font-family: monospace;">------</span>
-                        <button class="spell-button" onclick="gameScene.copySessionKey(event)" style="padding: 4px 12px; font-size: 11px;">
+                        <span id="pvp-session-key"
+                            style="color: #FFD700; font-size: 24px; font-weight: bold; letter-spacing: 4px; font-family: monospace;">------</span>
+                        <button class="spell-button" onclick="gameScene.copySessionKey(event)"
+                            style="padding: 4px 12px; font-size: 11px;">
                             📋 Copy
                         </button>
                     </div>
@@ -132,13 +148,14 @@
                 </div>
             </div>
         </div>
-        
+
         <p style="color: #E3D5B8; margin-bottom: 10px; font-size: 18px;">Spend your points wisely!</p>
         <div class="mana-display" style="margin-bottom: 20px;">
             💰 Points: <span id="points-remaining">1000</span>/1000
         </div>
-        
-        <div style="display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; max-width: 1000px;">
+
+        <div
+            style="display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; max-width: 1000px;">
             <!-- Basic Units (200-400 points) -->
             <div class="spell-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">⚔️</div>
@@ -151,12 +168,15 @@
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 200</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-KNIGHT" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-KNIGHT"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
-            
+
             <div class="spell-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">🏹</div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 3px; font-size: 14px;">Archer</div>
@@ -165,15 +185,20 @@
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 300</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-ARCHER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-ARCHER"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
-            
+
             <div class="spell-card specialist-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">🧙</div>
-                <div style="color: #9B6BAB; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 4px rgba(155, 107, 171, 0.4);">Wizard</div>
+                <div
+                    style="color: #9B6BAB; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 4px rgba(155, 107, 171, 0.4);">
+                    Wizard</div>
                 <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 40 | DMG: 45<br>MOV: 2 | RNG: 4
                 </div>
@@ -182,16 +207,21 @@
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 400</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-WIZARD" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-WIZARD"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
 
             <!-- Specialist Units (500 points) -->
             <div class="spell-card specialist-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">✝️</div>
-                <div style="color: #9B6BAB; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 4px rgba(155, 107, 171, 0.4);">Cleric</div>
+                <div
+                    style="color: #9B6BAB; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 4px rgba(155, 107, 171, 0.4);">
+                    Cleric</div>
                 <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 80 | DMG: 15<br>MOV: 2 | RNG: 4
                 </div>
@@ -200,15 +230,20 @@
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 500</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-CLERIC" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-CLERIC"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
-            
+
             <div class="spell-card specialist-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">🗡️</div>
-                <div style="color: #9B6BAB; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 4px rgba(155, 107, 171, 0.4);">Rogue</div>
+                <div
+                    style="color: #9B6BAB; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 4px rgba(155, 107, 171, 0.4);">
+                    Rogue</div>
                 <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 55 | DMG: 40<br>MOV: 8 | INIT: 16
                 </div>
@@ -217,16 +252,21 @@
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 500</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-ROGUE" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-ROGUE"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
 
             <!-- Elite Units (800 points) -->
             <div class="spell-card legendary-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">🛡️</div>
-                <div style="color: #ff8c00; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);">Paladin</div>
+                <div
+                    style="color: #ff8c00; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);">
+                    Paladin</div>
                 <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 150 | DMG: 50<br>MOV: 4 | INIT: 9
                 </div>
@@ -235,29 +275,39 @@
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 800</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-PALADIN" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-PALADIN"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
-            
+
             <div class="spell-card legendary-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">🎯</div>
-                <div style="color: #ff8c00; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);">Ranger</div>
+                <div
+                    style="color: #ff8c00; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);">
+                    Ranger</div>
                 <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 70 | DMG: 50<br>MOV: 2 | RNG: 10
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 800</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-RANGER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-RANGER"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
-            
+
             <div class="spell-card legendary-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">🪓</div>
-                <div style="color: #ff8c00; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);">Berserker</div>
+                <div
+                    style="color: #ff8c00; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);">
+                    Berserker</div>
                 <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 90 | DMG: 50<br>MOV: 4 | INIT: 11
                 </div>
@@ -266,15 +316,20 @@
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 800</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-BERSERKER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-BERSERKER"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
-            
+
             <div class="spell-card legendary-card" style="min-width: 130px; max-width: 160px;">
                 <div style="font-size: 36px; margin-bottom: 8px;">🔮</div>
-                <div style="color: #ff8c00; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);">Sorcerer</div>
+                <div
+                    style="color: #ff8c00; font-weight: bold; margin-bottom: 3px; font-size: 14px; text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);">
+                    Sorcerer</div>
                 <div style="font-size: 11px; color: #B8A896; margin-bottom: 8px;">
                     HP: 50 | DMG: 55<br>MOV: 2 | RNG: 4
                 </div>
@@ -283,13 +338,16 @@
                 </div>
                 <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; font-size: 14px;">💰 800</div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', -1)" style="padding: 4px 12px;">-</button>
-                    <span id="count-SORCERER" style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
-                    <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', 1)" style="padding: 4px 12px;">+</button>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', -1)"
+                        style="padding: 4px 12px;">-</button>
+                    <span id="count-SORCERER"
+                        style="font-size: 18px; font-weight: bold; min-width: 25px; color: #A68966;">0</span>
+                    <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', 1)"
+                        style="padding: 4px 12px;">+</button>
                 </div>
             </div>
         </div>
-        
+
         <button id="confirm-army" class="spellbook-close" onclick="gameScene.confirmArmySelection()" disabled>
             Confirm Army (0 units)
         </button>
@@ -298,11 +356,13 @@
     <!-- PVP Placement Screen (for final round placement) -->
     <div id="pvp-placement-screen" class="victory-screen hidden">
         <h2 style="color: #A68966;">⚔️ Final Battle - Unit Placement ⚔️</h2>
-        <p style="color: #E3D5B8; margin-bottom: 10px; font-size: 16px;">Place your army on your side of the battlefield</p>
+        <p style="color: #E3D5B8; margin-bottom: 10px; font-size: 16px;">Place your army on your side of the battlefield
+        </p>
         <div style="color: #4a7cd9; font-size: 14px; margin-bottom: 20px;">
             You are on the <span id="pvp-your-side" style="font-weight: bold; color: #FFD700;">LEFT</span> side
         </div>
-        <div id="pvp-placement-status" style="background: #2D241E; border: 2px solid #5D4E3E; border-radius: 4px; padding: 15px; max-width: 400px; margin: 0 auto 20px;">
+        <div id="pvp-placement-status"
+            style="background: #2D241E; border: 2px solid #5D4E3E; border-radius: 4px; padding: 15px; max-width: 400px; margin: 0 auto 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="color: #8B7355;">Your Status:</span>
                 <span id="pvp-your-ready" style="color: #ff4444;">❌ Not Ready</span>
@@ -327,7 +387,8 @@
 
     <!-- PVP Spectator Screen -->
     <div id="pvp-spectator-screen" class="victory-screen hidden" style="background: rgba(0,0,0,0.9);">
-        <div style="position: absolute; top: 20px; right: 20px; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 15px; max-width: 300px;">
+        <div
+            style="position: absolute; top: 20px; right: 20px; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 15px; max-width: 300px;">
             <div style="color: #A68966; font-weight: bold; margin-bottom: 10px;">👁️ Spectator Mode</div>
             <div style="color: #B8A896; font-size: 12px; margin-bottom: 10px;">
                 Watching: <span id="spectator-opponent-name" style="color: #4a7cd9;">Opponent</span>
@@ -337,22 +398,27 @@
                 <div style="color: #E3D5B8; font-size: 18px; font-weight: bold;">
                     Battle <span id="spectator-battle-num">1</span>/5
                 </div>
-                <div style="width: 100%; height: 6px; background: #1A1C1E; border-radius: 3px; margin-top: 8px; overflow: hidden;">
-                    <div id="spectator-progress-bar" style="width: 20%; height: 100%; background: #4a7cd9; transition: width 0.3s;"></div>
+                <div
+                    style="width: 100%; height: 6px; background: #1A1C1E; border-radius: 3px; margin-top: 8px; overflow: hidden;">
+                    <div id="spectator-progress-bar"
+                        style="width: 20%; height: 100%; background: #4a7cd9; transition: width 0.3s;"></div>
                 </div>
             </div>
             <div style="color: #8B7355; font-size: 11px; margin-top: 10px; font-style: italic;">
                 You'll face them in battle once they finish round 5!
             </div>
         </div>
-        <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); color: #8B7355; font-size: 14px;">
+        <div
+            style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); color: #8B7355; font-size: 14px;">
             ⌛ Waiting for opponent to finish their battles...
         </div>
     </div>
 
     <!-- PVP Match Progress Overlay (shown during PVE rounds in PVP mode) -->
-    <div id="pvp-progress-overlay" class="hidden" style="position: fixed; top: 80px; right: 20px; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 12px; z-index: 200; min-width: 200px;">
-        <div style="color: #A68966; font-weight: bold; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #5D4E3E; padding-bottom: 5px;">
+    <div id="pvp-progress-overlay" class="hidden"
+        style="position: fixed; top: 80px; right: 20px; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 12px; z-index: 200; min-width: 200px;">
+        <div
+            style="color: #A68966; font-weight: bold; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #5D4E3E; padding-bottom: 5px;">
             🏆 PVP Tournament
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -361,49 +427,61 @@
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="color: #d94a4a; font-size: 12px;">Opponent:</span>
-            <span id="pvp-opponent-progress" style="color: #E3D5B8; font-weight: bold; font-size: 14px;">Waiting...</span>
+            <span id="pvp-opponent-progress"
+                style="color: #E3D5B8; font-weight: bold; font-size: 14px;">Waiting...</span>
         </div>
         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #5D4E3E; text-align: center;">
-            <span id="pvp-status-text" style="color: #8B7355; font-size: 11px; font-style: italic;">First to round 6 wins!</span>
+            <span id="pvp-status-text" style="color: #8B7355; font-size: 11px; font-style: italic;">First to round 6
+                wins!</span>
         </div>
     </div>
 
     <!-- Victory Screen -->
     <div id="victory-screen" class="victory-screen hidden">
         <h2 id="victory-text">🎉 Victory! 🎉</h2>
-        <p id="victory-subtitle" style="color: #E3D5B8; margin-bottom: 20px; font-size: 18px;">Choose your rewards for the next battle:</p>
-        
-        <div id="rewards-container" style="display: flex; flex-direction: column; gap: 20px; align-items: center; max-width: 1200px; width: 100%;">
+        <p id="victory-subtitle" style="color: #E3D5B8; margin-bottom: 20px; font-size: 18px;">Choose your rewards for
+            the next battle:</p>
+
+        <div id="rewards-container"
+            style="display: flex; flex-direction: column; gap: 20px; align-items: center; max-width: 1200px; width: 100%;">
             <div style="width: 100%;">
                 <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;">⚔️ Recruit a New Unit</h3>
-                <div id="reward-units" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+                <div id="reward-units" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                </div>
             </div>
-            
+
             <div style="width: 100%;">
                 <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 10px;">💪 Buff an Existing Unit</h3>
-                <div id="reward-buffs" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+                <div id="reward-buffs" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                </div>
             </div>
-            
+
             <div style="width: 100%;">
                 <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 10px;">🧙 Spell or Mana Enhancement</h3>
-                <div id="reward-magic" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+                <div id="reward-magic" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                </div>
             </div>
         </div>
-        
+
         <div id="defeat-message" style="display: none; text-align: center; padding: 30px;">
             <p style="color: #B8A896; font-size: 18px; margin-bottom: 20px;">Your army has fallen...</p>
-            <p style="color: #8B7355; font-size: 14px; margin-bottom: 30px; font-style: italic;">Better luck next time, commander.</p>
-            <button class="spell-button" onclick="location.reload()" style="font-size: 16px; padding: 12px 30px;">⚔️ Try Again</button>
+            <p style="color: #8B7355; font-size: 14px; margin-bottom: 30px; font-style: italic;">Better luck next time,
+                commander.</p>
+            <button class="spell-button" onclick="location.reload()" style="font-size: 16px; padding: 12px 30px;">⚔️ Try
+                Again</button>
         </div>
-        
-        <button id="confirm-rewards" class="spellbook-close" style="margin-top: 30px;" onclick="gameScene.confirmRewards()" disabled>
+
+        <button id="confirm-rewards" class="spellbook-close" style="margin-top: 30px;"
+            onclick="gameScene.confirmRewards()" disabled>
             Confirm Choices (0/3)
         </button>
     </div>
 
     <!-- Magic Buffs Panel (moved to bottom left to avoid overlap with unit-info) -->
-    <div id="magic-buffs-panel" style="position: fixed; bottom: 20px; left: 20px; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 12px; min-width: 180px; max-width: 220px; color: #E3D5B8; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">
-        <div style="font-weight: bold; color: #A68966; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #5D4E3E; padding-bottom: 5px;">
+    <div id="magic-buffs-panel"
+        style="position: fixed; bottom: 20px; left: 20px; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 12px; min-width: 180px; max-width: 220px; color: #E3D5B8; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">
+        <div
+            style="font-weight: bold; color: #A68966; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #5D4E3E; padding-bottom: 5px;">
             🔮 Magic Buffs
         </div>
         <div id="magic-buffs-list" style="font-size: 12px;">
@@ -416,8 +494,8 @@
         <div class="spellbook-content">
             <div class="spellbook-header">
                 <h2>📖 Spell Book</h2>
-                <p style="color: #4A729E;">💧 Mana: <span id="spellbook-mana">100</span>/<span id="spellbook-max-mana">100</span> (Regenerates +1 per turn)</p>
-                <p style="color: #8B7355; font-size: 12px;">Click a spell to cast it</p>
+                <p style="color: #4A729E;">💧 Mana: <span id="spellbook-mana">100</span>/<span
+                        id="spellbook-max-mana">100</span> (Regenerates +1 per turn)</p>
             </div>
             <div class="spell-grid" id="spell-grid"></div>
             <button class="spellbook-close" onclick="gameScene.closeSpellBook()">Close</button>
@@ -427,4 +505,5 @@
     <!-- Main entry point as ES6 module -->
     <script type="module" src="src/main.js"></script>
 </body>
+
 </html>

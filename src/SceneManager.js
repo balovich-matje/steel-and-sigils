@@ -763,10 +763,15 @@ export class BattleScene extends Phaser.Scene {
 
     renderSpellBookPage() {
         const grid = document.getElementById('spell-grid');
+        const header = document.querySelector('.spellbook-header');
         const content = document.querySelector('.spellbook-content');
         const page = this.spellBookPages[this.currentSpellPage];
 
         grid.innerHTML = '';
+
+        // Remove old navigation bar if it exists to prevent duplication
+        const oldNav = document.getElementById('spellbook-nav');
+        if (oldNav) oldNav.remove();
 
         // Apply page style
         content.style.backgroundColor = page.style.bg;
@@ -774,7 +779,8 @@ export class BattleScene extends Phaser.Scene {
 
         // Create top navigation container
         const topNav = document.createElement('div');
-        topNav.style.cssText = 'display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #5D4E3E;';
+        topNav.id = 'spellbook-nav';
+        topNav.style.cssText = 'display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; padding-bottom: 10px; border-bottom: 1px solid #5D4E3E;';
 
         // Left Arrow
         const leftArrow = document.createElement('span');
@@ -813,7 +819,7 @@ export class BattleScene extends Phaser.Scene {
         rightArrow.onclick = () => this.nextSpellPage();
         topNav.appendChild(rightArrow);
 
-        grid.appendChild(topNav);
+        header.appendChild(topNav);
 
         // Filter and render spells
         let spellCount = 0;
