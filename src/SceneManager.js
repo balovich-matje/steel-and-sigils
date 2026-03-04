@@ -644,7 +644,10 @@ export class BattleScene extends Phaser.Scene {
                 // Paladin Mythic: Divine Retribution (Melee Retaliation)
                 // Assuming it's a melee attack if the distance is 1. (Ranged attacks use performRangedAttack typically, but let's be safe)
                 const distToDefender = this.gridSystem.getDistanceBetweenUnits(attacker, defender);
+                console.log(`[Divine Retribution Check] attacker: ${attacker.type}, defender: ${defender.type}, dist: ${distToDefender}, hasMythic: ${defender.hasDivineRetribution}, defenderHealth: ${defender.health}, attackerHealth: ${attacker.health}, isSecondStrike: ${isSecondStrike}`);
+
                 if (distToDefender <= 1 && defender.hasDivineRetribution && defender.health > 0 && !isSecondStrike && attacker.health > 0) {
+                    console.log(`[Divine Retribution Triggered] ${defender.type} retaliates against ${attacker.type}!`);
                     this.time.delayedCall(200, () => {
                         this.performRetaliation(defender, attacker);
                     });
