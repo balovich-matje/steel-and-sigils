@@ -18,12 +18,12 @@ export class UIManager {
         const maxEl = document.getElementById('mana-max');
         const spellbookManaEl = document.getElementById('spellbook-mana');
         const spellbookMaxManaEl = document.getElementById('spellbook-max-mana');
-        
+
         if (currentEl) currentEl.textContent = this.scene.mana;
         if (maxEl) maxEl.textContent = this.scene.maxMana;
         if (spellbookManaEl) spellbookManaEl.textContent = this.scene.mana;
         if (spellbookMaxManaEl) spellbookMaxManaEl.textContent = this.scene.maxMana;
-        
+
         const display = document.getElementById('mana-display');
         if (display) {
             if (this.scene.mana < 20) {
@@ -38,23 +38,23 @@ export class UIManager {
     updateMagicBuffsDisplay() {
         const buffsList = document.getElementById('magic-buffs-list');
         if (!buffsList) return;
-        
+
         if (!this.scene.magicBuffs || this.scene.magicBuffs.length === 0) {
             buffsList.innerHTML = '<div style="color: #B8A896; font-style: italic; text-align: center;">No active buffs</div>';
             return;
         }
-        
+
         let html = '';
         for (const buff of this.scene.magicBuffs) {
             let valueText = '';
             if (buff.type === 'manaRegen') valueText = `+${buff.value} regen`;
-            else if (buff.type === 'manaCost') valueText = `${Math.round((1-buff.value)*100)}% cost reduction`;
-            else if (buff.type === 'spellPower') valueText = `+${Math.round(buff.value*100)}% damage`;
+            else if (buff.type === 'manaCost') valueText = `${Math.round((1 - buff.value) * 100)}% cost reduction`;
+            else if (buff.type === 'spellPower') valueText = `+${Math.round(buff.value * 100)}% damage`;
             else if (buff.type === 'spellsPerRound') valueText = `+${buff.value} spell/round`;
             else if (buff.type === 'maxMana') valueText = `+${buff.value} max mana`;
             else if (buff.type === 'permanentBuffs') valueText = `Permanent buffs`;
             else if (buff.type === 'armyBuffs') valueText = `Army-wide spells`;
-            
+
             html += `
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; padding: 3px 6px; background: rgba(166, 137, 102, 0.15); border-radius: 4px;">
                     <span style="font-size: 14px;">${buff.icon}</span>
@@ -65,11 +65,63 @@ export class UIManager {
         buffsList.innerHTML = html;
     }
 
-    // Update unit info panel
+    // Update unit info panel and ability button
     updateUnitInfo(unit) {
         const infoPanel = document.getElementById('unit-info');
         if (infoPanel) {
             infoPanel.innerHTML = unit.getDisplayStats();
+        }
+
+        // Manage special ability button
+        const abilityBtn = document.getElementById('unit-ability-btn');
+        const abilityNameSpan = document.getElementById('unit-ability-name');
+
+        if (abilityBtn && abilityNameSpan) {
+            // Check if it's the player's turn and the current unit is selected
+            const isTurn = this.scene.turnSystem &&
+                this.scene.turnSystem.currentUnit === unit &&
+                unit.isPlayer &&
+                !unit.hasMoved &&
+                !unit.hasAttacked;
+
+            // Define which units have active abilities
+            let abilityName = null;
+            let canUseAbility = false;
+
+            if (unit.type === 'CLERIC') {
+                abilityName = 'Empowered Heal';
+                canUseAbility = isTurn && !unit.hasHealed;
+            } else if (unit.type === 'OCTO') {
+                abilityName = 'Tentacle Pull';
+                canUseAbility = isTurn && !unit.hasPulled;
+            }
+
+            if (abilityName) {
+                abilityNameSpan.textContent = abilityName;
+                if (canUseAbility) {
+                    abilityBtn.disabled = false;
+                    abilityBtn.style.filter = 'none';
+                    abilityBtn.style.opacity = '1';
+                    abilityBtn.style.background = '#2D241E';
+                    abilityBtn.style.borderColor = '#A68966';
+                    abilityBtn.style.color = '#E3D5B8';
+                } else {
+                    abilityBtn.disabled = true;
+                    abilityBtn.style.filter = 'grayscale(100%)';
+                    abilityBtn.style.opacity = '0.5';
+                    abilityBtn.style.background = '#3c3c3c';
+                    abilityBtn.style.borderColor = '#555';
+                    abilityBtn.style.color = '#888';
+                }
+            } else {
+                abilityNameSpan.textContent = 'Special Ability';
+                abilityBtn.disabled = true;
+                abilityBtn.style.filter = 'grayscale(100%)';
+                abilityBtn.style.opacity = '0.5';
+                abilityBtn.style.background = '#3c3c3c';
+                abilityBtn.style.borderColor = '#555';
+                abilityBtn.style.color = '#888';
+            }
         }
     }
 
@@ -147,7 +199,7 @@ export class UIManager {
         card.className = isLegendary ? 'reward-card legendary-card' : 'reward-card';
         card.dataset.category = category;
         card.dataset.id = id;
-        
+
         if (isLegendary) {
             // Legendary styling with animated glow - inline styles for base, animation from CSS
             card.style.cssText = `
@@ -175,9 +227,9 @@ export class UIManager {
                 box-shadow: 0 2px 8px rgba(0,0,0,0.4);
             `;
         }
-        
+
         card.innerHTML = innerHTML;
-        
+
         // Add hover effect via JS since inline styles don't support :hover
         card.onmouseenter = () => {
             if (isLegendary) {
@@ -197,9 +249,9 @@ export class UIManager {
                 card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
             }
         };
-        
+
         card.onclick = () => this.scene.selectReward(category, id, card, effectData);
-        
+
         return card;
     }
 }

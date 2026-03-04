@@ -39,8 +39,12 @@
 
     <!-- UI Panel -->
     <div id="ui-panel">
-        <div class="turn-indicator">
-            <strong>Turn:</strong> <span id="current-turn">Player</span>
+        <div class="action-section">
+            <strong style="color: #A68966;">Unit:</strong>
+            <button id="unit-ability-btn" class="spell-button" onclick="gameScene.useUnitAbility()" disabled
+                style="filter: grayscale(100%); opacity: 0.5; background: #3c3c3c; border-color: #555; color: #888;">
+                ⭐ <span id="unit-ability-name">Special Ability</span>
+            </button>
         </div>
         <div class="mana-display" id="mana-display">
             💧 Mana: <span id="mana-current">100</span>/<span id="mana-max">100</span>

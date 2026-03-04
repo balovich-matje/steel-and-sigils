@@ -191,7 +191,7 @@ export class BattleScene extends Phaser.Scene {
         // Create enemy units
         this.createEnemyUnits();
 
-        // Add click handler for spell targeting
+        // Add click handler for spell targeting and abilities
         this.input.on('pointerdown', (pointer) => {
             // Check if spellbook modal is open - if so, don't process game clicks
             const spellbookModal = document.getElementById('spellbook-modal');
@@ -203,6 +203,12 @@ export class BattleScene extends Phaser.Scene {
                 const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
                 if (gridX >= 0 && gridX < CONFIG.GRID_WIDTH && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
                     this.spellSystem.executeSpellAt(gridX, gridY);
+                }
+            } else if (this.activeUnitAbility) {
+                const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);
+                const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
+                if (gridX >= 0 && gridX < CONFIG.GRID_WIDTH && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
+                    this.executeUnitAbilityAt(gridX, gridY);
                 }
             }
         });
@@ -238,6 +244,11 @@ export class BattleScene extends Phaser.Scene {
             if (this.spellSystem.activeSpell) {
                 this.spellSystem.clearSpell();
                 this.uiManager.showFloatingText('Spell cancelled', 400, 300, '#A68966');
+            } else if (this.activeUnitAbility) {
+                this.activeUnitAbility = null;
+                document.body.style.cursor = 'default';
+                this.gridSystem.highlightValidMoves(this.turnSystem.currentUnit);
+                this.uiManager.showFloatingText('Ability cancelled', 400, 300, '#A68966');
             }
         });
     }
@@ -248,730 +259,797 @@ export class BattleScene extends Phaser.Scene {
 
         if (isBossWave) {
             this.createBossWave();
-            return;
-        }
-
-        const totalPoints = 1000 + (this.battleNumber - 1) * 250;
-        const enemyTypes = ENEMY_FACTIONS[this.currentEnemyFaction];
-
-        let remainingPoints = totalPoints;
-        const spawnedEnemies = [];
-        const availablePositions = this.getEnemySpawnPositions();
-
-        const statMultiplier = 1 + (this.battleNumber - 1) * 0.15;
-
-        while (remainingPoints >= 200 && availablePositions.length > 0) {
-            const affordable = enemyTypes.filter(type => UNIT_TYPES[type].cost <= remainingPoints);
-            if (affordable.length === 0) break;
-
-            const type = affordable[Math.floor(Math.random() * affordable.length)];
-            const pos = availablePositions.pop();
-
-            const unit = this.unitManager.addUnit(type, pos.x, pos.y);
-
-            if (unit) {
-                unit.maxHealth = Math.floor(unit.maxHealth * statMultiplier);
-                unit.health = unit.maxHealth;
-                unit.damage = Math.floor(unit.damage * statMultiplier);
-                unit.updateHealthBar();
-
-                remainingPoints -= UNIT_TYPES[type].cost;
-                spawnedEnemies.push(type);
-            }
-        }
-
-        if (this.battleNumber > 1) {
-            this.uiManager.showFloatingText(
-                `Battle ${this.battleNumber} - ${spawnedEnemies.length} enemies!`,
-                320, 100, '#A68966'
-            );
         } else {
-            this.uiManager.showFloatingText(
-                `Battle 1 - Defeat the enemy!`,
-                320, 100, '#A68966'
-            );
+            this.createNormalWave();
         }
     }
 
-    createBossWave() {
-        let selectedBoss;
-        if (this.currentEnemyFaction === 'DUNGEON_DWELLERS') {
-            selectedBoss = 'SUMMONER_LICH';
-        } else if (this.currentEnemyFaction === 'OLD_GOD_WORSHIPPERS') {
-            selectedBoss = 'OCTOTH_HROARATH';
-        } else {
-            // Default to Greenskin Horde bosses
-            const bossTypes = ['OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN'];
-            const roll = Math.random();
-            if (roll < 0.3) {
-                selectedBoss = 'LOOT_GOBLIN';
-            } else {
-                selectedBoss = roll < 0.65 ? 'OGRE_CHIEFTAIN' : 'ORC_SHAMAN_KING';
-            }
-        }
+    useUnitAbility() {
+        if (!this.turnSystem || !this.turnSystem.currentUnit) return;
+        const unit = this.turnSystem.currentUnit;
 
-        const availablePositions = this.getEnemySpawnPositions();
-        // Filter positions that can fit 2x2 bosses (need at least 2 columns from right edge)
-        const validPositions = availablePositions.filter(pos => {
-            const template = UNIT_TYPES[selectedBoss];
-            const size = template.bossSize || 1;
-            return pos.x <= CONFIG.GRID_WIDTH - size && pos.y <= CONFIG.GRID_HEIGHT - size;
-        });
+        if (unit.type === 'CLERIC' && !unit.hasHealed) {
+            this.activeUnitAbility = 'HEAL';
+            this.uiManager.showFloatingText('Select target to Heal', 400, 300, '#6B8B5B');
+            document.body.style.cursor = 'crosshair';
 
-        if (validPositions.length === 0) {
-            // Fallback to normal wave if no valid positions
-            this.uiManager.showFloatingText(
-                `Battle ${this.battleNumber} - No space for boss!`,
-                320, 100, '#ff0000'
-            );
-            return;
-        }
-
-        // Pick a random position from valid positions
-        const pos = validPositions[Math.floor(Math.random() * validPositions.length)];
-
-        const boss = this.unitManager.addUnit(selectedBoss, pos.x, pos.y);
-
-        if (boss) {
-            // Scale boss stats based on battle number
-            const statMultiplier = 1 + (this.battleNumber - 1) * 0.1;
-            boss.maxHealth = Math.floor(boss.maxHealth * statMultiplier);
-            boss.health = boss.maxHealth;
-            boss.damage = Math.floor(boss.damage * statMultiplier);
-            boss.updateHealthBar();
-
-            // Mark this battle as having a loot goblin for special reward
-            this.hasLootGoblin = (selectedBoss === 'LOOT_GOBLIN');
-
-            // Show boss announcement
-            const bossName = UNIT_TYPES[selectedBoss].name;
-            const bossEmoji = UNIT_TYPES[selectedBoss].emoji;
-
-            this.uiManager.showFloatingText(
-                `👑 BOSS WAVE! 👑`,
-                320, 80, '#FFD700'
-            );
-            this.uiManager.showFloatingText(
-                `${bossEmoji} ${bossName} Appears!`,
-                320, 120, '#ff4444'
-            );
-        }
-    }
-
-    getEnemySpawnPositions() {
-        const positions = [];
-        // Use the 2 rightmost columns for enemy spawns
-        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
-            for (let x = CONFIG.GRID_WIDTH - 2; x < CONFIG.GRID_WIDTH; x++) {
-                // Check if position is occupied by a player unit
-                const existingUnit = this.unitManager.getUnitAt(x, y);
-                if (!existingUnit) {
-                    positions.push({ x, y });
+            // Highlight allies
+            this.gridSystem.highlightGraphics.clear();
+            const allies = this.unitManager.getPlayerUnits();
+            allies.forEach(ally => {
+                if (!ally.isDead) {
+                    this.gridSystem.highlightGraphics.fillStyle(0x00ff00, 0.4);
+                    this.gridSystem.highlightGraphics.fillRect(
+                        ally.gridX * CONFIG.TILE_SIZE + 4,
+                        ally.gridY * CONFIG.TILE_SIZE + 4,
+                        CONFIG.TILE_SIZE - 8,
+                        CONFIG.TILE_SIZE - 8
+                    );
                 }
+            });
+        }
+        else if (unit.type === 'OCTO' && !unit.hasPulled) {
+            this.activeUnitAbility = 'PULL';
+            this.uiManager.showFloatingText('Select target to Pull', 400, 300, '#8B5A2B');
+            document.body.style.cursor = 'crosshair';
+        }
+    }
+
+    // Process unit abilities
+    executeUnitAbilityAt(gridX, gridY) {
+        if (!this.activeUnitAbility || !this.turnSystem.currentUnit) return;
+
+        const unit = this.turnSystem.currentUnit;
+        const target = this.unitManager.getUnitAt(gridX, gridY);
+
+        if (this.activeUnitAbility === 'HEAL') {
+            if (target && target.isPlayer && !target.isDead) {
+                // Cleric Heal: restore 30 + 50% = 45 health roughly
+                const healAmount = Math.floor(target.maxHealth * 0.4);
+                target.health = Math.min(target.maxHealth, target.health + healAmount);
+                target.updateHealthBar();
+                this.uiManager.showHealText(target, healAmount);
+
+                // End ability mode
+                unit.hasHealed = true;
+                this.activeUnitAbility = null;
+                document.body.style.cursor = 'default';
+                this.gridSystem.highlightValidMoves(unit);
+                this.uiManager.updateUnitInfo(unit);
+            } else {
+                this.uiManager.showFloatingText('Invalid target', 400, 300, '#ff0000');
             }
         }
-        // Shuffle the positions to ensure random placement
-        for (let i = positions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [positions[i], positions[j]] = [positions[j], positions[i]];
-        }
-        return positions;
-    }
-
-    regenerateMana() {
-        const wizardCount = this.unitManager.getPlayerUnits().filter(u => u.type === 'WIZARD').length;
-        const totalRegen = this.manaRegen + wizardCount;
-
-        if (this.mana < this.maxMana) {
-            this.mana = Math.min(this.maxMana, this.mana + totalRegen);
-            this.uiManager.updateManaDisplay();
-        }
-
-        if (totalRegen > this.manaRegen) {
-            this.uiManager.showFloatingText(
-                `+${totalRegen} Mana (${this.manaRegen} + ${wizardCount} from Wizards)`,
-                320, 50, '#4A729E'
-            );
+        else if (this.activeUnitAbility === 'PULL') {
+            // (Implementation for Octo pull can be added here or kept as is in Octo's AI)
+            this.activeUnitAbility = null;
+            document.body.style.cursor = 'default';
         }
     }
+    return;
+}
 
-    spendMana(amount) {
-        this.mana = Math.max(0, this.mana - amount);
+const totalPoints = 1000 + (this.battleNumber - 1) * 250;
+const enemyTypes = ENEMY_FACTIONS[this.currentEnemyFaction];
+
+let remainingPoints = totalPoints;
+const spawnedEnemies = [];
+const availablePositions = this.getEnemySpawnPositions();
+
+const statMultiplier = 1 + (this.battleNumber - 1) * 0.15;
+
+while (remainingPoints >= 200 && availablePositions.length > 0) {
+    const affordable = enemyTypes.filter(type => UNIT_TYPES[type].cost <= remainingPoints);
+    if (affordable.length === 0) break;
+
+    const type = affordable[Math.floor(Math.random() * affordable.length)];
+    const pos = availablePositions.pop();
+
+    const unit = this.unitManager.addUnit(type, pos.x, pos.y);
+
+    if (unit) {
+        unit.maxHealth = Math.floor(unit.maxHealth * statMultiplier);
+        unit.health = unit.maxHealth;
+        unit.damage = Math.floor(unit.damage * statMultiplier);
+        unit.updateHealthBar();
+
+        remainingPoints -= UNIT_TYPES[type].cost;
+        spawnedEnemies.push(type);
+    }
+}
+
+if (this.battleNumber > 1) {
+    this.uiManager.showFloatingText(
+        `Battle ${this.battleNumber} - ${spawnedEnemies.length} enemies!`,
+        320, 100, '#A68966'
+    );
+} else {
+    this.uiManager.showFloatingText(
+        `Battle 1 - Defeat the enemy!`,
+        320, 100, '#A68966'
+    );
+}
+    }
+
+createBossWave() {
+    let selectedBoss;
+    if (this.currentEnemyFaction === 'DUNGEON_DWELLERS') {
+        selectedBoss = 'SUMMONER_LICH';
+    } else if (this.currentEnemyFaction === 'OLD_GOD_WORSHIPPERS') {
+        selectedBoss = 'OCTOTH_HROARATH';
+    } else {
+        // Default to Greenskin Horde bosses
+        const bossTypes = ['OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN'];
+        const roll = Math.random();
+        if (roll < 0.3) {
+            selectedBoss = 'LOOT_GOBLIN';
+        } else {
+            selectedBoss = roll < 0.65 ? 'OGRE_CHIEFTAIN' : 'ORC_SHAMAN_KING';
+        }
+    }
+
+    const availablePositions = this.getEnemySpawnPositions();
+    // Filter positions that can fit 2x2 bosses (need at least 2 columns from right edge)
+    const validPositions = availablePositions.filter(pos => {
+        const template = UNIT_TYPES[selectedBoss];
+        const size = template.bossSize || 1;
+        return pos.x <= CONFIG.GRID_WIDTH - size && pos.y <= CONFIG.GRID_HEIGHT - size;
+    });
+
+    if (validPositions.length === 0) {
+        // Fallback to normal wave if no valid positions
+        this.uiManager.showFloatingText(
+            `Battle ${this.battleNumber} - No space for boss!`,
+            320, 100, '#ff0000'
+        );
+        return;
+    }
+
+    // Pick a random position from valid positions
+    const pos = validPositions[Math.floor(Math.random() * validPositions.length)];
+
+    const boss = this.unitManager.addUnit(selectedBoss, pos.x, pos.y);
+
+    if (boss) {
+        // Scale boss stats based on battle number
+        const statMultiplier = 1 + (this.battleNumber - 1) * 0.1;
+        boss.maxHealth = Math.floor(boss.maxHealth * statMultiplier);
+        boss.health = boss.maxHealth;
+        boss.damage = Math.floor(boss.damage * statMultiplier);
+        boss.updateHealthBar();
+
+        // Mark this battle as having a loot goblin for special reward
+        this.hasLootGoblin = (selectedBoss === 'LOOT_GOBLIN');
+
+        // Show boss announcement
+        const bossName = UNIT_TYPES[selectedBoss].name;
+        const bossEmoji = UNIT_TYPES[selectedBoss].emoji;
+
+        this.uiManager.showFloatingText(
+            `👑 BOSS WAVE! 👑`,
+            320, 80, '#FFD700'
+        );
+        this.uiManager.showFloatingText(
+            `${bossEmoji} ${bossName} Appears!`,
+            320, 120, '#ff4444'
+        );
+    }
+}
+
+getEnemySpawnPositions() {
+    const positions = [];
+    // Use the 2 rightmost columns for enemy spawns
+    for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+        for (let x = CONFIG.GRID_WIDTH - 2; x < CONFIG.GRID_WIDTH; x++) {
+            // Check if position is occupied by a player unit
+            const existingUnit = this.unitManager.getUnitAt(x, y);
+            if (!existingUnit) {
+                positions.push({ x, y });
+            }
+        }
+    }
+    // Shuffle the positions to ensure random placement
+    for (let i = positions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [positions[i], positions[j]] = [positions[j], positions[i]];
+    }
+    return positions;
+}
+
+regenerateMana() {
+    const wizardCount = this.unitManager.getPlayerUnits().filter(u => u.type === 'WIZARD').length;
+    const totalRegen = this.manaRegen + wizardCount;
+
+    if (this.mana < this.maxMana) {
+        this.mana = Math.min(this.maxMana, this.mana + totalRegen);
         this.uiManager.updateManaDisplay();
     }
 
-    // Unit selection and movement
-    selectUnit(unit) {
-        // Handle spell targeting on units
-        if (this.spellSystem.activeSpell) {
-            const spell = SPELLS[this.spellSystem.activeSpell];
-            if (spell) {
-                if (spell.targetType === 'enemy' && !unit.isPlayer) {
-                    if (spell.effect === 'aoeDamage' || spell.effect === 'iceStorm' || spell.effect === 'meteor') {
-                        this.spellSystem.executeSpellAt(unit.gridX, unit.gridY);
-                    } else {
-                        this.spellSystem.executeUnitSpell(spell, unit);
-                    }
-                    return;
-                } else if (spell.targetType === 'ally' && unit.isPlayer) {
+    if (totalRegen > this.manaRegen) {
+        this.uiManager.showFloatingText(
+            `+${totalRegen} Mana (${this.manaRegen} + ${wizardCount} from Wizards)`,
+            320, 50, '#4A729E'
+        );
+    }
+}
+
+spendMana(amount) {
+    this.mana = Math.max(0, this.mana - amount);
+    this.uiManager.updateManaDisplay();
+}
+
+// Unit selection and movement
+selectUnit(unit) {
+    // Handle spell targeting on units
+    if (this.spellSystem.activeSpell) {
+        const spell = SPELLS[this.spellSystem.activeSpell];
+        if (spell) {
+            if (spell.targetType === 'enemy' && !unit.isPlayer) {
+                if (spell.effect === 'aoeDamage' || spell.effect === 'iceStorm' || spell.effect === 'meteor') {
+                    this.spellSystem.executeSpellAt(unit.gridX, unit.gridY);
+                } else {
                     this.spellSystem.executeUnitSpell(spell, unit);
-                    return;
-                } else if (spell.targetType === 'ally_then_tile' && unit.isPlayer && !this.spellSystem.teleportUnit) {
-                    this.spellSystem.teleportUnit = unit;
-                    this.uiManager.showFloatingText('Now select destination', 400, 300, '#A68966');
-                    return;
                 }
+                return;
+            } else if (spell.targetType === 'ally' && unit.isPlayer) {
+                this.spellSystem.executeUnitSpell(spell, unit);
+                return;
+            } else if (spell.targetType === 'ally_then_tile' && unit.isPlayer && !this.spellSystem.teleportUnit) {
+                this.spellSystem.teleportUnit = unit;
+                this.uiManager.showFloatingText('Now select destination', 400, 300, '#A68966');
+                return;
             }
-        }
-
-        this.gridSystem.highlightValidMoves(unit);
-        this.uiManager.updateUnitInfo(unit);
-        this.selectedUnit = unit;
-
-        // Auto-highlight ranged targets if this is the current unit and can attack
-        if (this.turnSystem.currentUnit === unit &&
-            unit.isPlayer &&
-            unit.rangedRange > 0 &&
-            unit.canAttack()) {
-            this.gridSystem.highlightRangedAttackRange(unit);
         }
     }
 
-    moveUnit(unit, newX, newY) {
-        this.unitManager.updateUnitPosition(unit, newX, newY);
-        unit.hasMoved = true;
+    this.gridSystem.highlightValidMoves(unit);
+    this.uiManager.updateUnitInfo(unit);
+    this.selectedUnit = unit;
 
-        // Recalculate valid moves
-        if (this.selectedUnit === unit) {
-            this.gridSystem.highlightValidMoves(unit);
-        }
+    // Auto-highlight ranged targets if this is the current unit and can attack
+    if (this.turnSystem.currentUnit === unit &&
+        unit.isPlayer &&
+        unit.rangedRange > 0 &&
+        unit.canAttack()) {
+        this.gridSystem.highlightRangedAttackRange(unit);
+    }
+}
 
-        // Auto-end turn if unit has moved and attacked
-        if (unit.hasMoved && unit.isPlayer && this.turnSystem.currentUnit === unit) {
-            let shouldEndTurn = false;
+moveUnit(unit, newX, newY) {
+    this.unitManager.updateUnitPosition(unit, newX, newY);
+    unit.hasMoved = true;
 
-            if (unit.hasAttacked) {
-                shouldEndTurn = true;
-            } else {
-                // Check if unit has any valid attacks
-                const enemies = this.unitManager.getEnemyUnits();
-                let hasValidTarget = false;
+    // Recalculate valid moves
+    if (this.selectedUnit === unit) {
+        this.gridSystem.highlightValidMoves(unit);
+    }
 
-                for (const enemy of enemies) {
-                    const dist = this.gridSystem.getDistanceBetweenUnits(unit, enemy);
-                    // Can melee attack
-                    if (dist === 1) {
-                        hasValidTarget = true;
-                        break;
-                    }
-                    // Can ranged attack
-                    if (unit.rangedRange > 0 && dist <= unit.rangedRange && dist > 1) {
-                        hasValidTarget = true;
-                        break;
-                    }
+    // Auto-end turn if unit has moved and attacked
+    if (unit.hasMoved && unit.isPlayer && this.turnSystem.currentUnit === unit) {
+        let shouldEndTurn = false;
+
+        if (unit.hasAttacked) {
+            shouldEndTurn = true;
+        } else {
+            // Check if unit has any valid attacks
+            const enemies = this.unitManager.getEnemyUnits();
+            let hasValidTarget = false;
+
+            for (const enemy of enemies) {
+                const dist = this.gridSystem.getDistanceBetweenUnits(unit, enemy);
+                // Can melee attack
+                if (dist === 1) {
+                    hasValidTarget = true;
+                    break;
                 }
-
-                // Check for unused abilities (like Octo pull)
-                const hasUnusedAbility = (unit.type === 'OCTO' && !unit.hasPulled) ||
-                    (unit.type === 'CLERIC' && !unit.hasHealed);
-
-                if (!hasValidTarget && !hasUnusedAbility) {
-                    shouldEndTurn = true;
+                // Can ranged attack
+                if (unit.rangedRange > 0 && dist <= unit.rangedRange && dist > 1) {
+                    hasValidTarget = true;
+                    break;
                 }
             }
 
-            if (shouldEndTurn) {
+            // Check for unused abilities (like Octo pull)
+            const hasUnusedAbility = (unit.type === 'OCTO' && !unit.hasPulled) ||
+                (unit.type === 'CLERIC' && !unit.hasHealed);
+
+            if (!hasValidTarget && !hasUnusedAbility) {
+                shouldEndTurn = true;
+            }
+        }
+
+        if (shouldEndTurn) {
+            this.time.delayedCall(300, () => {
+                this.endTurn();
+            });
+        }
+    }
+}
+
+// Move unit for AI without setting hasMoved (for multi-cell movement)
+moveUnitAI(unit, newX, newY) {
+
+    this.unitManager.updateUnitPosition(unit, newX, newY);
+    // Note: hasMoved is NOT set here - AI handles that separately after all movement
+}
+
+// Combat
+performAttack(attacker, defender, isSecondStrike = false) {
+    if (!isSecondStrike && !attacker.canAttack()) return;
+
+    if (!isSecondStrike) {
+        attacker.hasAttacked = true;
+    }
+
+    // Visual lunge
+    const originalX = attacker.sprite.x;
+    const originalY = attacker.sprite.y;
+    const targetX = defender.sprite.x;
+    const targetY = defender.sprite.y;
+
+    const lungeX = originalX + (targetX - originalX) * 0.3;
+    const lungeY = originalY + (targetY - originalY) * 0.3;
+
+    this.tweens.add({
+        targets: attacker.sprite,
+        x: lungeX,
+        y: lungeY,
+        duration: 100,
+        yoyo: true,
+        onComplete: () => {
+            let damage = Math.floor(attacker.damage * attacker.blessValue);
+
+            // Rogue legendary perk: Backstab (4x damage if attacking from behind)
+            if (attacker.type === 'ROGUE' && attacker.hasBackstab) {
+                // Check if attacking from behind (same X but behind in Y relative to center of board, or same Y but behind in X)
+                // Simplified: check if attacker's direction matches target's forward direction (usually right to left for enemies)
+                // Enemies face left, so behind them is to their right (attacker.gridX > defender.gridX)
+                const isBehindEnemy = (!defender.isPlayer && attacker.gridX > defender.gridX);
+                // Players face right, so behind them is to their left (attacker.gridX < defender.gridX)
+                const isBehindPlayer = (defender.isPlayer && attacker.gridX < defender.gridX);
+
+                if (isBehindEnemy || isBehindPlayer) {
+                    damage *= 4;
+                    this.uiManager.showBuffText(attacker, 'BACKSTAB!', '#6B5B8B');
+                }
+            }
+
+            // Paladin Cleave: 3x3 area damage
+            if (attacker.hasCleave) {
+                this.performCleaveAttack(attacker, defender, damage);
+            } else {
+                defender.takeDamage(damage, false, attacker);
+                this.uiManager.showDamageText(defender, damage);
+
+                this.tweens.add({
+                    targets: defender.sprite,
+                    alpha: 0.3,
+                    duration: 50,
+                    yoyo: true,
+                    repeat: 2
+                });
+            }
+
+            if (this.selectedUnit === defender) {
+                this.uiManager.updateUnitInfo(defender);
+            }
+
+            // Berserker Legendary: Double Strike
+            if (attacker.hasDoubleStrike && !isSecondStrike && defender.health > 0) {
+                this.time.delayedCall(300, () => {
+                    this.uiManager.showBuffText(attacker, 'FRENZY!', '#9E4A4A');
+                    this.performAttack(attacker, defender, true);
+                });
+            }
+
+            // Rogue: Hit and run
+            if (attacker.type === 'ROGUE' && attacker.turnStartX !== undefined) {
+                this.time.delayedCall(400, () => {
+                    if (!attacker.isDead && attacker.health > 0) {
+                        this.uiManager.showBuffText(attacker, 'VANISH!', '#6B5B8B');
+                        this.unitManager.updateUnitPosition(attacker, attacker.turnStartX, attacker.turnStartY);
+
+                        // Auto-end turn if unit has moved and attacked (checked again since Vanish moves them)
+                        if (attacker.hasMoved && attacker.hasAttacked && attacker.isPlayer && this.turnSystem.currentUnit === attacker) {
+                            this.time.delayedCall(300, () => {
+                                this.endTurn();
+                            });
+                        }
+                    }
+                });
+            } else if (attacker.hasMoved && attacker.hasAttacked && attacker.isPlayer && this.turnSystem.currentUnit === attacker) {
+                // Normal auto-end turn 
                 this.time.delayedCall(300, () => {
                     this.endTurn();
                 });
             }
+
+            this.checkVictoryCondition();
         }
+    });
+
+    if (!isSecondStrike) {
+        this.gridSystem.clearHighlights();
     }
+}
 
-    // Move unit for AI without setting hasMoved (for multi-cell movement)
-    moveUnitAI(unit, newX, newY) {
+performCleaveAttack(attacker, mainTarget, fullDamage) {
+    // Deal full damage to main target
+    mainTarget.takeDamage(fullDamage, false, attacker);
+    this.uiManager.showDamageText(mainTarget, fullDamage);
+    this.uiManager.showBuffText(attacker, 'CLEAVE!', '#D4A574');
 
-        this.unitManager.updateUnitPosition(unit, newX, newY);
-        // Note: hasMoved is NOT set here - AI handles that separately after all movement
-    }
+    this.tweens.add({
+        targets: mainTarget.sprite,
+        alpha: 0.3,
+        duration: 50,
+        yoyo: true,
+        repeat: 2
+    });
 
-    // Combat
-    performAttack(attacker, defender, isSecondStrike = false) {
-        if (!isSecondStrike && !attacker.canAttack()) return;
+    // Deal 50% damage to adjacent units in 3x3 area
+    const cleaveDamage = Math.floor(fullDamage * 0.5);
+    const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead);
 
-        if (!isSecondStrike) {
-            attacker.hasAttacked = true;
+    enemyUnits.forEach(enemy => {
+        if (enemy === mainTarget) return;
+        const dist = Math.abs(enemy.gridX - mainTarget.gridX) + Math.abs(enemy.gridY - mainTarget.gridY);
+        if (dist <= 1) { // Adjacent in 3x3 area (including diagonals)
+            enemy.takeDamage(cleaveDamage, false, attacker);
+            this.uiManager.showDamageText(enemy, cleaveDamage);
+            this.tweens.add({
+                targets: enemy.sprite,
+                alpha: 0.3,
+                duration: 50,
+                yoyo: true,
+                repeat: 1
+            });
         }
+    });
+}
 
-        // Visual lunge
-        const originalX = attacker.sprite.x;
-        const originalY = attacker.sprite.y;
-        const targetX = defender.sprite.x;
-        const targetY = defender.sprite.y;
+performRangedAttack(attacker, defender) {
+    if (!attacker.canAttack()) return;
 
-        const lungeX = originalX + (targetX - originalX) * 0.3;
-        const lungeY = originalY + (targetY - originalY) * 0.3;
+    attacker.hasAttacked = true;
+    document.body.style.cursor = 'default';
 
-        this.tweens.add({
-            targets: attacker.sprite,
-            x: lungeX,
-            y: lungeY,
-            duration: 100,
-            yoyo: true,
-            onComplete: () => {
-                let damage = Math.floor(attacker.damage * attacker.blessValue);
+    // Create arrow/projectile
+    const isWizard = attacker.type === 'WIZARD';
+    const projectile = this.add.text(
+        attacker.sprite.x, attacker.sprite.y - 20,
+        isWizard ? '✦' : '➤',
+        { fontSize: isWizard ? '28px' : '24px', color: isWizard ? '#6B7A9A' : '#8b4513' }
+    ).setOrigin(0.5);
 
-                // Rogue legendary perk: Backstab (4x damage if attacking from behind)
-                if (attacker.type === 'ROGUE' && attacker.hasBackstab) {
-                    // Check if attacking from behind (same X but behind in Y relative to center of board, or same Y but behind in X)
-                    // Simplified: check if attacker's direction matches target's forward direction (usually right to left for enemies)
-                    // Enemies face left, so behind them is to their right (attacker.gridX > defender.gridX)
-                    const isBehindEnemy = (!defender.isPlayer && attacker.gridX > defender.gridX);
-                    // Players face right, so behind them is to their left (attacker.gridX < defender.gridX)
-                    const isBehindPlayer = (defender.isPlayer && attacker.gridX < defender.gridX);
+    const angle = Phaser.Math.Angle.Between(
+        attacker.sprite.x, attacker.sprite.y,
+        defender.sprite.x, defender.sprite.y
+    );
+    projectile.setRotation(angle);
 
-                    if (isBehindEnemy || isBehindPlayer) {
-                        damage *= 4;
-                        this.uiManager.showBuffText(attacker, 'BACKSTAB!', '#6B5B8B');
-                    }
-                }
+    this.tweens.add({
+        targets: projectile,
+        x: defender.sprite.x,
+        y: defender.sprite.y,
+        duration: isWizard ? 200 : 300,
+        ease: 'Power2',
+        onComplete: () => {
+            projectile.destroy();
 
-                // Paladin Cleave: 3x3 area damage
-                if (attacker.hasCleave) {
-                    this.performCleaveAttack(attacker, defender, damage);
-                } else {
-                    defender.takeDamage(damage, false, attacker);
-                    this.uiManager.showDamageText(defender, damage);
-
-                    this.tweens.add({
-                        targets: defender.sprite,
-                        alpha: 0.3,
-                        duration: 50,
-                        yoyo: true,
-                        repeat: 2
-                    });
-                }
-
-                if (this.selectedUnit === defender) {
-                    this.uiManager.updateUnitInfo(defender);
-                }
-
-                // Berserker Legendary: Double Strike
-                if (attacker.hasDoubleStrike && !isSecondStrike && defender.health > 0) {
-                    this.time.delayedCall(300, () => {
-                        this.uiManager.showBuffText(attacker, 'FRENZY!', '#9E4A4A');
-                        this.performAttack(attacker, defender, true);
-                    });
-                }
-
-                // Rogue: Hit and run
-                if (attacker.type === 'ROGUE' && attacker.turnStartX !== undefined) {
-                    this.time.delayedCall(400, () => {
-                        if (!attacker.isDead && attacker.health > 0) {
-                            this.uiManager.showBuffText(attacker, 'VANISH!', '#6B5B8B');
-                            this.unitManager.updateUnitPosition(attacker, attacker.turnStartX, attacker.turnStartY);
-
-                            // Auto-end turn if unit has moved and attacked (checked again since Vanish moves them)
-                            if (attacker.hasMoved && attacker.hasAttacked && attacker.isPlayer && this.turnSystem.currentUnit === attacker) {
-                                this.time.delayedCall(300, () => {
-                                    this.endTurn();
-                                });
-                            }
-                        }
-                    });
-                } else if (attacker.hasMoved && attacker.hasAttacked && attacker.isPlayer && this.turnSystem.currentUnit === attacker) {
-                    // Normal auto-end turn 
-                    this.time.delayedCall(300, () => {
-                        this.endTurn();
-                    });
-                }
-
-                this.checkVictoryCondition();
+            // Wizard Piercing: Shot goes through all enemies in line
+            if (attacker.hasPiercing) {
+                this.performPiercingAttack(attacker, defender);
             }
-        });
+            // Ranger Ricochet: Bounce to nearby targets
+            else if (attacker.hasRicochet) {
+                this.performRicochetAttack(attacker, defender);
+            }
+            else {
+                const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
+                defender.takeDamage(damage, true, attacker);
+                this.uiManager.showDamageText(defender, damage);
 
-        if (!isSecondStrike) {
-            this.gridSystem.clearHighlights();
-        }
-    }
-
-    performCleaveAttack(attacker, mainTarget, fullDamage) {
-        // Deal full damage to main target
-        mainTarget.takeDamage(fullDamage, false, attacker);
-        this.uiManager.showDamageText(mainTarget, fullDamage);
-        this.uiManager.showBuffText(attacker, 'CLEAVE!', '#D4A574');
-
-        this.tweens.add({
-            targets: mainTarget.sprite,
-            alpha: 0.3,
-            duration: 50,
-            yoyo: true,
-            repeat: 2
-        });
-
-        // Deal 50% damage to adjacent units in 3x3 area
-        const cleaveDamage = Math.floor(fullDamage * 0.5);
-        const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead);
-
-        enemyUnits.forEach(enemy => {
-            if (enemy === mainTarget) return;
-            const dist = Math.abs(enemy.gridX - mainTarget.gridX) + Math.abs(enemy.gridY - mainTarget.gridY);
-            if (dist <= 1) { // Adjacent in 3x3 area (including diagonals)
-                enemy.takeDamage(cleaveDamage, false, attacker);
-                this.uiManager.showDamageText(enemy, cleaveDamage);
                 this.tweens.add({
-                    targets: enemy.sprite,
+                    targets: defender.sprite,
                     alpha: 0.3,
                     duration: 50,
                     yoyo: true,
-                    repeat: 1
+                    repeat: 2
                 });
             }
-        });
-    }
 
-    performRangedAttack(attacker, defender) {
-        if (!attacker.canAttack()) return;
+            this.checkVictoryCondition();
+        }
+    });
 
-        attacker.hasAttacked = true;
-        document.body.style.cursor = 'default';
+    this.gridSystem.clearHighlights();
+}
 
-        // Create arrow/projectile
-        const isWizard = attacker.type === 'WIZARD';
-        const projectile = this.add.text(
-            attacker.sprite.x, attacker.sprite.y - 20,
-            isWizard ? '✦' : '➤',
-            { fontSize: isWizard ? '28px' : '24px', color: isWizard ? '#6B7A9A' : '#8b4513' }
-        ).setOrigin(0.5);
+performRicochetAttack(attacker, mainTarget) {
+    const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
 
-        const angle = Phaser.Math.Angle.Between(
-            attacker.sprite.x, attacker.sprite.y,
-            defender.sprite.x, defender.sprite.y
-        );
-        projectile.setRotation(angle);
+    // Hit main target
+    mainTarget.takeDamage(damage, true, attacker);
+    this.uiManager.showDamageText(mainTarget, damage);
+    this.uiManager.showBuffText(attacker, 'RICOCHET!', '#6B8B5B');
 
-        this.tweens.add({
-            targets: projectile,
-            x: defender.sprite.x,
-            y: defender.sprite.y,
-            duration: isWizard ? 200 : 300,
-            ease: 'Power2',
-            onComplete: () => {
-                projectile.destroy();
+    this.tweens.add({
+        targets: mainTarget.sprite,
+        alpha: 0.3,
+        duration: 50,
+        yoyo: true,
+        repeat: 2
+    });
 
-                // Wizard Piercing: Shot goes through all enemies in line
-                if (attacker.hasPiercing) {
-                    this.performPiercingAttack(attacker, defender);
-                }
-                // Ranger Ricochet: Bounce to nearby targets
-                else if (attacker.hasRicochet) {
-                    this.performRicochetAttack(attacker, defender);
-                }
-                else {
-                    const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
-                    defender.takeDamage(damage, true, attacker);
-                    this.uiManager.showDamageText(defender, damage);
+    // Find nearby enemies within 2 tiles to bounce to
+    const bounceDamage = Math.floor(damage * 0.5);
+    const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead && u !== mainTarget);
 
-                    this.tweens.add({
-                        targets: defender.sprite,
-                        alpha: 0.3,
-                        duration: 50,
-                        yoyo: true,
-                        repeat: 2
-                    });
-                }
+    enemyUnits.forEach((enemy, index) => {
+        const dist = Math.abs(enemy.gridX - mainTarget.gridX) + Math.abs(enemy.gridY - mainTarget.gridY);
+        if (dist <= 2) {
+            this.time.delayedCall(200 * (index + 1), () => {
+                // Visual bounce arrow
+                const bounceArrow = this.add.text(
+                    mainTarget.sprite.x, mainTarget.sprite.y - 20,
+                    '➤',
+                    { fontSize: '20px', color: '#8b4513' }
+                ).setOrigin(0.5);
 
-                this.checkVictoryCondition();
-            }
-        });
+                const bounceAngle = Phaser.Math.Angle.Between(
+                    mainTarget.sprite.x, mainTarget.sprite.y,
+                    enemy.sprite.x, enemy.sprite.y
+                );
+                bounceArrow.setRotation(bounceAngle);
 
-        this.gridSystem.clearHighlights();
-    }
-
-    performRicochetAttack(attacker, mainTarget) {
-        const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
-
-        // Hit main target
-        mainTarget.takeDamage(damage, true, attacker);
-        this.uiManager.showDamageText(mainTarget, damage);
-        this.uiManager.showBuffText(attacker, 'RICOCHET!', '#6B8B5B');
-
-        this.tweens.add({
-            targets: mainTarget.sprite,
-            alpha: 0.3,
-            duration: 50,
-            yoyo: true,
-            repeat: 2
-        });
-
-        // Find nearby enemies within 2 tiles to bounce to
-        const bounceDamage = Math.floor(damage * 0.5);
-        const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead && u !== mainTarget);
-
-        enemyUnits.forEach((enemy, index) => {
-            const dist = Math.abs(enemy.gridX - mainTarget.gridX) + Math.abs(enemy.gridY - mainTarget.gridY);
-            if (dist <= 2) {
-                this.time.delayedCall(200 * (index + 1), () => {
-                    // Visual bounce arrow
-                    const bounceArrow = this.add.text(
-                        mainTarget.sprite.x, mainTarget.sprite.y - 20,
-                        '➤',
-                        { fontSize: '20px', color: '#8b4513' }
-                    ).setOrigin(0.5);
-
-                    const bounceAngle = Phaser.Math.Angle.Between(
-                        mainTarget.sprite.x, mainTarget.sprite.y,
-                        enemy.sprite.x, enemy.sprite.y
-                    );
-                    bounceArrow.setRotation(bounceAngle);
-
-                    this.tweens.add({
-                        targets: bounceArrow,
-                        x: enemy.sprite.x,
-                        y: enemy.sprite.y,
-                        duration: 150,
-                        onComplete: () => {
-                            bounceArrow.destroy();
-                            enemy.takeDamage(bounceDamage, true, attacker);
-                            this.uiManager.showDamageText(enemy, bounceDamage);
-                            this.tweens.add({
-                                targets: enemy.sprite,
-                                alpha: 0.3,
-                                duration: 50,
-                                yoyo: true,
-                                repeat: 1
-                            });
-                        }
-                    });
-                });
-            }
-        });
-    }
-
-    performPiercingAttack(attacker, target) {
-        const baseDamage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
-
-        // Hit all enemies in a line from attacker through target
-        const dx = target.gridX - attacker.gridX;
-        const dy = target.gridY - attacker.gridY;
-        const stepX = dx === 0 ? 0 : Math.sign(dx);
-        const stepY = dy === 0 ? 0 : Math.sign(dy);
-
-        this.uiManager.showBuffText(attacker, 'PIERCE!', '#6B7A9A');
-
-        // Find all enemies in the line of fire
-        const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead);
-        let hitCount = 0;
-
-        enemyUnits.forEach(enemy => {
-            // Check if enemy is in line with the shot
-            const ex = enemy.gridX - attacker.gridX;
-            const ey = enemy.gridY - attacker.gridY;
-
-            // Must be in same direction
-            const enemyStepX = ex === 0 ? 0 : Math.sign(ex);
-            const enemyStepY = ey === 0 ? 0 : Math.sign(ey);
-
-            if (enemyStepX === stepX && enemyStepY === stepY) {
-                // Check if collinear (same ratio)
-                const isCollinear = (stepX === 0 || stepY === 0) ?
-                    (stepX === 0 ? ex === 0 : ey === 0) :
-                    (Math.abs(ex * stepY - ey * stepX) <= 1);
-
-                if (isCollinear) {
-                    hitCount++;
-                    const delay = hitCount * 100;
-
-                    this.time.delayedCall(delay, () => {
-                        enemy.takeDamage(baseDamage, true, attacker);
-                        this.uiManager.showDamageText(enemy, baseDamage);
+                this.tweens.add({
+                    targets: bounceArrow,
+                    x: enemy.sprite.x,
+                    y: enemy.sprite.y,
+                    duration: 150,
+                    onComplete: () => {
+                        bounceArrow.destroy();
+                        enemy.takeDamage(bounceDamage, true, attacker);
+                        this.uiManager.showDamageText(enemy, bounceDamage);
                         this.tweens.add({
                             targets: enemy.sprite,
                             alpha: 0.3,
                             duration: 50,
                             yoyo: true,
-                            repeat: 2
+                            repeat: 1
                         });
-                    });
-                }
-            }
-        });
-    }
-
-    // UI Methods
-    openSpellBook() {
-        const modal = document.getElementById('spellbook-modal');
-        if (!modal.classList.contains('hidden')) return;
-
-        this.uiManager.updateManaDisplay();
-
-        // Define categories with styles
-        this.spellBookPages = [
-            {
-                name: 'Destructo',
-                icon: '🔥',
-                filter: (s) => ['singleDamage', 'aoeDamage', 'meteor', 'iceStorm', 'chainLightning'].includes(s.effect),
-                style: { bg: '#2a1f1f', header: '#ff4444' }
-            },
-            {
-                name: 'Restoratio',
-                icon: '💚',
-                filter: (s) => ['heal', 'regenerate', 'cure'].includes(s.effect),
-                style: { bg: '#2a3a2a', header: '#44ff44' }
-            },
-            {
-                name: 'Benedictio',
-                icon: '🛡️',
-                filter: (s) => ['haste', 'shield', 'bless'].includes(s.effect),
-                style: { bg: '#2D241E', header: '#A68966' }
-            },
-            {
-                name: 'Utilitas',
-                icon: '✨',
-                filter: (s) => !['singleDamage', 'aoeDamage', 'meteor', 'iceStorm', 'chainLightning', 'heal', 'regenerate', 'cure', 'haste', 'shield', 'bless'].includes(s.effect),
-                style: { bg: '#2D241E', header: '#A68966' }
-            }
-        ];
-
-        // Initialize page if not set
-        if (this.currentSpellPage === undefined) this.currentSpellPage = 0;
-
-        this.renderSpellBookPage();
-        modal.classList.remove('hidden');
-
-        // Add navigation listeners
-        this.input.keyboard.on('keydown-LEFT', this.prevSpellPage, this);
-        this.input.keyboard.on('keydown-RIGHT', this.nextSpellPage, this);
-    }
-
-    closeSpellBook() {
-        document.getElementById('spellbook-modal').classList.add('hidden');
-        this.input.keyboard.off('keydown-LEFT', this.prevSpellPage, this);
-        this.input.keyboard.off('keydown-RIGHT', this.nextSpellPage, this);
-        this._clearSpellHotkeys();
-    }
-
-    _clearSpellHotkeys() {
-        if (this.spellHotkeyListeners && this.spellHotkeyListeners.length > 0) {
-            this.spellHotkeyListeners.forEach(listener => {
-                this.input.keyboard.off(`keydown-${listener.key}`, listener.callback);
+                    }
+                });
             });
         }
-        this.spellHotkeyListeners = [];
-    }
+    });
+}
 
-    prevSpellPage() {
-        if (!this.spellBookPages) return;
-        this.currentSpellPage = (this.currentSpellPage - 1 + this.spellBookPages.length) % this.spellBookPages.length;
-        this.renderSpellBookPage();
-    }
+performPiercingAttack(attacker, target) {
+    const baseDamage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
 
-    nextSpellPage() {
-        if (!this.spellBookPages) return;
-        this.currentSpellPage = (this.currentSpellPage + 1) % this.spellBookPages.length;
-        this.renderSpellBookPage();
-    }
+    // Hit all enemies in a line from attacker through target
+    const dx = target.gridX - attacker.gridX;
+    const dy = target.gridY - attacker.gridY;
+    const stepX = dx === 0 ? 0 : Math.sign(dx);
+    const stepY = dy === 0 ? 0 : Math.sign(dy);
 
-    renderSpellBookPage() {
-        const grid = document.getElementById('spell-grid');
-        const header = document.querySelector('.spellbook-header');
-        const content = document.querySelector('.spellbook-content');
-        const page = this.spellBookPages[this.currentSpellPage];
+    this.uiManager.showBuffText(attacker, 'PIERCE!', '#6B7A9A');
 
-        grid.innerHTML = '';
+    // Find all enemies in the line of fire
+    const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead);
+    let hitCount = 0;
 
-        // Clear any hotkeys from the previous page
-        this._clearSpellHotkeys();
+    enemyUnits.forEach(enemy => {
+        // Check if enemy is in line with the shot
+        const ex = enemy.gridX - attacker.gridX;
+        const ey = enemy.gridY - attacker.gridY;
 
-        // Remove old navigation bar if it exists to prevent duplication
-        const oldNav = document.getElementById('spellbook-nav');
-        if (oldNav) oldNav.remove();
+        // Must be in same direction
+        const enemyStepX = ex === 0 ? 0 : Math.sign(ex);
+        const enemyStepY = ey === 0 ? 0 : Math.sign(ey);
 
-        // Apply page style
-        content.style.backgroundColor = page.style.bg;
-        content.style.transition = 'background-color 0.3s ease';
+        if (enemyStepX === stepX && enemyStepY === stepY) {
+            // Check if collinear (same ratio)
+            const isCollinear = (stepX === 0 || stepY === 0) ?
+                (stepX === 0 ? ex === 0 : ey === 0) :
+                (Math.abs(ex * stepY - ey * stepX) <= 1);
 
-        // Create top navigation container
-        const topNav = document.createElement('div');
-        topNav.id = 'spellbook-nav';
-        topNav.style.cssText = 'display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; padding-bottom: 10px; border-bottom: 1px solid #5D4E3E;';
+            if (isCollinear) {
+                hitCount++;
+                const delay = hitCount * 100;
 
-        // Left Arrow
-        const leftArrow = document.createElement('span');
-        leftArrow.innerHTML = '↶';
-        leftArrow.style.cssText = 'cursor: pointer; font-size: 24px; user-select: none; padding: 0 10px; color: #8B7355;';
-        leftArrow.onclick = () => this.prevSpellPage();
-        topNav.appendChild(leftArrow);
-
-        // Category tabs
-        this.spellBookPages.forEach((p, i) => {
-            const tab = document.createElement('div');
-            tab.innerHTML = `${p.icon} ${p.name}`;
-            tab.style.cssText = 'cursor: pointer; padding: 5px 10px; border-radius: 4px; transition: all 0.2s ease; user-select: none; font-family: serif;';
-            tab.onclick = () => {
-                this.currentSpellPage = i;
-                this.renderSpellBookPage();
-            };
-
-            if (i === this.currentSpellPage) {
-                tab.style.transform = 'scale(1.2)';
-                tab.style.color = p.style.header;
-                tab.style.background = 'rgba(0,0,0,0.3)';
-                tab.style.fontWeight = 'bold';
-                tab.style.textShadow = `0 0 8px ${p.style.header}`;
-            } else {
-                tab.style.color = '#8B7355';
-                tab.style.transform = 'scale(1.0)';
+                this.time.delayedCall(delay, () => {
+                    enemy.takeDamage(baseDamage, true, attacker);
+                    this.uiManager.showDamageText(enemy, baseDamage);
+                    this.tweens.add({
+                        targets: enemy.sprite,
+                        alpha: 0.3,
+                        duration: 50,
+                        yoyo: true,
+                        repeat: 2
+                    });
+                });
             }
-            topNav.appendChild(tab);
+        }
+    });
+}
+
+// UI Methods
+openSpellBook() {
+    const modal = document.getElementById('spellbook-modal');
+    if (!modal.classList.contains('hidden')) return;
+
+    this.uiManager.updateManaDisplay();
+
+    // Define categories with styles
+    this.spellBookPages = [
+        {
+            name: 'Destructo',
+            icon: '🔥',
+            filter: (s) => ['singleDamage', 'aoeDamage', 'meteor', 'iceStorm', 'chainLightning'].includes(s.effect),
+            style: { bg: '#2a1f1f', header: '#ff4444' }
+        },
+        {
+            name: 'Restoratio',
+            icon: '💚',
+            filter: (s) => ['heal', 'regenerate', 'cure'].includes(s.effect),
+            style: { bg: '#2a3a2a', header: '#44ff44' }
+        },
+        {
+            name: 'Benedictio',
+            icon: '🛡️',
+            filter: (s) => ['haste', 'shield', 'bless'].includes(s.effect),
+            style: { bg: '#2D241E', header: '#A68966' }
+        },
+        {
+            name: 'Utilitas',
+            icon: '✨',
+            filter: (s) => !['singleDamage', 'aoeDamage', 'meteor', 'iceStorm', 'chainLightning', 'heal', 'regenerate', 'cure', 'haste', 'shield', 'bless'].includes(s.effect),
+            style: { bg: '#2D241E', header: '#A68966' }
+        }
+    ];
+
+    // Initialize page if not set
+    if (this.currentSpellPage === undefined) this.currentSpellPage = 0;
+
+    this.renderSpellBookPage();
+    modal.classList.remove('hidden');
+
+    // Add navigation listeners
+    this.input.keyboard.on('keydown-LEFT', this.prevSpellPage, this);
+    this.input.keyboard.on('keydown-RIGHT', this.nextSpellPage, this);
+}
+
+closeSpellBook() {
+    document.getElementById('spellbook-modal').classList.add('hidden');
+    this.input.keyboard.off('keydown-LEFT', this.prevSpellPage, this);
+    this.input.keyboard.off('keydown-RIGHT', this.nextSpellPage, this);
+    this._clearSpellHotkeys();
+}
+
+_clearSpellHotkeys() {
+    if (this.spellHotkeyListeners && this.spellHotkeyListeners.length > 0) {
+        this.spellHotkeyListeners.forEach(listener => {
+            this.input.keyboard.off(`keydown-${listener.key}`, listener.callback);
         });
+    }
+    this.spellHotkeyListeners = [];
+}
 
-        // Right Arrow
-        const rightArrow = document.createElement('span');
-        rightArrow.innerHTML = '↷';
-        rightArrow.style.cssText = 'cursor: pointer; font-size: 24px; user-select: none; padding: 0 10px; color: #8B7355;';
-        rightArrow.onclick = () => this.nextSpellPage();
-        topNav.appendChild(rightArrow);
+prevSpellPage() {
+    if (!this.spellBookPages) return;
+    this.currentSpellPage = (this.currentSpellPage - 1 + this.spellBookPages.length) % this.spellBookPages.length;
+    this.renderSpellBookPage();
+}
 
-        header.appendChild(topNav);
+nextSpellPage() {
+    if (!this.spellBookPages) return;
+    this.currentSpellPage = (this.currentSpellPage + 1) % this.spellBookPages.length;
+    this.renderSpellBookPage();
+}
 
-        // Filter and render spells
-        let spellCount = 0;
-        const usedHotkeys = new Set(); // Prevent duplicate hotkeys on the same page
+renderSpellBookPage() {
+    const grid = document.getElementById('spell-grid');
+    const header = document.querySelector('.spellbook-header');
+    const content = document.querySelector('.spellbook-content');
+    const page = this.spellBookPages[this.currentSpellPage];
 
-        for (const [key, spell] of Object.entries(SPELLS)) {
-            if (page.filter(spell)) {
-                spellCount++;
-                const card = document.createElement('div');
-                card.className = 'spell-card';
+    grid.innerHTML = '';
 
-                const canAfford = this.mana >= Math.floor(spell.manaCost * this.manaCostMultiplier);
-                if (!canAfford) {
-                    card.classList.add('disabled');
-                }
+    // Clear any hotkeys from the previous page
+    this._clearSpellHotkeys();
 
-                let displayName = spell.name;
-                const hotkey = spell.name.charAt(0).toUpperCase();
+    // Remove old navigation bar if it exists to prevent duplication
+    const oldNav = document.getElementById('spellbook-nav');
+    if (oldNav) oldNav.remove();
 
-                // Assign hotkey if affordable and not already used on this page
-                if (canAfford && /^[A-Z]$/.test(hotkey) && !usedHotkeys.has(hotkey)) {
-                    usedHotkeys.add(hotkey);
-                    displayName = `(${hotkey})${spell.name.substring(1)}`;
+    // Apply page style
+    content.style.backgroundColor = page.style.bg;
+    content.style.transition = 'background-color 0.3s ease';
 
-                    // Register listener with a specific callback function
-                    const spellKey = key; // Capture key for the closure
-                    const hotkeyCallback = () => {
-                        // Double-check if spellbook is open and mana is sufficient
-                        const modal = document.getElementById('spellbook-modal');
-                        if (!modal.classList.contains('hidden') && this.mana >= Math.floor(SPELLS[spellKey].manaCost * this.manaCostMultiplier)) {
-                            this.spellSystem.castSpell(spellKey);
-                        }
-                    };
-                    this.input.keyboard.on(`keydown-${hotkey}`, hotkeyCallback);
-                    this.spellHotkeyListeners.push({ key: hotkey, callback: hotkeyCallback });
-                }
+    // Create top navigation container
+    const topNav = document.createElement('div');
+    topNav.id = 'spellbook-nav';
+    topNav.style.cssText = 'display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; padding-bottom: 10px; border-bottom: 1px solid #5D4E3E;';
 
-                card.innerHTML = `
+    // Left Arrow
+    const leftArrow = document.createElement('span');
+    leftArrow.innerHTML = '↶';
+    leftArrow.style.cssText = 'cursor: pointer; font-size: 24px; user-select: none; padding: 0 10px; color: #8B7355;';
+    leftArrow.onclick = () => this.prevSpellPage();
+    topNav.appendChild(leftArrow);
+
+    // Category tabs
+    this.spellBookPages.forEach((p, i) => {
+        const tab = document.createElement('div');
+        tab.innerHTML = `${p.icon} ${p.name}`;
+        tab.style.cssText = 'cursor: pointer; padding: 5px 10px; border-radius: 4px; transition: all 0.2s ease; user-select: none; font-family: serif;';
+        tab.onclick = () => {
+            this.currentSpellPage = i;
+            this.renderSpellBookPage();
+        };
+
+        if (i === this.currentSpellPage) {
+            tab.style.transform = 'scale(1.2)';
+            tab.style.color = p.style.header;
+            tab.style.background = 'rgba(0,0,0,0.3)';
+            tab.style.fontWeight = 'bold';
+            tab.style.textShadow = `0 0 8px ${p.style.header}`;
+        } else {
+            tab.style.color = '#8B7355';
+            tab.style.transform = 'scale(1.0)';
+        }
+        topNav.appendChild(tab);
+    });
+
+    // Right Arrow
+    const rightArrow = document.createElement('span');
+    rightArrow.innerHTML = '↷';
+    rightArrow.style.cssText = 'cursor: pointer; font-size: 24px; user-select: none; padding: 0 10px; color: #8B7355;';
+    rightArrow.onclick = () => this.nextSpellPage();
+    topNav.appendChild(rightArrow);
+
+    header.appendChild(topNav);
+
+    // Filter and render spells
+    let spellCount = 0;
+    const usedHotkeys = new Set(); // Prevent duplicate hotkeys on the same page
+
+    for (const [key, spell] of Object.entries(SPELLS)) {
+        if (page.filter(spell)) {
+            spellCount++;
+            const card = document.createElement('div');
+            card.className = 'spell-card';
+
+            const canAfford = this.mana >= Math.floor(spell.manaCost * this.manaCostMultiplier);
+            if (!canAfford) {
+                card.classList.add('disabled');
+            }
+
+            let displayName = spell.name;
+            const hotkey = spell.name.charAt(0).toUpperCase();
+
+            // Assign hotkey if affordable and not already used on this page
+            if (canAfford && /^[A-Z]$/.test(hotkey) && !usedHotkeys.has(hotkey)) {
+                usedHotkeys.add(hotkey);
+                displayName = `(${hotkey})${spell.name.substring(1)}`;
+
+                // Register listener with a specific callback function
+                const spellKey = key; // Capture key for the closure
+                const hotkeyCallback = () => {
+                    // Double-check if spellbook is open and mana is sufficient
+                    const modal = document.getElementById('spellbook-modal');
+                    if (!modal.classList.contains('hidden') && this.mana >= Math.floor(SPELLS[spellKey].manaCost * this.manaCostMultiplier)) {
+                        this.spellSystem.castSpell(spellKey);
+                    }
+                };
+                this.input.keyboard.on(`keydown-${hotkey}`, hotkeyCallback);
+                this.spellHotkeyListeners.push({ key: hotkey, callback: hotkeyCallback });
+            }
+
+            card.innerHTML = `
                     <div style="font-size: 32px; margin-bottom: 5px;">${spell.icon}</div>
                     <div style="color: ${page.style.header}; font-weight: bold;">${displayName}</div>
                     <div class="spell-type">${spell.type}</div>
@@ -979,108 +1057,108 @@ export class BattleScene extends Phaser.Scene {
                     <div class="spell-cost ${!canAfford ? 'too-expensive' : ''}">💧 ${Math.floor(spell.manaCost * this.manaCostMultiplier)} Mana</div>
                 `;
 
-                if (canAfford) {
-                    card.onclick = () => this.spellSystem.castSpell(key);
-                }
-
-                grid.appendChild(card);
-            }
-        }
-
-        if (spellCount === 0) {
-            const emptyMsg = document.createElement('div');
-            emptyMsg.style.gridColumn = '1 / -1';
-            emptyMsg.style.textAlign = 'center';
-            emptyMsg.style.color = '#888';
-            emptyMsg.style.padding = '40px';
-            emptyMsg.textContent = 'No spells known in this school.';
-            grid.appendChild(emptyMsg);
-        }
-    }
-
-    // Victory/Defeat
-    checkVictoryCondition() {
-        if (this.victoryShown) return;
-
-        const playerUnits = this.unitManager.getPlayerUnits();
-        const enemyUnits = this.unitManager.getEnemyUnits();
-
-        if (enemyUnits.length === 0) {
-            this.victoryShown = true;
-            this.showVictoryScreen(true);
-        } else if (playerUnits.length === 0) {
-            this.victoryShown = true;
-            this.showVictoryScreen(false);
-        }
-    }
-
-    // Check if loot goblin was killed (for special reward)
-    wasLootGoblinKilled() {
-        // Check if this battle had a loot goblin that is now dead
-        // We need to track this differently since the unit is removed from alive list
-        // For now, we check if hasLootGoblin was set and there are no loot goblins in enemy units
-        if (!this.hasLootGoblin) return false;
-        const lootGoblins = this.unitManager.units.filter(u => u.type === 'LOOT_GOBLIN');
-        const aliveLootGoblins = lootGoblins.filter(u => !u.isDead && u.health > 0);
-        // If there was a loot goblin but none are alive now, it was killed
-        return lootGoblins.length > 0 && aliveLootGoblins.length === 0;
-    }
-
-    showVictoryScreen(playerWon) {
-        const victoryScreen = document.getElementById('victory-screen');
-        const victoryText = document.getElementById('victory-text');
-        const confirmBtn = document.getElementById('confirm-rewards');
-
-        victoryText.innerHTML = playerWon ? '🎉 Victory! 🎉' : 'Defeat...';
-        victoryText.style.color = playerWon ? '#A68966' : '#9E4A4A';
-
-        if (playerWon) {
-            // Check for Loot Goblin special reward
-            this.lootGoblinReward = this.wasLootGoblinKilled();
-
-            const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
-            this.selectedRewards = {
-                unit: canGetNewUnit ? null : { id: 'skipped', effectData: null },
-                buff: null,
-                magic: null
-            };
-
-            // If loot goblin was killed, show special reward screen first
-            if (this.lootGoblinReward) {
-                this.showLootGoblinReward();
-            } else {
-                this.generateRewardChoices();
+            if (canAfford) {
+                card.onclick = () => this.spellSystem.castSpell(key);
             }
 
-            confirmBtn.style.display = 'block';
-            document.getElementById('rewards-container').style.display = 'flex';
-            document.getElementById('defeat-message').style.display = 'none';
-            document.getElementById('victory-subtitle').style.display = 'block';
+            grid.appendChild(card);
+        }
+    }
+
+    if (spellCount === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.gridColumn = '1 / -1';
+        emptyMsg.style.textAlign = 'center';
+        emptyMsg.style.color = '#888';
+        emptyMsg.style.padding = '40px';
+        emptyMsg.textContent = 'No spells known in this school.';
+        grid.appendChild(emptyMsg);
+    }
+}
+
+// Victory/Defeat
+checkVictoryCondition() {
+    if (this.victoryShown) return;
+
+    const playerUnits = this.unitManager.getPlayerUnits();
+    const enemyUnits = this.unitManager.getEnemyUnits();
+
+    if (enemyUnits.length === 0) {
+        this.victoryShown = true;
+        this.showVictoryScreen(true);
+    } else if (playerUnits.length === 0) {
+        this.victoryShown = true;
+        this.showVictoryScreen(false);
+    }
+}
+
+// Check if loot goblin was killed (for special reward)
+wasLootGoblinKilled() {
+    // Check if this battle had a loot goblin that is now dead
+    // We need to track this differently since the unit is removed from alive list
+    // For now, we check if hasLootGoblin was set and there are no loot goblins in enemy units
+    if (!this.hasLootGoblin) return false;
+    const lootGoblins = this.unitManager.units.filter(u => u.type === 'LOOT_GOBLIN');
+    const aliveLootGoblins = lootGoblins.filter(u => !u.isDead && u.health > 0);
+    // If there was a loot goblin but none are alive now, it was killed
+    return lootGoblins.length > 0 && aliveLootGoblins.length === 0;
+}
+
+showVictoryScreen(playerWon) {
+    const victoryScreen = document.getElementById('victory-screen');
+    const victoryText = document.getElementById('victory-text');
+    const confirmBtn = document.getElementById('confirm-rewards');
+
+    victoryText.innerHTML = playerWon ? '🎉 Victory! 🎉' : 'Defeat...';
+    victoryText.style.color = playerWon ? '#A68966' : '#9E4A4A';
+
+    if (playerWon) {
+        // Check for Loot Goblin special reward
+        this.lootGoblinReward = this.wasLootGoblinKilled();
+
+        const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
+        this.selectedRewards = {
+            unit: canGetNewUnit ? null : { id: 'skipped', effectData: null },
+            buff: null,
+            magic: null
+        };
+
+        // If loot goblin was killed, show special reward screen first
+        if (this.lootGoblinReward) {
+            this.showLootGoblinReward();
         } else {
-            // Defeat - hide rewards, show defeat message
-            document.getElementById('rewards-container').style.display = 'none';
-            document.getElementById('defeat-message').style.display = 'block';
-            document.getElementById('victory-subtitle').style.display = 'none';
-            confirmBtn.style.display = 'none';
-
-            // If in PVP context, report defeat to PVPMatchScene
-            if (this.isPVPContext) {
-                setTimeout(() => {
-                    const pvpMatchScene = this.scene.get('PVPMatchScene');
-                    if (pvpMatchScene) {
-                        pvpMatchScene.reportBattleComplete(false, [], this.magicBuffs);
-                    }
-                }, 3000); // Give player time to see defeat message
-            }
+            this.generateRewardChoices();
         }
 
-        victoryScreen.classList.remove('hidden');
+        confirmBtn.style.display = 'block';
+        document.getElementById('rewards-container').style.display = 'flex';
+        document.getElementById('defeat-message').style.display = 'none';
+        document.getElementById('victory-subtitle').style.display = 'block';
+    } else {
+        // Defeat - hide rewards, show defeat message
+        document.getElementById('rewards-container').style.display = 'none';
+        document.getElementById('defeat-message').style.display = 'block';
+        document.getElementById('victory-subtitle').style.display = 'none';
+        confirmBtn.style.display = 'none';
+
+        // If in PVP context, report defeat to PVPMatchScene
+        if (this.isPVPContext) {
+            setTimeout(() => {
+                const pvpMatchScene = this.scene.get('PVPMatchScene');
+                if (pvpMatchScene) {
+                    pvpMatchScene.reportBattleComplete(false, [], this.magicBuffs);
+                }
+            }, 3000); // Give player time to see defeat message
+        }
     }
 
-    // Restore the original rewards container structure
-    restoreRewardContainerStructure() {
-        const rewardsContainer = document.getElementById('rewards-container');
-        rewardsContainer.innerHTML = `
+    victoryScreen.classList.remove('hidden');
+}
+
+// Restore the original rewards container structure
+restoreRewardContainerStructure() {
+    const rewardsContainer = document.getElementById('rewards-container');
+    rewardsContainer.innerHTML = `
             <div style="width: 100%;">
                 <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;">⚔️ Recruit a New Unit</h3>
                 <div id="reward-units" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
@@ -1096,19 +1174,19 @@ export class BattleScene extends Phaser.Scene {
                 <div id="reward-magic" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
             </div>
         `;
-    }
+}
 
-    // Show special Loot Goblin reward - choice of 3 unit buffs
-    showLootGoblinReward() {
-        const rewardsContainer = document.getElementById('rewards-container');
+// Show special Loot Goblin reward - choice of 3 unit buffs
+showLootGoblinReward() {
+    const rewardsContainer = document.getElementById('rewards-container');
 
-        // Clear existing content and show loot goblin reward UI
-        rewardsContainer.innerHTML = '';
+    // Clear existing content and show loot goblin reward UI
+    rewardsContainer.innerHTML = '';
 
-        // Create loot goblin reward section
-        const lootSection = document.createElement('div');
-        lootSection.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 20px;';
-        lootSection.innerHTML = `
+    // Create loot goblin reward section
+    const lootSection = document.createElement('div');
+    lootSection.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 20px;';
+    lootSection.innerHTML = `
             <div style="font-size: 48px; margin-bottom: 10px;">💰</div>
             <div style="color: #FFD700; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">
                 Loot Goblin Defeated!
@@ -1120,114 +1198,114 @@ export class BattleScene extends Phaser.Scene {
                 ✨ 3 buff choices available! ✨
             </div>
         `;
-        rewardsContainer.appendChild(lootSection);
+    rewardsContainer.appendChild(lootSection);
 
-        // Create buff selection container
-        const buffContainer = document.createElement('div');
-        buffContainer.id = 'loot-goblin-buffs';
-        buffContainer.className = 'reward-column';
-        buffContainer.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;';
-        rewardsContainer.appendChild(buffContainer);
+    // Create buff selection container
+    const buffContainer = document.createElement('div');
+    buffContainer.id = 'loot-goblin-buffs';
+    buffContainer.className = 'reward-column';
+    buffContainer.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;';
+    rewardsContainer.appendChild(buffContainer);
 
-        // Generate 3 random buffs (from standard buffs)
-        const standardBuffs = [
-            {
-                id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage',
-                effect: (unit) => {
-                    unit.damage += 10;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
-                }
-            },
-            {
-                id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP',
-                effect: (unit) => {
-                    unit.maxHealth += 30; unit.health += 30;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
-                    unit.updateHealthBar();
-                }
-            },
-            {
-                id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement',
-                effect: (unit) => {
-                    unit.moveRange += 1;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
-                }
-            },
-            {
-                id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage',
-                effect: (unit) => {
-                    unit.initiative += 5; unit.damage += 5;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                }
-            },
-            {
-                id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)',
-                effect: (unit) => {
-                    if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.rangedRange = unit.rangedRange;
-                }
-            },
-            {
-                id: 'legendary', name: 'Legendary Status', icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV',
-                effect: (unit) => {
-                    unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
-                    unit.updateHealthBar();
-                }
+    // Generate 3 random buffs (from standard buffs)
+    const standardBuffs = [
+        {
+            id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage',
+            effect: (unit) => {
+                unit.damage += 10;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
             }
-        ];
+        },
+        {
+            id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP',
+            effect: (unit) => {
+                unit.maxHealth += 30; unit.health += 30;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
+                unit.updateHealthBar();
+            }
+        },
+        {
+            id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement',
+            effect: (unit) => {
+                unit.moveRange += 1;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+            }
+        },
+        {
+            id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage',
+            effect: (unit) => {
+                unit.initiative += 5; unit.damage += 5;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
+                unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+            }
+        },
+        {
+            id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)',
+            effect: (unit) => {
+                if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.rangedRange = unit.rangedRange;
+            }
+        },
+        {
+            id: 'legendary', name: 'Legendary Status', icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV',
+            effect: (unit) => {
+                unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
+                unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+                unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                unit.updateHealthBar();
+            }
+        }
+    ];
 
-        const buffOptions = standardBuffs.sort(() => 0.5 - Math.random()).slice(0, 3);
+    const buffOptions = standardBuffs.sort(() => 0.5 - Math.random()).slice(0, 3);
 
-        buffOptions.forEach(buff => {
-            const isLegendary = buff.id === 'legendary';
-            const card = this.uiManager.createRewardCard('buff', buff.id, `
+    buffOptions.forEach(buff => {
+        const isLegendary = buff.id === 'legendary';
+        const card = this.uiManager.createRewardCard('buff', buff.id, `
                 <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
                 <div style="color: ${isLegendary ? '#ff8c00' : '#6B8B5B'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${buff.name}</div>
                 <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
                 ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">⚡ Legendary</div>' : ''}
             `, buff, isLegendary);
 
-            card.onclick = () => {
-                // Show unit selection for this buff
-                this.showBuffTargetSelectionForLootGoblin(buff, card);
-            };
-
-            buffContainer.appendChild(card);
-        });
-
-        // Skip button
-        const skipBtn = document.createElement('button');
-        skipBtn.className = 'spellbook-close';
-        skipBtn.style.cssText = 'grid-column: 1 / -1; margin-top: 20px;';
-        skipBtn.textContent = 'Skip Bonus (Continue to Normal Rewards)';
-        skipBtn.onclick = () => {
-            this.lootGoblinReward = false;
-            this.restoreRewardContainerStructure();
-            this.generateRewardChoices();
+        card.onclick = () => {
+            // Show unit selection for this buff
+            this.showBuffTargetSelectionForLootGoblin(buff, card);
         };
-        rewardsContainer.appendChild(skipBtn);
-    }
 
-    // Show unit selection for Loot Goblin buff
-    showBuffTargetSelectionForLootGoblin(buffData, buffCard) {
-        const playerUnits = this.unitManager.getPlayerUnits();
-        if (playerUnits.length === 0) return;
+        buffContainer.appendChild(card);
+    });
 
-        const modal = document.createElement('div');
-        modal.id = 'loot-goblin-target-modal';
-        modal.className = 'spellbook-modal';
-        modal.style.cssText = 'display: flex; z-index: 2000;';
-        modal.innerHTML = `
+    // Skip button
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'spellbook-close';
+    skipBtn.style.cssText = 'grid-column: 1 / -1; margin-top: 20px;';
+    skipBtn.textContent = 'Skip Bonus (Continue to Normal Rewards)';
+    skipBtn.onclick = () => {
+        this.lootGoblinReward = false;
+        this.restoreRewardContainerStructure();
+        this.generateRewardChoices();
+    };
+    rewardsContainer.appendChild(skipBtn);
+}
+
+// Show unit selection for Loot Goblin buff
+showBuffTargetSelectionForLootGoblin(buffData, buffCard) {
+    const playerUnits = this.unitManager.getPlayerUnits();
+    if (playerUnits.length === 0) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'loot-goblin-target-modal';
+    modal.className = 'spellbook-modal';
+    modal.style.cssText = 'display: flex; z-index: 2000;';
+    modal.innerHTML = `
             <div class="spellbook-content" style="max-width: 500px;">
                 <div class="spellbook-header">
                     <h2>💰 Select Unit to Buff</h2>
@@ -1239,13 +1317,13 @@ export class BattleScene extends Phaser.Scene {
             </div>
         `;
 
-        document.body.appendChild(modal);
+    document.body.appendChild(modal);
 
-        const grid = document.getElementById('loot-goblin-target-grid');
-        playerUnits.forEach(unit => {
-            const card = document.createElement('div');
-            card.className = 'spell-card';
-            card.innerHTML = `
+    const grid = document.getElementById('loot-goblin-target-grid');
+    playerUnits.forEach(unit => {
+        const card = document.createElement('div');
+        card.className = 'spell-card';
+        card.innerHTML = `
                 <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
                 <div style="color: #A68966; font-weight: bold;">${unit.name}</div>
                 <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
@@ -1254,43 +1332,43 @@ export class BattleScene extends Phaser.Scene {
                 </div>
             `;
 
-            card.onclick = () => {
-                modal.remove();
+        card.onclick = () => {
+            modal.remove();
 
-                // Apply the buff
-                buffData.effect(unit);
-                this.uiManager.showFloatingText(`${buffData.name} Applied!`, 400, 300, '#FFD700');
+            // Apply the buff
+            buffData.effect(unit);
+            this.uiManager.showFloatingText(`${buffData.name} Applied!`, 400, 300, '#FFD700');
 
-                // Mark loot goblin reward as handled and show normal rewards
-                this.lootGoblinReward = false;
-                this.restoreRewardContainerStructure();
-                this.generateRewardChoices();
-            };
+            // Mark loot goblin reward as handled and show normal rewards
+            this.lootGoblinReward = false;
+            this.restoreRewardContainerStructure();
+            this.generateRewardChoices();
+        };
 
-            grid.appendChild(card);
-        });
-    }
+        grid.appendChild(card);
+    });
+}
 
-    // Reward system
-    generateRewardChoices() {
-        const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
+// Reward system
+generateRewardChoices() {
+    const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
 
-        const unitContainer = document.getElementById('reward-units');
-        unitContainer.innerHTML = '';
+    const unitContainer = document.getElementById('reward-units');
+    unitContainer.innerHTML = '';
 
-        if (canGetNewUnit) {
-            const recruitableUnits = ['KNIGHT', 'ARCHER', 'WIZARD', 'PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
-            const unitOptions = recruitableUnits
-                .sort(() => 0.5 - Math.random())
-                .slice(0, 3);
+    if (canGetNewUnit) {
+        const recruitableUnits = ['KNIGHT', 'ARCHER', 'WIZARD', 'PALADIN', 'RANGER', 'BERSERKER', 'CLERIC', 'ROGUE', 'SORCERER'];
+        const unitOptions = recruitableUnits
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 3);
 
-            // Legendary units that get special glowing border
-            const legendaryUnits = ['PALADIN', 'RANGER', 'BERSERKER', 'SORCERER'];
+        // Legendary units that get special glowing border
+        const legendaryUnits = ['PALADIN', 'RANGER', 'BERSERKER', 'SORCERER'];
 
-            unitOptions.forEach(unitType => {
-                const template = UNIT_TYPES[unitType];
-                const isLegendary = legendaryUnits.includes(unitType);
-                const card = this.uiManager.createRewardCard('unit', unitType, `
+        unitOptions.forEach(unitType => {
+            const template = UNIT_TYPES[unitType];
+            const isLegendary = legendaryUnits.includes(unitType);
+            const card = this.uiManager.createRewardCard('unit', unitType, `
                     <div style="font-size: 40px; margin-bottom: 5px;">${template.emoji}</div>
                     <div style="color: ${isLegendary ? '#ff8c00' : '#A68966'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${template.name}</div>
                     <div style="font-size: 12px; color: #B8A896;">
@@ -1300,342 +1378,342 @@ export class BattleScene extends Phaser.Scene {
                     </div>
                     ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">⚡ Legendary Class</div>' : ''}
                 `, null, isLegendary);
-                unitContainer.appendChild(card);
-            });
-        } else {
-            const roundMsg = this.battleNumber === 1 ? 'First victory! No new unit yet.' : `Victory! New unit available in round ${this.battleNumber + 1}.`;
-            unitContainer.innerHTML = `
+            unitContainer.appendChild(card);
+        });
+    } else {
+        const roundMsg = this.battleNumber === 1 ? 'First victory! No new unit yet.' : `Victory! New unit available in round ${this.battleNumber + 1}.`;
+        unitContainer.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align: center; color: #8B7355; padding: 20px;">
                     <div style="font-size: 24px; margin-bottom: 10px;">📦</div>
                     <div>${roundMsg}</div>
                     <div style="font-size: 11px; margin-top: 5px;">(New units every 2 rounds)</div>
                 </div>
             `;
-        }
+    }
 
-        // Standard buffs pool
-        const standardBuffs = [
-            {
-                id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage',
-                effect: (unit) => {
-                    unit.damage += 10;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
-                }
-            },
-            {
-                id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP',
-                effect: (unit) => {
-                    unit.maxHealth += 30; unit.health += 30;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
-                    unit.updateHealthBar();
-                }
-            },
-            {
-                id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement',
-                effect: (unit) => {
-                    unit.moveRange += 1;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
-                }
-            },
-            {
-                id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage',
-                effect: (unit) => {
-                    unit.initiative += 5; unit.damage += 5;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                }
-            },
-            {
-                id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)',
-                effect: (unit) => {
-                    if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.rangedRange = unit.rangedRange;
-                }
-            },
-            {
-                id: 'legendary', name: 'Legendary Status', icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV',
-                effect: (unit) => {
-                    unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
-                    unit.updateHealthBar();
-                }
+    // Standard buffs pool
+    const standardBuffs = [
+        {
+            id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage',
+            effect: (unit) => {
+                unit.damage += 10;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
             }
-        ];
-
-        // 50% chance to roll a legendary buff instead of a standard one
-        let buffOptions = [];
-        const legendaryBuff = this.tryGenerateLegendaryBuff();
-
-        if (legendaryBuff && Math.random() < 0.5) {
-            // Legendary rolled - include it as one of the 3 buffs
-            const shuffledStandard = [...standardBuffs].sort(() => 0.5 - Math.random());
-            buffOptions = [legendaryBuff, ...shuffledStandard.slice(0, 2)];
-        } else {
-            // No legendary - just 3 standard buffs
-            buffOptions = standardBuffs.sort(() => 0.5 - Math.random()).slice(0, 3);
+        },
+        {
+            id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP',
+            effect: (unit) => {
+                unit.maxHealth += 30; unit.health += 30;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
+                unit.updateHealthBar();
+            }
+        },
+        {
+            id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement',
+            effect: (unit) => {
+                unit.moveRange += 1;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+            }
+        },
+        {
+            id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage',
+            effect: (unit) => {
+                unit.initiative += 5; unit.damage += 5;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
+                unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+            }
+        },
+        {
+            id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)',
+            effect: (unit) => {
+                if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.rangedRange = unit.rangedRange;
+            }
+        },
+        {
+            id: 'legendary', name: 'Legendary Status', icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV',
+            effect: (unit) => {
+                unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
+                unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+                unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                unit.updateHealthBar();
+            }
         }
+    ];
 
-        const buffContainer = document.getElementById('reward-buffs');
-        buffContainer.innerHTML = '';
-        buffOptions.forEach(buff => {
-            const isLegendary = buff.id.startsWith('legendary_');
-            const card = this.uiManager.createRewardCard(
-                isLegendary ? 'legendary' : 'buff',
-                buff.id,
-                `
+    // 50% chance to roll a legendary buff instead of a standard one
+    let buffOptions = [];
+    const legendaryBuff = this.tryGenerateLegendaryBuff();
+
+    if (legendaryBuff && Math.random() < 0.5) {
+        // Legendary rolled - include it as one of the 3 buffs
+        const shuffledStandard = [...standardBuffs].sort(() => 0.5 - Math.random());
+        buffOptions = [legendaryBuff, ...shuffledStandard.slice(0, 2)];
+    } else {
+        // No legendary - just 3 standard buffs
+        buffOptions = standardBuffs.sort(() => 0.5 - Math.random()).slice(0, 3);
+    }
+
+    const buffContainer = document.getElementById('reward-buffs');
+    buffContainer.innerHTML = '';
+    buffOptions.forEach(buff => {
+        const isLegendary = buff.id.startsWith('legendary_');
+        const card = this.uiManager.createRewardCard(
+            isLegendary ? 'legendary' : 'buff',
+            buff.id,
+            `
                     <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
                     <div style="color: ${isLegendary ? '#ff8c00' : '#6B8B5B'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : ''}">${buff.name}</div>
                     ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">⚡ Legendary Power</div>' : ''}
                     <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
                 `,
-                buff,
-                isLegendary
-            );
+            buff,
+            isLegendary
+        );
 
-            buffContainer.appendChild(card);
-        });
+        buffContainer.appendChild(card);
+    });
 
-        // Filter out buffs that are already owned (unique buffs)
-        const ownedBuffTypes = new Set(this.magicBuffs.map(b => b.type));
-        const allMagicOptions = [
-            {
-                id: 'mana_max', name: 'Expanded Mana Pool', icon: '💧', desc: '+30 Max Mana',
-                buffType: 'maxMana', buffValue: 30,
-                effect: () => { this.maxMana += 30; this.mana = this.maxMana; this.uiManager.updateManaDisplay(); }
+    // Filter out buffs that are already owned (unique buffs)
+    const ownedBuffTypes = new Set(this.magicBuffs.map(b => b.type));
+    const allMagicOptions = [
+        {
+            id: 'mana_max', name: 'Expanded Mana Pool', icon: '💧', desc: '+30 Max Mana',
+            buffType: 'maxMana', buffValue: 30,
+            effect: () => { this.maxMana += 30; this.mana = this.maxMana; this.uiManager.updateManaDisplay(); }
+        },
+        {
+            id: 'mana_regen', name: 'Mana Flow', icon: '🌊', desc: '+2 Mana Regen per turn',
+            buffType: 'manaRegen', buffValue: 2,
+            effect: () => { this.manaRegen += 2; }
+        },
+        {
+            id: 'spell_power', name: 'Arcane Power', icon: '🔮', desc: '+20% Spell Damage',
+            buffType: 'spellPower', buffValue: 0.2,
+            effect: () => { this.spellPowerMultiplier = (this.spellPowerMultiplier || 1) + 0.2; }
+        },
+        {
+            id: 'spell_efficiency', name: 'Efficient Casting', icon: '⚡', desc: '-20% Mana Cost for all spells',
+            buffType: 'manaCost', buffValue: 0.2,
+            effect: () => {
+                // Flat -20% from base, capped at 80% reduction (0.2 multiplier minimum)
+                this.manaCostMultiplier = Math.max(0.2, this.manaCostMultiplier - 0.2);
             },
-            {
-                id: 'mana_regen', name: 'Mana Flow', icon: '🌊', desc: '+2 Mana Regen per turn',
-                buffType: 'manaRegen', buffValue: 2,
-                effect: () => { this.manaRegen += 2; }
-            },
-            {
-                id: 'spell_power', name: 'Arcane Power', icon: '🔮', desc: '+20% Spell Damage',
-                buffType: 'spellPower', buffValue: 0.2,
-                effect: () => { this.spellPowerMultiplier = (this.spellPowerMultiplier || 1) + 0.2; }
-            },
-            {
-                id: 'spell_efficiency', name: 'Efficient Casting', icon: '⚡', desc: '-20% Mana Cost for all spells',
-                buffType: 'manaCost', buffValue: 0.2,
-                effect: () => {
-                    // Flat -20% from base, capped at 80% reduction (0.2 multiplier minimum)
-                    this.manaCostMultiplier = Math.max(0.2, this.manaCostMultiplier - 0.2);
-                },
-                maxStacks: 4
-            },
-            {
-                id: 'mana_restore', name: 'Mana Surge', icon: '✨', desc: 'Fully restore mana now & +20 max',
-                buffType: 'maxMana', buffValue: 20,
-                effect: () => { this.maxMana += 20; this.mana = this.maxMana; this.uiManager.updateManaDisplay(); }
-            },
-            {
-                id: 'double_cast', name: 'Twin Cast', icon: '🔄', desc: '+1 spell per round',
-                buffType: 'spellsPerRound', buffValue: 1,
-                effect: () => { this.spellsPerRound = (this.spellsPerRound || 1) + 1; }
-            },
-            {
-                id: 'permanent_buffs', name: 'Eternal Magic', icon: '♾️', desc: 'Spell buffs no longer expire',
-                buffType: 'permanentBuffs', buffValue: 1,
-                effect: () => { this.permanentBuffs = true; },
-                unique: true
-            },
-            {
-                id: 'army_buffs', name: 'Mass Enchantment', icon: '🌟', desc: 'Spells target whole army',
-                buffType: 'armyBuffs', buffValue: 1,
-                effect: () => { this.armyBuffs = true; },
-                unique: true
-            }
-        ];
+            maxStacks: 4
+        },
+        {
+            id: 'mana_restore', name: 'Mana Surge', icon: '✨', desc: 'Fully restore mana now & +20 max',
+            buffType: 'maxMana', buffValue: 20,
+            effect: () => { this.maxMana += 20; this.mana = this.maxMana; this.uiManager.updateManaDisplay(); }
+        },
+        {
+            id: 'double_cast', name: 'Twin Cast', icon: '🔄', desc: '+1 spell per round',
+            buffType: 'spellsPerRound', buffValue: 1,
+            effect: () => { this.spellsPerRound = (this.spellsPerRound || 1) + 1; }
+        },
+        {
+            id: 'permanent_buffs', name: 'Eternal Magic', icon: '♾️', desc: 'Spell buffs no longer expire',
+            buffType: 'permanentBuffs', buffValue: 1,
+            effect: () => { this.permanentBuffs = true; },
+            unique: true
+        },
+        {
+            id: 'army_buffs', name: 'Mass Enchantment', icon: '🌟', desc: 'Spells target whole army',
+            buffType: 'armyBuffs', buffValue: 1,
+            effect: () => { this.armyBuffs = true; },
+            unique: true
+        }
+    ];
 
-        // Filter out unique buffs that are already owned, and capped buffs
-        const availableOptions = allMagicOptions.filter(opt => {
-            if (opt.unique && ownedBuffTypes.has(opt.buffType)) return false;
-            // Check for max stacks (like mana cost reduction capped at 4)
-            if (opt.maxStacks) {
-                const existingBuff = this.magicBuffs.find(b => b.type === opt.buffType);
-                if (existingBuff && existingBuff.value >= opt.maxStacks * opt.buffValue) return false;
-            }
-            return true;
-        });
+    // Filter out unique buffs that are already owned, and capped buffs
+    const availableOptions = allMagicOptions.filter(opt => {
+        if (opt.unique && ownedBuffTypes.has(opt.buffType)) return false;
+        // Check for max stacks (like mana cost reduction capped at 4)
+        if (opt.maxStacks) {
+            const existingBuff = this.magicBuffs.find(b => b.type === opt.buffType);
+            if (existingBuff && existingBuff.value >= opt.maxStacks * opt.buffValue) return false;
+        }
+        return true;
+    });
 
-        const magicOptions = availableOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
+    const magicOptions = availableOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
 
-        const magicContainer = document.getElementById('reward-magic');
-        magicContainer.innerHTML = '';
+    const magicContainer = document.getElementById('reward-magic');
+    magicContainer.innerHTML = '';
 
-        // Special legendary magic buffs
-        const legendaryMagicBuffs = ['permanent_buffs', 'army_buffs'];
+    // Special legendary magic buffs
+    const legendaryMagicBuffs = ['permanent_buffs', 'army_buffs'];
 
-        magicOptions.forEach(magic => {
-            const isLegendary = legendaryMagicBuffs.includes(magic.id);
-            const card = this.uiManager.createRewardCard('magic', magic.id, `
+    magicOptions.forEach(magic => {
+        const isLegendary = legendaryMagicBuffs.includes(magic.id);
+        const card = this.uiManager.createRewardCard('magic', magic.id, `
                 <div style="font-size: 32px; margin-bottom: 5px;">${magic.icon}</div>
                 <div style="color: ${isLegendary ? '#ff8c00' : '#6B7A9A'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${magic.name}</div>
                 <div style="font-size: 12px; color: #B8A896;">${magic.desc}</div>
                 ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">✨ Legendary Enhancement</div>' : ''}
             `, magic, isLegendary);
-            magicContainer.appendChild(card);
+        magicContainer.appendChild(card);
+    });
+
+    this.updateConfirmButton();
+}
+
+// Try to generate a legendary buff (50% chance when called)
+tryGenerateLegendaryBuff() {
+    const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
+    const availableLegendaryBuffs = [];
+
+    // Helper to check if any unit of a type already has the buff
+    const hasBuff = (unitType, buffProperty) => {
+        return playerUnits.some(u => u.type === unitType && u[buffProperty]);
+    };
+
+    // Check for eligible legendary buffs based on player units
+    // Filter out buffs that units already have
+    if (playerUnits.some(u => u.type === 'BERSERKER') && !hasBuff('BERSERKER', 'hasDoubleStrike')) {
+        availableLegendaryBuffs.push({
+            id: 'legendary_frenzy',
+            name: 'Blood Frenzy',
+            icon: '🩸',
+            desc: 'Berserker: Strikes 2 times per attack',
+            unitType: 'BERSERKER',
+            effect: (unit) => {
+                unit.hasDoubleStrike = true;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.hasDoubleStrike = true;
+            }
         });
-
-        this.updateConfirmButton();
     }
 
-    // Try to generate a legendary buff (50% chance when called)
-    tryGenerateLegendaryBuff() {
-        const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
-        const availableLegendaryBuffs = [];
-
-        // Helper to check if any unit of a type already has the buff
-        const hasBuff = (unitType, buffProperty) => {
-            return playerUnits.some(u => u.type === unitType && u[buffProperty]);
-        };
-
-        // Check for eligible legendary buffs based on player units
-        // Filter out buffs that units already have
-        if (playerUnits.some(u => u.type === 'BERSERKER') && !hasBuff('BERSERKER', 'hasDoubleStrike')) {
-            availableLegendaryBuffs.push({
-                id: 'legendary_frenzy',
-                name: 'Blood Frenzy',
-                icon: '🩸',
-                desc: 'Berserker: Strikes 2 times per attack',
-                unitType: 'BERSERKER',
-                effect: (unit) => {
-                    unit.hasDoubleStrike = true;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasDoubleStrike = true;
-                }
-            });
-        }
-
-        if (playerUnits.some(u => u.type === 'PALADIN') && !hasBuff('PALADIN', 'hasCleave')) {
-            availableLegendaryBuffs.push({
-                id: 'legendary_cleave',
-                name: 'Divine Wrath',
-                icon: '⚡',
-                desc: 'Paladin: 3x3 cleave attack, +40 damage',
-                unitType: 'PALADIN',
-                effect: (unit) => {
-                    unit.hasCleave = true;
-                    unit.damage += 40;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasCleave = true;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 40;
-                }
-            });
-        }
-
-        if (playerUnits.some(u => u.type === 'RANGER') && !hasBuff('RANGER', 'hasRicochet')) {
-            availableLegendaryBuffs.push({
-                id: 'legendary_ricochet',
-                name: 'Ricochet Shot',
-                icon: '🏹',
-                desc: 'Ranger: Arrows bounce to nearby targets (2 range, 50% dmg), +40 damage',
-                unitType: 'RANGER',
-                effect: (unit) => {
-                    unit.hasRicochet = true;
-                    unit.damage += 40;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasRicochet = true;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 40;
-                }
-            });
-        }
-
-        if (playerUnits.some(u => u.type === 'WIZARD') && !hasBuff('WIZARD', 'hasPiercing')) {
-            availableLegendaryBuffs.push({
-                id: 'legendary_piercing',
-                name: 'Arcane Pierce',
-                icon: '🔮',
-                desc: 'Wizard: 20 range, shots pierce through enemies',
-                unitType: 'WIZARD',
-                effect: (unit) => {
-                    unit.hasPiercing = true;
-                    unit.rangedRange = 20;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasPiercing = true;
-                    unit.statModifiers.rangedRange = 20;
-                }
-            });
-        }
-
-        if (playerUnits.some(u => u.type === 'ROGUE') && !hasBuff('ROGUE', 'hasBackstab')) {
-            availableLegendaryBuffs.push({
-                id: 'legendary_backstab',
-                name: 'Shadow Strike',
-                icon: '🗡️',
-                desc: 'Rogue: 4x damage when attacking from behind (or side)',
-                unitType: 'ROGUE',
-                effect: (unit) => {
-                    unit.hasBackstab = true;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasBackstab = true;
-                }
-            });
-        }
-
-        if (availableLegendaryBuffs.length === 0) {
-            return null;
-        }
-
-        // Return a random legendary buff
-        return availableLegendaryBuffs[Math.floor(Math.random() * availableLegendaryBuffs.length)];
+    if (playerUnits.some(u => u.type === 'PALADIN') && !hasBuff('PALADIN', 'hasCleave')) {
+        availableLegendaryBuffs.push({
+            id: 'legendary_cleave',
+            name: 'Divine Wrath',
+            icon: '⚡',
+            desc: 'Paladin: 3x3 cleave attack, +40 damage',
+            unitType: 'PALADIN',
+            effect: (unit) => {
+                unit.hasCleave = true;
+                unit.damage += 40;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.hasCleave = true;
+                unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 40;
+            }
+        });
     }
 
-    selectReward(category, id, cardElement, effectData) {
-        if (category === 'buff') {
-            this.showBuffTargetSelection(id, cardElement, effectData);
-            return;
-        }
+    if (playerUnits.some(u => u.type === 'RANGER') && !hasBuff('RANGER', 'hasRicochet')) {
+        availableLegendaryBuffs.push({
+            id: 'legendary_ricochet',
+            name: 'Ricochet Shot',
+            icon: '🏹',
+            desc: 'Ranger: Arrows bounce to nearby targets (2 range, 50% dmg), +40 damage',
+            unitType: 'RANGER',
+            effect: (unit) => {
+                unit.hasRicochet = true;
+                unit.damage += 40;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.hasRicochet = true;
+                unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 40;
+            }
+        });
+    }
 
-        if (category === 'legendary') {
-            this.showLegendaryTargetSelection(id, cardElement, effectData);
-            return;
-        }
+    if (playerUnits.some(u => u.type === 'WIZARD') && !hasBuff('WIZARD', 'hasPiercing')) {
+        availableLegendaryBuffs.push({
+            id: 'legendary_piercing',
+            name: 'Arcane Pierce',
+            icon: '🔮',
+            desc: 'Wizard: 20 range, shots pierce through enemies',
+            unitType: 'WIZARD',
+            effect: (unit) => {
+                unit.hasPiercing = true;
+                unit.rangedRange = 20;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.hasPiercing = true;
+                unit.statModifiers.rangedRange = 20;
+            }
+        });
+    }
 
-        const container = document.getElementById(`reward-${category === 'magic' ? 'magic' : 'units'}`);
-        container.querySelectorAll('.reward-card').forEach(c => {
+    if (playerUnits.some(u => u.type === 'ROGUE') && !hasBuff('ROGUE', 'hasBackstab')) {
+        availableLegendaryBuffs.push({
+            id: 'legendary_backstab',
+            name: 'Shadow Strike',
+            icon: '🗡️',
+            desc: 'Rogue: 4x damage when attacking from behind (or side)',
+            unitType: 'ROGUE',
+            effect: (unit) => {
+                unit.hasBackstab = true;
+                unit.statModifiers = unit.statModifiers || {};
+                unit.statModifiers.hasBackstab = true;
+            }
+        });
+    }
+
+    if (availableLegendaryBuffs.length === 0) {
+        return null;
+    }
+
+    // Return a random legendary buff
+    return availableLegendaryBuffs[Math.floor(Math.random() * availableLegendaryBuffs.length)];
+}
+
+selectReward(category, id, cardElement, effectData) {
+    if (category === 'buff') {
+        this.showBuffTargetSelection(id, cardElement, effectData);
+        return;
+    }
+
+    if (category === 'legendary') {
+        this.showLegendaryTargetSelection(id, cardElement, effectData);
+        return;
+    }
+
+    const container = document.getElementById(`reward-${category === 'magic' ? 'magic' : 'units'}`);
+    container.querySelectorAll('.reward-card').forEach(c => {
+        c.style.borderColor = '#555';
+        c.style.transform = 'scale(1)';
+        c.style.boxShadow = 'none';
+    });
+
+    cardElement.style.borderColor = '#A68966';
+    cardElement.style.transform = 'scale(1.05)';
+    cardElement.style.boxShadow = '0 0 20px rgba(255,215,0,0.3)';
+
+    this.selectedRewards[category] = { id, effectData };
+    this.updateConfirmButton();
+}
+
+clearBuffSelection() {
+    const buffContainer = document.getElementById('reward-buffs');
+    if (buffContainer) {
+        buffContainer.querySelectorAll('.reward-card').forEach(c => {
             c.style.borderColor = '#555';
             c.style.transform = 'scale(1)';
             c.style.boxShadow = 'none';
         });
-
-        cardElement.style.borderColor = '#A68966';
-        cardElement.style.transform = 'scale(1.05)';
-        cardElement.style.boxShadow = '0 0 20px rgba(255,215,0,0.3)';
-
-        this.selectedRewards[category] = { id, effectData };
-        this.updateConfirmButton();
     }
+    this.selectedRewards.buff = null;
+    this.selectedRewards.legendary = null;
+}
 
-    clearBuffSelection() {
-        const buffContainer = document.getElementById('reward-buffs');
-        if (buffContainer) {
-            buffContainer.querySelectorAll('.reward-card').forEach(c => {
-                c.style.borderColor = '#555';
-                c.style.transform = 'scale(1)';
-                c.style.boxShadow = 'none';
-            });
-        }
-        this.selectedRewards.buff = null;
-        this.selectedRewards.legendary = null;
-    }
+showBuffTargetSelection(buffId, buffCard, buffData) {
+    const playerUnits = this.unitManager.getPlayerUnits();
+    if (playerUnits.length === 0) return;
 
-    showBuffTargetSelection(buffId, buffCard, buffData) {
-        const playerUnits = this.unitManager.getPlayerUnits();
-        if (playerUnits.length === 0) return;
-
-        const modal = document.createElement('div');
-        modal.id = 'buff-target-modal';
-        modal.className = 'spellbook-modal';
-        modal.style.cssText = 'display: flex; z-index: 2000;';
-        modal.innerHTML = `
+    const modal = document.createElement('div');
+    modal.id = 'buff-target-modal';
+    modal.className = 'spellbook-modal';
+    modal.style.cssText = 'display: flex; z-index: 2000;';
+    modal.innerHTML = `
             <div class="spellbook-content" style="max-width: 500px;">
                 <div class="spellbook-header">
                     <h2>💪 Select Unit to Buff</h2>
@@ -1647,13 +1725,13 @@ export class BattleScene extends Phaser.Scene {
             </div>
         `;
 
-        document.body.appendChild(modal);
+    document.body.appendChild(modal);
 
-        const grid = document.getElementById('buff-target-grid');
-        playerUnits.forEach(unit => {
-            const card = document.createElement('div');
-            card.className = 'spell-card';
-            card.innerHTML = `
+    const grid = document.getElementById('buff-target-grid');
+    playerUnits.forEach(unit => {
+        const card = document.createElement('div');
+        card.className = 'spell-card';
+        card.innerHTML = `
                 <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
                 <div style="color: #A68966; font-weight: bold;">${unit.name}</div>
                 <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
@@ -1662,47 +1740,47 @@ export class BattleScene extends Phaser.Scene {
                 </div>
             `;
 
-            card.onclick = () => {
-                modal.remove();
+        card.onclick = () => {
+            modal.remove();
 
-                // Clear any existing buff/legendary selection
-                this.clearBuffSelection();
+            // Clear any existing buff/legendary selection
+            this.clearBuffSelection();
 
-                buffCard.style.borderColor = '#A68966';
-                buffCard.style.transform = 'scale(1.05)';
-                buffCard.style.boxShadow = '0 0 20px rgba(255,215,0,0.3)';
+            buffCard.style.borderColor = '#A68966';
+            buffCard.style.transform = 'scale(1.05)';
+            buffCard.style.boxShadow = '0 0 20px rgba(255,215,0,0.3)';
 
-                this.selectedRewards.buff = { id: buffId, effectData: buffData, targetUnit: unit };
-                this.updateConfirmButton();
-            };
-            grid.appendChild(card);
-        });
-    }
-
-    showLegendaryTargetSelection(buffId, buffCard, buffData) {
-        // Filter by unit type AND exclude units that already have this buff
-        const buffPropertyMap = {
-            'BERSERKER': 'hasDoubleStrike',
-            'PALADIN': 'hasCleave',
-            'RANGER': 'hasRicochet',
-            'WIZARD': 'hasPiercing',
-            'ROGUE': 'hasBackstab'
+            this.selectedRewards.buff = { id: buffId, effectData: buffData, targetUnit: unit };
+            this.updateConfirmButton();
         };
-        const buffProperty = buffPropertyMap[buffData.unitType];
+        grid.appendChild(card);
+    });
+}
 
-        const playerUnits = this.unitManager.getPlayerUnits().filter(u => {
-            if (u.type !== buffData.unitType) return false;
-            if (buffProperty && u[buffProperty]) return false; // Already has buff
-            return true;
-        });
+showLegendaryTargetSelection(buffId, buffCard, buffData) {
+    // Filter by unit type AND exclude units that already have this buff
+    const buffPropertyMap = {
+        'BERSERKER': 'hasDoubleStrike',
+        'PALADIN': 'hasCleave',
+        'RANGER': 'hasRicochet',
+        'WIZARD': 'hasPiercing',
+        'ROGUE': 'hasBackstab'
+    };
+    const buffProperty = buffPropertyMap[buffData.unitType];
 
-        if (playerUnits.length === 0) return;
+    const playerUnits = this.unitManager.getPlayerUnits().filter(u => {
+        if (u.type !== buffData.unitType) return false;
+        if (buffProperty && u[buffProperty]) return false; // Already has buff
+        return true;
+    });
 
-        const modal = document.createElement('div');
-        modal.id = 'legendary-target-modal';
-        modal.className = 'spellbook-modal';
-        modal.style.cssText = 'display: flex; z-index: 2000;';
-        modal.innerHTML = `
+    if (playerUnits.length === 0) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'legendary-target-modal';
+    modal.className = 'spellbook-modal';
+    modal.style.cssText = 'display: flex; z-index: 2000;';
+    modal.innerHTML = `
             <div class="spellbook-content" style="max-width: 500px;">
                 <div class="spellbook-header">
                     <h2 style="color: #D4A574;">⚡ Select Legendary Champion</h2>
@@ -1714,14 +1792,14 @@ export class BattleScene extends Phaser.Scene {
             </div>
         `;
 
-        document.body.appendChild(modal);
+    document.body.appendChild(modal);
 
-        const grid = document.getElementById('legendary-target-grid');
-        playerUnits.forEach(unit => {
-            const card = document.createElement('div');
-            card.className = 'spell-card';
-            card.style.border = '2px solid #8B6914';
-            card.innerHTML = `
+    const grid = document.getElementById('legendary-target-grid');
+    playerUnits.forEach(unit => {
+        const card = document.createElement('div');
+        card.className = 'spell-card';
+        card.style.border = '2px solid #8B6914';
+        card.innerHTML = `
                 <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
                 <div style="color: #D4A574; font-weight: bold;">${unit.name}</div>
                 <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
@@ -1730,177 +1808,177 @@ export class BattleScene extends Phaser.Scene {
                 </div>
             `;
 
-            card.onclick = () => {
-                modal.remove();
+        card.onclick = () => {
+            modal.remove();
 
-                // Clear any existing buff/legendary selection
-                this.clearBuffSelection();
+            // Clear any existing buff/legendary selection
+            this.clearBuffSelection();
 
-                buffCard.style.borderColor = '#D4A574';
-                buffCard.style.transform = 'scale(1.05)';
-                buffCard.style.boxShadow = '0 0 30px rgba(212, 165, 116, 0.5)';
+            buffCard.style.borderColor = '#D4A574';
+            buffCard.style.transform = 'scale(1.05)';
+            buffCard.style.boxShadow = '0 0 30px rgba(212, 165, 116, 0.5)';
 
-                this.selectedRewards.legendary = { id: buffId, effectData: buffData, targetUnit: unit };
-                this.updateConfirmButton();
-            };
-            grid.appendChild(card);
-        });
+            this.selectedRewards.legendary = { id: buffId, effectData: buffData, targetUnit: unit };
+            this.updateConfirmButton();
+        };
+        grid.appendChild(card);
+    });
+}
+
+updateConfirmButton() {
+    const btn = document.getElementById('confirm-rewards');
+    const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
+
+    let required = 2;
+    if (canGetNewUnit) required = 3;
+
+    let selected = 0;
+    // Buff or legendary counts as the buff slot
+    if (this.selectedRewards.buff || this.selectedRewards.legendary) selected++;
+    if (this.selectedRewards.magic) selected++;
+    if (canGetNewUnit && this.selectedRewards.unit) selected++;
+
+    btn.disabled = selected < required;
+    btn.textContent = `Confirm Choices (${selected}/${required})`;
+
+    if (selected === required) {
+        btn.style.background = '#3E5D3E';
+    } else {
+        btn.style.background = '#3D3D3D';
+    }
+}
+
+confirmRewards() {
+    const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
+
+    // Either buff or legendary must be selected
+    const hasBuff = this.selectedRewards.buff || this.selectedRewards.legendary;
+    if (!hasBuff || !this.selectedRewards.magic) return;
+    if (canGetNewUnit && !this.selectedRewards.unit) return;
+
+    if (canGetNewUnit && this.selectedRewards.unit) {
+        const unitType = this.selectedRewards.unit.id;
+        let spawnX = 0, spawnY = 3;
+        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+            if (!this.unitManager.getUnitAt(0, y)) {
+                spawnY = y;
+                break;
+            }
+        }
+        this.unitManager.addUnit(unitType, spawnX, spawnY);
     }
 
-    updateConfirmButton() {
-        const btn = document.getElementById('confirm-rewards');
-        const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
-
-        let required = 2;
-        if (canGetNewUnit) required = 3;
-
-        let selected = 0;
-        // Buff or legendary counts as the buff slot
-        if (this.selectedRewards.buff || this.selectedRewards.legendary) selected++;
-        if (this.selectedRewards.magic) selected++;
-        if (canGetNewUnit && this.selectedRewards.unit) selected++;
-
-        btn.disabled = selected < required;
-        btn.textContent = `Confirm Choices (${selected}/${required})`;
-
-        if (selected === required) {
-            btn.style.background = '#3E5D3E';
-        } else {
-            btn.style.background = '#3D3D3D';
-        }
-    }
-
-    confirmRewards() {
-        const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
-
-        // Either buff or legendary must be selected
-        const hasBuff = this.selectedRewards.buff || this.selectedRewards.legendary;
-        if (!hasBuff || !this.selectedRewards.magic) return;
-        if (canGetNewUnit && !this.selectedRewards.unit) return;
-
-        if (canGetNewUnit && this.selectedRewards.unit) {
-            const unitType = this.selectedRewards.unit.id;
-            let spawnX = 0, spawnY = 3;
-            for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
-                if (!this.unitManager.getUnitAt(0, y)) {
-                    spawnY = y;
-                    break;
-                }
-            }
-            this.unitManager.addUnit(unitType, spawnX, spawnY);
-        }
-
-        // Apply regular buff (if selected)
-        if (this.selectedRewards.buff) {
-            const buffEffect = this.selectedRewards.buff.effectData;
-            const buffTarget = this.selectedRewards.buff.targetUnit;
-            if (buffEffect && buffTarget) {
-                buffEffect.effect(buffTarget);
-            }
-        }
-
-        // Apply legendary buff (if selected)
-        if (this.selectedRewards.legendary) {
-            const legendaryEffect = this.selectedRewards.legendary.effectData;
-            const targetUnit = this.selectedRewards.legendary.targetUnit;
-            if (legendaryEffect && targetUnit) {
-                legendaryEffect.effect(targetUnit);
-                this.uiManager.showFloatingText(`${this.selectedRewards.legendary.effectData.name} Acquired!`, 400, 250, '#D4A574');
-            }
-        }
-
-        // Magic buffs are only added to the array here; effects applied during create()
-        const magicEffect = this.selectedRewards.magic.effectData;
-        if (magicEffect) {
-            this.uiManager.showFloatingText(`${magicEffect.name} Acquired!`, 400, 200, '#A68966');
-
-            if (magicEffect.buffType) {
-                const existingBuff = this.magicBuffs.find(b => b.type === magicEffect.buffType);
-                if (existingBuff && magicEffect.buffType === 'manaCost') {
-                    // Flat addition for mana cost reduction (capped at 0.8 = 80%)
-                    existingBuff.value = Math.min(0.8, existingBuff.value + magicEffect.buffValue);
-                } else if (existingBuff && magicEffect.buffType === 'maxMana') {
-                    existingBuff.value += magicEffect.buffValue;
-                } else if (existingBuff) {
-                    existingBuff.value += magicEffect.buffValue;
-                } else {
-                    this.magicBuffs.push({
-                        type: magicEffect.buffType,
-                        value: magicEffect.buffValue,
-                        name: magicEffect.name,
-                        icon: magicEffect.icon
-                    });
-                }
-                this.uiManager.updateMagicBuffsDisplay();
-            }
-        }
-
-        this.nextBattle();
-    }
-
-    nextBattle() {
-        document.getElementById('victory-screen').classList.add('hidden');
-        document.getElementById('ui-panel').classList.remove('hidden');
-        document.getElementById('placement-bar').classList.add('hidden');
-
-        const playerUnits = this.unitManager.getPlayerUnits().map(u => ({
-            type: u.type,
-            x: u.gridX,
-            y: u.gridY,
-            health: u.health, // Save current health
-            statModifiers: u.statModifiers || null,
-            bloodlustStacks: u.bloodlustStacks || 0,
-            // Persist active buffs
-            buffs: {
-                hasteRounds: u.hasteRounds,
-                hasteValue: u.hasteRounds > 0 || u.hasteRounds === -1 ? u.moveRange - UNIT_TYPES[u.type].moveRange : 0,
-                shieldRounds: u.shieldRounds,
-                shieldValue: u.shieldValue,
-                blessRounds: u.blessRounds,
-                blessValue: u.blessValue,
-                regenerateRounds: u.regenerateRounds,
-                regenerateAmount: u.regenerateAmount
-            }
-        }));
-
-        const nextBattleNumber = this.battleNumber + 1;
-
-        // If in PVP context, report to PVPMatchScene instead of restarting
-        if (this.isPVPContext) {
-            const pvpMatchScene = this.scene.get('PVPMatchScene');
-            if (pvpMatchScene) {
-                pvpMatchScene.reportBattleComplete(true, playerUnits, this.magicBuffs);
-            }
-            return;
-        }
-
-        this.scene.restart({
-            battleNumber: nextBattleNumber,
-            placedUnits: playerUnits,
-            magicBuffs: this.magicBuffs,
-            currentEnemyFaction: this.currentEnemyFaction
-        });
-    }
-
-    endTurn() {
-        if (this.turnSystem.currentUnit && this.turnSystem.currentUnit.isPlayer) {
-            // Mark unit as done for this turn
-            this.turnSystem.currentUnit.hasMoved = true;
-            this.turnSystem.currentUnit.hasAttacked = true;
-
-            this.gridSystem.clearHighlights();
-            this.cancelSpell();
-            this.turnSystem.nextTurn();
+    // Apply regular buff (if selected)
+    if (this.selectedRewards.buff) {
+        const buffEffect = this.selectedRewards.buff.effectData;
+        const buffTarget = this.selectedRewards.buff.targetUnit;
+        if (buffEffect && buffTarget) {
+            buffEffect.effect(buffTarget);
         }
     }
 
-    cancelSpell() {
-        if (this.spellSystem.activeSpell) {
-            this.spellSystem.clearSpell();
-            this.gridSystem.clearAoePreview();
-            this.uiManager.showFloatingText('Spell cancelled', 400, 300, '#888888');
+    // Apply legendary buff (if selected)
+    if (this.selectedRewards.legendary) {
+        const legendaryEffect = this.selectedRewards.legendary.effectData;
+        const targetUnit = this.selectedRewards.legendary.targetUnit;
+        if (legendaryEffect && targetUnit) {
+            legendaryEffect.effect(targetUnit);
+            this.uiManager.showFloatingText(`${this.selectedRewards.legendary.effectData.name} Acquired!`, 400, 250, '#D4A574');
         }
     }
+
+    // Magic buffs are only added to the array here; effects applied during create()
+    const magicEffect = this.selectedRewards.magic.effectData;
+    if (magicEffect) {
+        this.uiManager.showFloatingText(`${magicEffect.name} Acquired!`, 400, 200, '#A68966');
+
+        if (magicEffect.buffType) {
+            const existingBuff = this.magicBuffs.find(b => b.type === magicEffect.buffType);
+            if (existingBuff && magicEffect.buffType === 'manaCost') {
+                // Flat addition for mana cost reduction (capped at 0.8 = 80%)
+                existingBuff.value = Math.min(0.8, existingBuff.value + magicEffect.buffValue);
+            } else if (existingBuff && magicEffect.buffType === 'maxMana') {
+                existingBuff.value += magicEffect.buffValue;
+            } else if (existingBuff) {
+                existingBuff.value += magicEffect.buffValue;
+            } else {
+                this.magicBuffs.push({
+                    type: magicEffect.buffType,
+                    value: magicEffect.buffValue,
+                    name: magicEffect.name,
+                    icon: magicEffect.icon
+                });
+            }
+            this.uiManager.updateMagicBuffsDisplay();
+        }
+    }
+
+    this.nextBattle();
+}
+
+nextBattle() {
+    document.getElementById('victory-screen').classList.add('hidden');
+    document.getElementById('ui-panel').classList.remove('hidden');
+    document.getElementById('placement-bar').classList.add('hidden');
+
+    const playerUnits = this.unitManager.getPlayerUnits().map(u => ({
+        type: u.type,
+        x: u.gridX,
+        y: u.gridY,
+        health: u.health, // Save current health
+        statModifiers: u.statModifiers || null,
+        bloodlustStacks: u.bloodlustStacks || 0,
+        // Persist active buffs
+        buffs: {
+            hasteRounds: u.hasteRounds,
+            hasteValue: u.hasteRounds > 0 || u.hasteRounds === -1 ? u.moveRange - UNIT_TYPES[u.type].moveRange : 0,
+            shieldRounds: u.shieldRounds,
+            shieldValue: u.shieldValue,
+            blessRounds: u.blessRounds,
+            blessValue: u.blessValue,
+            regenerateRounds: u.regenerateRounds,
+            regenerateAmount: u.regenerateAmount
+        }
+    }));
+
+    const nextBattleNumber = this.battleNumber + 1;
+
+    // If in PVP context, report to PVPMatchScene instead of restarting
+    if (this.isPVPContext) {
+        const pvpMatchScene = this.scene.get('PVPMatchScene');
+        if (pvpMatchScene) {
+            pvpMatchScene.reportBattleComplete(true, playerUnits, this.magicBuffs);
+        }
+        return;
+    }
+
+    this.scene.restart({
+        battleNumber: nextBattleNumber,
+        placedUnits: playerUnits,
+        magicBuffs: this.magicBuffs,
+        currentEnemyFaction: this.currentEnemyFaction
+    });
+}
+
+endTurn() {
+    if (this.turnSystem.currentUnit && this.turnSystem.currentUnit.isPlayer) {
+        // Mark unit as done for this turn
+        this.turnSystem.currentUnit.hasMoved = true;
+        this.turnSystem.currentUnit.hasAttacked = true;
+
+        this.gridSystem.clearHighlights();
+        this.cancelSpell();
+        this.turnSystem.nextTurn();
+    }
+}
+
+cancelSpell() {
+    if (this.spellSystem.activeSpell) {
+        this.spellSystem.clearSpell();
+        this.gridSystem.clearAoePreview();
+        this.uiManager.showFloatingText('Spell cancelled', 400, 300, '#888888');
+    }
+}
 }
 
 // ============================================
