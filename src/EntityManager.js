@@ -617,7 +617,14 @@ export class TurnSystem {
 
     updateQueue() {
         const aliveUnits = this.scene.unitManager.getAllAliveUnits();
-        this.turnQueue = aliveUnits.sort((a, b) => b.initiative - a.initiative);
+        const sorted = aliveUnits.sort((a, b) => b.initiative - a.initiative);
+        this.turnQueue = [];
+        for (const unit of sorted) {
+            this.turnQueue.push(unit);
+            if (unit.hasTemporalShift) {
+                this.turnQueue.push(unit);
+            }
+        }
     }
 
     nextTurn() {

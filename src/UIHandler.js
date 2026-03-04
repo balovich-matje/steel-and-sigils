@@ -186,13 +186,13 @@ export class UIManager {
     }
 
     // Create reward card HTML element
-    createRewardCard(category, id, innerHTML, effectData = null, isLegendary = false) {
+    createRewardCard(category, id, innerHTML, effectData = null, rarity = 'common') {
         const card = document.createElement('div');
-        card.className = isLegendary ? 'reward-card legendary-card' : 'reward-card';
+        card.className = rarity === 'legendary' ? 'reward-card legendary-card' : rarity === 'epic' ? 'reward-card specialist-card' : 'reward-card';
         card.dataset.category = category;
         card.dataset.id = id;
 
-        if (isLegendary) {
+        if (rarity === 'legendary') {
             // Legendary styling with animated glow - inline styles for base, animation from CSS
             card.style.cssText = `
                 border: 2px solid #ff8c00;
@@ -204,6 +204,19 @@ export class UIManager {
                 transition: all 0.15s;
                 color: #E3D5B8;
                 background: linear-gradient(135deg, #2D241E 0%, #3D2814 100%);
+            `;
+        } else if (rarity === 'epic') {
+            // Epic styling with purple aura
+            card.style.cssText = `
+                border: 2px solid #8B5B9B;
+                border-radius: 4px;
+                padding: 15px;
+                min-width: 150px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.15s;
+                color: #E3D5B8;
+                background: linear-gradient(135deg, #2D241E 0%, #302438 100%);
             `;
         } else {
             card.style.cssText = `
@@ -224,8 +237,10 @@ export class UIManager {
 
         // Add hover effect via JS since inline styles don't support :hover
         card.onmouseenter = () => {
-            if (isLegendary) {
+            if (rarity === 'legendary') {
                 card.style.background = 'linear-gradient(135deg, #3D342E 0%, #4D3820 100%)';
+            } else if (rarity === 'epic') {
+                card.style.background = 'linear-gradient(135deg, #3D342E 0%, #4D3840 100%)';
             } else {
                 card.style.background = '#3D342E';
                 card.style.borderColor = '#B69976';
@@ -233,8 +248,10 @@ export class UIManager {
             }
         };
         card.onmouseleave = () => {
-            if (isLegendary) {
+            if (rarity === 'legendary') {
                 card.style.background = 'linear-gradient(135deg, #2D241E 0%, #3D2814 100%)';
+            } else if (rarity === 'epic') {
+                card.style.background = 'linear-gradient(135deg, #2D241E 0%, #302438 100%)';
             } else {
                 card.style.background = '#2D241E';
                 card.style.borderColor = '#A68966';

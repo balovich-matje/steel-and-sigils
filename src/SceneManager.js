@@ -1217,73 +1217,16 @@ export class BattleScene extends Phaser.Scene {
         buffContainer.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;';
         rewardsContainer.appendChild(buffContainer);
 
-        // Generate 3 random buffs (from standard buffs)
-        const standardBuffs = [
-            {
-                id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage',
-                effect: (unit) => {
-                    unit.damage += 10;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
-                }
-            },
-            {
-                id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP',
-                effect: (unit) => {
-                    unit.maxHealth += 30; unit.health += 30;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
-                    unit.updateHealthBar();
-                }
-            },
-            {
-                id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement',
-                effect: (unit) => {
-                    unit.moveRange += 1;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
-                }
-            },
-            {
-                id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage',
-                effect: (unit) => {
-                    unit.initiative += 5; unit.damage += 5;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                }
-            },
-            {
-                id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)',
-                effect: (unit) => {
-                    if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.rangedRange = unit.rangedRange;
-                }
-            },
-            {
-                id: 'legendary', name: 'Legendary Status', icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV',
-                effect: (unit) => {
-                    unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
-                    unit.updateHealthBar();
-                }
-            }
-        ];
-
-        const buffOptions = standardBuffs.sort(() => 0.5 - Math.random()).slice(0, 3);
+        // Generate 3 random buffs (weighted by rarity)
+        const buffOptions = this.getRandomBuffs(3);
 
         buffOptions.forEach(buff => {
-            const isLegendary = buff.id === 'legendary';
-            const card = this.uiManager.createRewardCard('buff', buff.id, `
+            const card = this.uiManager.createRewardCard(buff.rarity === 'epic' ? 'epic' : 'buff', buff.id, `
                 <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
-                <div style="color: ${isLegendary ? '#ff8c00' : '#6B8B5B'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${buff.name}</div>
+                <div style="color: ${buff.rarity === 'epic' ? '#9B6BAB' : '#6B8B5B'}; font-weight: bold;${buff.rarity === 'epic' ? ' text-shadow: 0 0 6px rgba(139, 91, 155, 0.5);' : ''}">${buff.name}</div>
                 <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
-                ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">⚡ Legendary</div>' : ''}
-            `, buff, isLegendary);
+                ${buff.rarity === 'epic' ? '<div style="font-size: 11px; color: #9B6BAB; margin-top: 4px; text-shadow: 0 0 4px rgba(139, 91, 155, 0.4);">⚡ Epic Power</div>' : ''}
+            `, buff, buff.rarity);
 
             card.onclick = () => {
                 // Show unit selection for this buff
@@ -1360,6 +1303,124 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Reward system
+    getRandomBuffs(count) {
+        const commonBuffs = [
+            {
+                id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage', rarity: 'common',
+                effect: (unit) => {
+                    unit.damage += 10;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
+                }
+            },
+            {
+                id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP', rarity: 'common',
+                effect: (unit) => {
+                    unit.maxHealth += 30; unit.health += 30;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
+                    unit.updateHealthBar();
+                }
+            },
+            {
+                id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement', rarity: 'common',
+                effect: (unit) => {
+                    unit.moveRange += 1;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                }
+            },
+            {
+                id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage', rarity: 'common',
+                effect: (unit) => {
+                    unit.initiative += 5; unit.damage += 5;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+                }
+            },
+            {
+                id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)', rarity: 'common',
+                effect: (unit) => {
+                    if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.rangedRange = unit.rangedRange;
+                }
+            }
+        ];
+
+        const epicBuffs = [
+            {
+                id: 'champion_favor', name: "Champion's Favor", icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV', rarity: 'epic',
+                effect: (unit) => {
+                    unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
+                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                    unit.updateHealthBar();
+                }
+            },
+            {
+                id: 'obsidian_armor', name: 'Obsidian Armor', icon: '⬛', desc: 'Max HP x2, Movement -2', rarity: 'epic',
+                effect: (unit) => {
+                    const hpDiff = unit.maxHealth;
+                    unit.maxHealth += hpDiff;
+                    unit.health += hpDiff;
+                    unit.moveRange = Math.max(1, unit.moveRange - 2);
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + hpDiff;
+                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) - 2;
+                    unit.updateHealthBar();
+                }
+            },
+            {
+                id: 'glass_cannon', name: 'Glass Cannon', icon: '💥', desc: 'Damage x2, Max HP x0.5', rarity: 'epic',
+                effect: (unit) => {
+                    const dmgDiff = unit.damage;
+                    const hpDiff = -Math.floor(unit.maxHealth * 0.5);
+                    unit.damage += dmgDiff;
+                    unit.maxHealth += hpDiff;
+                    unit.health = Math.min(unit.health, unit.maxHealth);
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + dmgDiff;
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + hpDiff;
+                    unit.updateHealthBar();
+                }
+            },
+            {
+                id: 'temporal_shift', name: 'Temporal Shift', icon: '⏳', desc: '2 turns per round. Damage x0.5', rarity: 'epic',
+                effect: (unit) => {
+                    unit.hasTemporalShift = true;
+                    const dmgDiff = -Math.floor(unit.damage * 0.5);
+                    unit.damage += dmgDiff;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + dmgDiff;
+                }
+            }
+        ];
+
+        const available = [];
+        commonBuffs.forEach(b => available.push({ buff: b, weight: 80 }));
+        epicBuffs.forEach(b => available.push({ buff: b, weight: 20 }));
+
+        const result = [];
+        for (let i = 0; i < count; i++) {
+            if (available.length === 0) break;
+            const totalWeight = available.reduce((sum, item) => sum + item.weight, 0);
+            let rand = Math.random() * totalWeight;
+            for (let j = 0; j < available.length; j++) {
+                rand -= available[j].weight;
+                if (rand <= 0) {
+                    result.push(available[j].buff);
+                    available.splice(j, 1);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
     generateRewardChoices() {
         const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
 
@@ -1401,91 +1462,45 @@ export class BattleScene extends Phaser.Scene {
             `;
         }
 
-        // Standard buffs pool
-        const standardBuffs = [
-            {
-                id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage',
-                effect: (unit) => {
-                    unit.damage += 10;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 10;
-                }
-            },
-            {
-                id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP',
-                effect: (unit) => {
-                    unit.maxHealth += 30; unit.health += 30;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 30;
-                    unit.updateHealthBar();
-                }
-            },
-            {
-                id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement',
-                effect: (unit) => {
-                    unit.moveRange += 1;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
-                }
-            },
-            {
-                id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage',
-                effect: (unit) => {
-                    unit.initiative += 5; unit.damage += 5;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 5;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                }
-            },
-            {
-                id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)',
-                effect: (unit) => {
-                    if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.rangedRange = unit.rangedRange;
-                }
-            },
-            {
-                id: 'legendary', name: 'Legendary Status', icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV',
-                effect: (unit) => {
-                    unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
-                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
-                    unit.updateHealthBar();
-                }
-            }
-        ];
-
         // 50% chance to roll a legendary buff instead of a standard one
         let buffOptions = [];
         const legendaryBuff = this.tryGenerateLegendaryBuff();
 
         if (legendaryBuff && Math.random() < 0.5) {
             // Legendary rolled - include it as one of the 3 buffs
-            const shuffledStandard = [...standardBuffs].sort(() => 0.5 - Math.random());
-            buffOptions = [legendaryBuff, ...shuffledStandard.slice(0, 2)];
+            buffOptions = [legendaryBuff, ...this.getRandomBuffs(2)];
         } else {
-            // No legendary - just 3 standard buffs
-            buffOptions = standardBuffs.sort(() => 0.5 - Math.random()).slice(0, 3);
+            // No legendary - just 3 standard/epic buffs
+            buffOptions = this.getRandomBuffs(3);
         }
 
         const buffContainer = document.getElementById('reward-buffs');
         buffContainer.innerHTML = '';
         buffOptions.forEach(buff => {
             const isLegendary = buff.id.startsWith('legendary_');
+            const rarity = isLegendary ? 'legendary' : (buff.rarity || 'common');
+
+            const nameColor = rarity === 'legendary' ? '#ff8c00' : (rarity === 'epic' ? '#9B6BAB' : '#6B8B5B');
+            const textShadow = rarity === 'legendary' ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : (rarity === 'epic' ? ' text-shadow: 0 0 6px rgba(139, 91, 155, 0.5);' : '');
+
+            let rarityLabel = '';
+            if (rarity === 'legendary') {
+                rarityLabel = '<div style="font-size: 11px; color: #ff8c00; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">⚡ Legendary Power</div>';
+            } else if (rarity === 'epic') {
+                rarityLabel = '<div style="font-size: 11px; color: #9B6BAB; margin-top: 2px; text-shadow: 0 0 4px rgba(139, 91, 155, 0.4);">⚡ Epic Power</div>';
+            }
+
             const card = this.uiManager.createRewardCard(
-                isLegendary ? 'legendary' : 'buff',
+                rarity === 'legendary' ? 'legendary' : (rarity === 'epic' ? 'epic' : 'buff'),
                 buff.id,
                 `
                     <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
-                    <div style="color: ${isLegendary ? '#ff8c00' : '#6B8B5B'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : ''}">${buff.name}</div>
-                    ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">⚡ Legendary Power</div>' : ''}
+                    <div style="color: ${nameColor}; font-weight: bold;${textShadow}">${buff.name}</div>
+                    ${rarityLabel}
                     <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
                 `,
                 buff,
-                isLegendary
+                rarity
             );
 
             buffContainer.appendChild(card);
