@@ -2,7 +2,7 @@
 // MAIN ENTRY POINT - Steel and Sigils
 // ============================================
 
-const GAME_VERSION = '0.45';
+const GAME_VERSION = '0.46';
 console.log(`Steel and Sigils v${GAME_VERSION}`);
 
 import { CONFIG } from './GameConfig.js';

@@ -784,8 +784,8 @@ export class BattleScene extends Phaser.Scene {
 
         // Left Arrow
         const leftArrow = document.createElement('span');
-        leftArrow.innerHTML = '◀';
-        leftArrow.style.cssText = 'cursor: pointer; font-size: 20px; user-select: none;';
+        leftArrow.innerHTML = '↶';
+        leftArrow.style.cssText = 'cursor: pointer; font-size: 24px; user-select: none; padding: 0 10px; color: #8B7355;';
         leftArrow.onclick = () => this.prevSpellPage();
         topNav.appendChild(leftArrow);
 
@@ -793,7 +793,7 @@ export class BattleScene extends Phaser.Scene {
         this.spellBookPages.forEach((p, i) => {
             const tab = document.createElement('div');
             tab.innerHTML = `${p.icon} ${p.name}`;
-            tab.style.cssText = 'cursor: pointer; padding: 5px 10px; border-radius: 4px; transition: all 0.2s ease; user-select: none;';
+            tab.style.cssText = 'cursor: pointer; padding: 5px 10px; border-radius: 4px; transition: all 0.2s ease; user-select: none; font-family: serif;';
             tab.onclick = () => {
                 this.currentSpellPage = i;
                 this.renderSpellBookPage();
@@ -814,8 +814,8 @@ export class BattleScene extends Phaser.Scene {
 
         // Right Arrow
         const rightArrow = document.createElement('span');
-        rightArrow.innerHTML = '▶';
-        rightArrow.style.cssText = 'cursor: pointer; font-size: 20px; user-select: none;';
+        rightArrow.innerHTML = '↷';
+        rightArrow.style.cssText = 'cursor: pointer; font-size: 24px; user-select: none; padding: 0 10px; color: #8B7355;';
         rightArrow.onclick = () => this.nextSpellPage();
         topNav.appendChild(rightArrow);
 
