@@ -338,9 +338,9 @@ export class BattleScene extends Phaser.Scene {
             document.body.style.cursor = 'default';
         }
         else if (this.activeUnitAbility === 'SORCERER_FIREBALL') {
-            // Sorcerer Fireball: cast fireball without the 50% passive boost
+            // Sorcerer Fireball: cast fireball with army-wide passive boost
             const spell = SPELLS.fireball;
-            this.spellSystem.executeAoEDamage(spell, gridX, gridY, 1, true); // true to ignore passive
+            this.spellSystem.executeAoEDamage(spell, gridX, gridY, 1);
 
             // End ability mode
             unit.hasCastFireball = true;
