@@ -112,9 +112,15 @@ export class GridSystem {
 
     handleTileHover(tile) {
         const activeSpell = this.scene.spellSystem.activeSpell;
+        const activeAbility = this.scene.activeUnitAbility;
         const { gridX, gridY } = tile;
 
-        if (!activeSpell) {
+        if (activeAbility === 'SORCERER_FIREBALL') {
+            this.drawAoePreview(gridX, gridY, 1);
+            return;
+        }
+
+        if (!activeSpell && !activeAbility) {
             const currentUnit = this.scene.turnSystem.currentUnit;
             // Check piercing hover if no spell is active
             if (currentUnit && currentUnit.isPlayer && currentUnit.hasPiercing && currentUnit.canAttack()) {

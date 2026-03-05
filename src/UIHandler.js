@@ -108,6 +108,7 @@ export class UIManager {
                 abilityBtn.style.background = '#2D241E';
                 abilityBtn.style.borderColor = '#A68966';
                 abilityBtn.style.color = '#E3D5B8';
+                abilityBtn.title = '';
             } else {
                 abilityBtn.disabled = true;
                 abilityBtn.style.filter = 'grayscale(100%)';
@@ -115,6 +116,16 @@ export class UIManager {
                 abilityBtn.style.background = '#3c3c3c';
                 abilityBtn.style.borderColor = '#555';
                 abilityBtn.style.color = '#888';
+
+                if (unit && unit.isPlayer) {
+                    if (unit.hasMoved && unit.hasAttacked) abilityBtn.title = 'Unit has already acted';
+                    else if (unit.type === 'CLERIC' && unit.hasHealed) abilityBtn.title = 'Heal already used this turn';
+                    else if (unit.type === 'OCTO' && unit.hasPulled) abilityBtn.title = 'Pull already used this turn';
+                    else if (unit.type === 'SORCERER' && unit.hasCastFireball) abilityBtn.title = 'Fireball already used this turn';
+                    else abilityBtn.title = 'Ability not available';
+                } else {
+                    abilityBtn.title = '';
+                }
             }
         }
     }

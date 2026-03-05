@@ -155,6 +155,14 @@ export class SpellSystem {
         }
 
         this.clearSpell();
+
+        // Restore highlights if the current unit can still act
+        const currentUnit = this.scene.turnSystem?.currentUnit;
+        if (currentUnit && currentUnit.isPlayer && (currentUnit.canMove() || currentUnit.canAttack())) {
+            this.scene.gridSystem.highlightValidMoves(currentUnit);
+        } else {
+            this.scene.gridSystem.clearHighlights();
+        }
     }
 
     executeUnitSpell(spell, unit) {
@@ -214,6 +222,14 @@ export class SpellSystem {
         }
 
         this.clearSpell();
+
+        // Restore highlights if the current unit can still act
+        const currentUnit = this.scene.turnSystem?.currentUnit;
+        if (currentUnit && currentUnit.isPlayer && (currentUnit.canMove() || currentUnit.canAttack())) {
+            this.scene.gridSystem.highlightValidMoves(currentUnit);
+        } else {
+            this.scene.gridSystem.clearHighlights();
+        }
     }
 
     executeAoEDamage(spell, centerX, centerY, radius) {

@@ -15,29 +15,29 @@ import { CONFIG } from './GameConfig.js';
 export class PVPBattleScene extends Phaser.Scene {
     constructor() {
         super({ key: 'PVPBattleScene' });
-        
+
         // Systems
         this.gridSystem = null;
         this.unitManager = null;
         this.spellSystem = null;
         this.uiManager = null;
-        
+
         // PVP state
         this.pvpManager = null;
         this.playerNumber = null;
-        
+
         // Unit-based initiative system (like PVE)
         this.turnQueue = [];
         this.currentUnit = null;
         this.roundNumber = 1;
-        
+
         // Game state
         this.units = [];
         this.selectedUnit = null;
         this.battleEnded = false;
         this.mana = 100;
         this.maxMana = 100;
-        
+
         // Position tracking for sync
         this.unitPositions = new Map();
     }
@@ -48,7 +48,7 @@ export class PVPBattleScene extends Phaser.Scene {
         this.myArmy = data.myArmy;
         this.opponentArmy = data.opponentArmy;
         this.onComplete = data.onComplete;
-        
+
         // Set up action handler
         this.pvpManager.onOpponentAction = (action) => this._applyOpponentAction(action);
     }
@@ -70,23 +70,23 @@ export class PVPBattleScene extends Phaser.Scene {
         console.log('[PVPBattleScene] Player:', this.playerNumber, 'isHost:', this.playerNumber === 1);
         console.log('[PVPBattleScene] My army:', this.myArmy?.length, 'units');
         console.log('[PVPBattleScene] Opponent army:', this.opponentArmy?.length, 'units');
-        
+
         window.gameScene = this;
-        
+
         // Init systems
         this.gridSystem = new GridSystem(this);
         this.unitManager = new UnitManager(this);
         this.spellSystem = new SpellSystem(this);
         this.uiManager = new UIManager(this);
-        
+
         this.gridSystem.create();
-        
+
         // Create units from army data
         this._createUnits();
-        
+
         // Show turn indicator
         this._showTurnIndicator();
-        
+
         // Input handling
         this.input.on('pointerdown', (p) => this._onPointerDown(p));
     }
@@ -99,52 +99,52 @@ export class PVPBattleScene extends Phaser.Scene {
         const data = this.scene.settings.data;
         const myArmy = data.myArmy || [];
         const opponentArmy = data.opponentArmy || [];
-        
+
         // Create my units
         for (const u of myArmy) {
             this._spawnUnit(u.type, u.x, u.y, this.playerNumber);
         }
-        
+
         // Create opponent units
         const opponentNumber = this.playerNumber === 1 ? 2 : 1;
         for (const u of opponentArmy) {
             this._spawnUnit(u.type, u.x, u.y, opponentNumber);
         }
-        
+
         // Initialize unit-based initiative turn system
         this._initTurnQueue();
     }
-    
+
     _initTurnQueue() {
         // Sort all units by initiative (highest first)
         const aliveUnits = this.units.filter(u => !u.isDead);
         this.turnQueue = aliveUnits.sort((a, b) => b.initiative - a.initiative);
-        
+
         console.log('[PVPBattleScene] Turn queue initialized:', this.turnQueue.map(u => `${u.name}(init:${u.initiative})`).join(', '));
-        
+
         // Start first turn
         this._nextTurn();
     }
-    
+
     _nextTurn() {
         // Remove dead units from queue
         this.turnQueue = this.turnQueue.filter(u => !u.isDead);
-        
+
         if (this.turnQueue.length === 0) {
             this._startNewRound();
             return;
         }
-        
+
         this.currentUnit = this.turnQueue.shift();
-        
+
         if (this.currentUnit.isDead) {
             this._nextTurn();
             return;
         }
-        
+
         this.currentUnit.resetTurn();
         this._showTurnIndicator();
-        
+
         // If it's not this player's unit, wait for opponent's action
         if (this.currentUnit.owner !== this.playerNumber) {
             console.log('[PVPBattleScene] Waiting for opponent to move:', this.currentUnit.name);
@@ -154,17 +154,17 @@ export class PVPBattleScene extends Phaser.Scene {
             this.selectUnit(this.currentUnit);
         }
     }
-    
+
     _startNewRound() {
         this.roundNumber++;
         this.regenerateMana();
-        
+
         // Reset turn queue with all alive units sorted by initiative
         const aliveUnits = this.units.filter(u => !u.isDead);
         this.turnQueue = aliveUnits.sort((a, b) => b.initiative - a.initiative);
-        
+
         console.log('[PVPBattleScene] Starting new round:', this.roundNumber);
-        
+
         this._nextTurn();
     }
 
@@ -172,13 +172,13 @@ export class PVPBattleScene extends Phaser.Scene {
         const unit = this.unitManager.addUnit(type, x, y);
         unit.owner = owner;
         unit.alive = true;
-        
+
         if (unit.sprite) {
             // Flip sprite for Player 2 (right side) to face left
             if (owner === 2) {
                 unit.sprite.setFlipX(true);
             }
-            
+
             // Remove any existing listeners and add our own
             unit.sprite.removeAllListeners('pointerdown');
             unit.sprite.removeAllListeners('pointerover');
@@ -187,12 +187,12 @@ export class PVPBattleScene extends Phaser.Scene {
             // Show stats on hover
             unit.sprite.on('pointerover', () => this._onUnitHover(unit));
         }
-        
+
         this.units.push(unit);
         this.unitPositions.set(`${x},${y}`, unit);
         return unit;
     }
-    
+
     _onUnitHover(unit) {
         // Show unit stats on hover - stats persist until another unit is hovered
         this.uiManager.updateUnitInfo(unit);
@@ -208,18 +208,18 @@ export class PVPBattleScene extends Phaser.Scene {
 
     _onPointerDown(pointer) {
         if (this.battleEnded || !this._isMyTurn()) return;
-        
+
         const x = Math.floor(pointer.x / CONFIG.TILE_SIZE);
         const y = Math.floor(pointer.y / CONFIG.TILE_SIZE);
-        
+
         if (x < 0 || x >= CONFIG.GRID_WIDTH || y < 0 || y >= CONFIG.GRID_HEIGHT) return;
-        
+
         // Handle spell
         if (this.spellSystem.activeSpell) {
             this._castSpell(x, y);
             return;
         }
-        
+
         const unit = this._getUnitAt(x, y);
         if (unit) {
             this._onUnitClick(unit);
@@ -232,13 +232,13 @@ export class PVPBattleScene extends Phaser.Scene {
 
     _onUnitClick(unit) {
         if (!this._isMyTurn()) return;
-        
+
         // Select my unit
         if (unit.owner === this.playerNumber && unit.alive) {
             this._selectUnit(unit);
             return;
         }
-        
+
         // Attack enemy
         if (unit.owner !== this.playerNumber && this.selectedUnit) {
             this._tryAttack(this.selectedUnit, unit);
@@ -260,9 +260,9 @@ export class PVPBattleScene extends Phaser.Scene {
     _selectUnit(unit) {
         this._deselect();
         this.selectedUnit = unit;
-        
+
         if (unit.sprite) unit.sprite.setTint(0xFFFF00);
-        
+
         // Show move range using GridSystem's built-in method
         this.gridSystem.highlightValidMoves(unit);
     }
@@ -284,21 +284,21 @@ export class PVPBattleScene extends Phaser.Scene {
     _tryMove(tx, ty) {
         const unit = this.selectedUnit;
         if (!unit) return;
-        
+
         const dist = Math.abs(tx - unit.gridX) + Math.abs(ty - unit.gridY);
         if (dist > unit.moveRange || this._getUnitAt(tx, ty)) return;
-        
+
         const fromX = unit.gridX, fromY = unit.gridY;
-        
+
         // Update tracking
         this.unitPositions.delete(`${fromX},${fromY}`);
         this.unitManager.updateUnitPosition(unit, tx, ty);
         this.unitPositions.set(`${tx},${ty}`, unit);
         unit.hasMoved = true;
-        
+
         // Sync
         this._syncAction({ type: 'move', fromX, fromY, toX: tx, toY: ty });
-        
+
         this._deselect();
     }
 
@@ -310,13 +310,13 @@ export class PVPBattleScene extends Phaser.Scene {
         const range = attacker.rangedRange || 1;
         const dist = Math.abs(target.gridX - attacker.gridX) + Math.abs(target.gridY - attacker.gridY);
         if (dist > range) return;
-        
+
         const damage = attacker.damage;
-        
+
         // Apply
         target.health -= damage;
         this.uiManager.showFloatingText(`-${damage}`, target.sprite.x, target.sprite.y - 40, '#ff4444');
-        
+
         // Animation
         if (attacker.sprite) {
             this.tweens.add({
@@ -326,11 +326,11 @@ export class PVPBattleScene extends Phaser.Scene {
                 duration: 100, yoyo: true
             });
         }
-        
+
         if (target.health <= 0) {
             this._killUnit(target);
         }
-        
+
         // Sync
         this._syncAction({
             type: 'attack',
@@ -338,22 +338,28 @@ export class PVPBattleScene extends Phaser.Scene {
             targetX: target.gridX, targetY: target.gridY,
             damage
         });
-        
-        this._deselect();
+
+        // Restore highlights if unit can still act (hasn't moved yet)
+        if (attacker.canMove() || attacker.canAttack()) {
+            this.gridSystem.highlightValidMoves(attacker);
+        } else {
+            this._deselect();
+        }
+
         this._checkWin();
     }
 
     _killUnit(unit) {
         unit.alive = false;
         this.unitPositions.delete(`${unit.gridX},${unit.gridY}`);
-        
+
         if (unit.sprite) {
             this.tweens.add({
                 targets: unit.sprite, alpha: 0, duration: 500,
                 onComplete: () => unit.sprite.setVisible(false)
             });
         }
-        
+
         const idx = this.units.indexOf(unit);
         if (idx > -1) this.units.splice(idx, 1);
     }
@@ -367,9 +373,9 @@ export class PVPBattleScene extends Phaser.Scene {
         const caster = this.selectedUnit;
         if (!spell || !caster) return;
         if (this.mana < spell.manaCost) return;
-        
+
         this.mana -= spell.manaCost;
-        
+
         // Apply effect (simplified)
         if (spell.type === 'damage') {
             const target = this._getUnitAt(x, y);
@@ -379,7 +385,7 @@ export class PVPBattleScene extends Phaser.Scene {
                 if (target.health <= 0) this._killUnit(target);
             }
         }
-        
+
         // Sync
         this._syncAction({
             type: 'spell',
@@ -387,7 +393,7 @@ export class PVPBattleScene extends Phaser.Scene {
             casterX: caster.gridX, casterY: caster.gridY,
             targetX: x, targetY: y
         });
-        
+
         this.spellSystem.activeSpell = null;
         document.getElementById('active-spell-display')?.classList.add('hidden');
         this._deselect();
@@ -404,7 +410,7 @@ export class PVPBattleScene extends Phaser.Scene {
 
     _applyOpponentAction(action) {
 
-        
+
         switch (action.type) {
             case 'move':
                 this._applyMove(action);
@@ -464,9 +470,9 @@ export class PVPBattleScene extends Phaser.Scene {
     _showTurnIndicator() {
         const existing = document.getElementById('turn-indicator');
         if (existing) existing.remove();
-        
+
         if (!this.currentUnit) return;
-        
+
         const isMyTurn = this._isMyTurn();
         const div = document.createElement('div');
         div.id = 'turn-indicator';
@@ -476,7 +482,7 @@ export class PVPBattleScene extends Phaser.Scene {
             color: #fff; padding: 10px 30px; border-radius: 8px;
             font-size: 18px; font-weight: bold; z-index: 2000;
         `;
-        
+
         // Show which unit's turn it is
         const unitName = this.currentUnit.name;
         const unitEmoji = this.currentUnit.emoji;
@@ -485,20 +491,20 @@ export class PVPBattleScene extends Phaser.Scene {
         } else {
             div.textContent = `⏳ Opponent's Turn: ${unitEmoji} ${unitName}`;
         }
-        
+
         document.body.appendChild(div);
-        
+
         // Also update initiative queue display (using existing PVE element)
         this._updateInitiativeBar();
     }
-    
+
     _updateInitiativeBar() {
         const queueEl = document.getElementById('initiative-queue');
         if (!queueEl) return;
-        
+
         // Build queue: current unit + next up to 7 units (same as PVE)
         const displayQueue = [this.currentUnit, ...this.turnQueue.slice(0, 7)];
-        
+
         let html = '';
         displayQueue.forEach((unit, index) => {
             if (!unit || unit.isDead) return;
@@ -510,14 +516,14 @@ export class PVPBattleScene extends Phaser.Scene {
                 </div>
             `;
         });
-        
+
         queueEl.innerHTML = html;
     }
 
     endTurn() {
         if (!this._isMyTurn()) return;
         if (!this.currentUnit) return;
-        
+
         this._syncAction({ type: 'end_turn' });
         this._nextTurn();
     }
@@ -529,7 +535,7 @@ export class PVPBattleScene extends Phaser.Scene {
     _checkWin() {
         const myUnits = this.units.filter(u => u.owner === this.playerNumber && u.alive);
         const theirUnits = this.units.filter(u => u.owner !== this.playerNumber && u.alive);
-        
+
         if (theirUnits.length === 0) this._endBattle(this.playerNumber);
         else if (myUnits.length === 0) this._endBattle(this.playerNumber === 1 ? 2 : 1);
     }
@@ -537,7 +543,7 @@ export class PVPBattleScene extends Phaser.Scene {
     _endBattle(winner) {
         if (this.battleEnded) return;
         this.battleEnded = true;
-        
+
         if (this.onComplete) this.onComplete(winner);
     }
 

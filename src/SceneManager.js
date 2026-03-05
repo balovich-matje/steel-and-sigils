@@ -733,7 +733,12 @@ export class BattleScene extends Phaser.Scene {
         });
 
         if (!isSecondStrike) {
-            this.gridSystem.clearHighlights();
+            // Keep highlights active if unit can still act
+            if (attacker.canMove() || attacker.canAttack()) {
+                this.gridSystem.highlightValidMoves(attacker);
+            } else {
+                this.gridSystem.clearHighlights();
+            }
         }
     }
 
@@ -875,7 +880,12 @@ export class BattleScene extends Phaser.Scene {
             }
         });
 
-        this.gridSystem.clearHighlights();
+        // Keep highlights active if unit can still act
+        if (attacker.canMove() || attacker.canAttack()) {
+            this.gridSystem.highlightValidMoves(attacker);
+        } else {
+            this.gridSystem.clearHighlights();
+        }
     }
 
     performRicochetAttack(attacker, mainTarget) {
