@@ -94,6 +94,8 @@ export class UIManager {
                     canUseAbility = isTurn && !unit.hasHealed;
                 } else if (unit.type === 'OCTO') {
                     canUseAbility = isTurn && !unit.hasPulled;
+                } else if (unit.type === 'SORCERER') {
+                    canUseAbility = isTurn && !unit.hasCastFireball;
                 }
             }
 

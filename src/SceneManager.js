@@ -295,6 +295,11 @@ export class BattleScene extends Phaser.Scene {
             this.uiManager.showFloatingText('Select target to Pull', 400, 300, '#8B5A2B');
             document.body.style.cursor = 'crosshair';
         }
+        else if (unit.type === 'PULL_FROG' && !unit.hasPulled) {
+            this.activeUnitAbility = 'PULL';
+            this.uiManager.showFloatingText('Select target to Pull', 400, 300, '#8B5A2B');
+            document.body.style.cursor = 'crosshair';
+        }
         else if (unit.type === 'SORCERER' && !unit.hasCastFireball) {
             this.activeUnitAbility = 'SORCERER_FIREBALL';
             this.uiManager.showFloatingText('Select target for Fireball', 400, 300, '#FF4500');
@@ -597,7 +602,8 @@ export class BattleScene extends Phaser.Scene {
 
                 // Check for unused abilities (like Octo pull)
                 const hasUnusedAbility = (unit.type === 'OCTO' && !unit.hasPulled) ||
-                    (unit.type === 'CLERIC' && !unit.hasHealed);
+                    (unit.type === 'CLERIC' && !unit.hasHealed) ||
+                    (unit.type === 'SORCERER' && !unit.hasCastFireball);
 
                 if (!hasValidTarget && !hasUnusedAbility) {
                     shouldEndTurn = true;
