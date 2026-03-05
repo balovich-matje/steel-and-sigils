@@ -193,6 +193,15 @@ export class Unit {
         this.isDead = true;
         this.health = 0;
 
+        // Combat log kill entry
+        if (scene && scene.addCombatLog) {
+            if (this.killedBy) {
+                scene.addCombatLog(`${this.killedBy.name} killed ${this.name}!`, 'kill');
+            } else {
+                scene.addCombatLog(`${this.name} was slain!`, 'kill');
+            }
+        }
+
         // Bloodlust: If killed by Berserker, they get +15 permanent damage
         if (this.killedBy && this.killedBy.type === 'BERSERKER' && !this.killedBy.isDead) {
             this.killedBy.damage += 15;
@@ -201,234 +210,238 @@ export class Unit {
                 scene.uiManager.showBuffText(this.killedBy, 'BLOODLUST!', '#9E4A4A');
                 scene.uiManager.showFloatingText('+15 DMG', this.killedBy.sprite.x, this.killedBy.sprite.y - 80, '#9E4A4A');
             }
-        }
-
-        if (this.sprite) {
-            // Adjust origin to center so it rotates in-place instead of swinging out of the cell
-            if (this.sprite.setOrigin) {
-                const hOffset = this.sprite.displayHeight ? this.sprite.displayHeight / 2 : 32;
-                this.sprite.setOrigin(0.5, 0.5);
-                this.sprite.y -= hOffset;
-            }
-
-            // Fall backwards depending on side
-            const fallAngle = this.isPlayer ? -90 : 90;
-
-            if (scene) {
-                // Add a falling animation (rotate 90 degrees)
-                scene.tweens.add({
-                    targets: this.sprite,
-                    angle: fallAngle,
-                    y: '+=20', // drop slightly to lie on the floor
-                    alpha: 0.5,
-                    duration: 500,
-                    ease: 'Power2'
-                });
-            } else {
-                this.sprite.setAngle(fallAngle);
-                this.sprite.y += 20;
-                this.sprite.setAlpha(0.5);
-            }
-
-            if (!this.sprite.setText) {
-                this.sprite.setTint(0x666666);
-            }
-            this.sprite.removeInteractive();
-        }
-
-        if (this.healthBar) {
-            this.healthBar.clear();
-        }
-
-        // Clear unit info panel if this unit was selected
-        if (scene && scene.selectedUnit === this) {
-            const infoPanel = document.getElementById('unit-info');
-            if (infoPanel) {
-                infoPanel.innerHTML = '<em>Unit defeated</em>';
-            }
-        }
-
-        // Check victory condition
-        if (scene && scene.unitManager) {
-            const enemies = scene.unitManager.getEnemyUnits();
-            const players = scene.unitManager.getPlayerUnits();
-
-            if (enemies.length === 0 && !scene.victoryShown) {
-                scene.victoryShown = true;
-                scene.showVictoryScreen(true);
-            } else if (players.length === 0 && !scene.victoryShown) {
-                scene.victoryShown = true;
-                scene.showVictoryScreen(false);
+            if (scene && scene.addCombatLog) {
+                scene.addCombatLog(`${this.killedBy.name} gained +15 DMG from Bloodlust! (${this.killedBy.bloodlustStacks} stacks)`, 'buff');
             }
         }
     }
 
-    resetTurn() {
-        this.hasMoved = false;
-        this.hasAttacked = false;
-        this.hasHealed = false;
-        this.hasPulled = false;
-        this.hasCastFireball = false;
-
-        // Store starting position for Rogue's hit-and-run
-        if (this.type === 'ROGUE' || this.type === 'ORC_ROGUE' || this.type === 'LOOT_GOBLIN') {
-            this.turnStartX = this.gridX;
-            this.turnStartY = this.gridY;
+    if(this.sprite) {
+        // Adjust origin to center so it rotates in-place instead of swinging out of the cell
+        if (this.sprite.setOrigin) {
+            const hOffset = this.sprite.displayHeight ? this.sprite.displayHeight / 2 : 32;
+            this.sprite.setOrigin(0.5, 0.5);
+            this.sprite.y -= hOffset;
         }
 
-        // Summoner Lich: Summon units at start of turn
-        if (this.type === 'SUMMONER_LICH' && !this.isDead) {
-            const summonCount = this.firstSummon ? 2 : 1;
-            this.firstSummon = false;
+        // Fall backwards depending on side
+        const fallAngle = this.isPlayer ? -90 : 90;
 
-            this.scene.uiManager.showBuffText(this, 'SUMMON!', '#9B59B6');
+        if (scene) {
+            // Add a falling animation (rotate 90 degrees)
+            scene.tweens.add({
+                targets: this.sprite,
+                angle: fallAngle,
+                y: '+=20', // drop slightly to lie on the floor
+                alpha: 0.5,
+                duration: 500,
+                ease: 'Power2'
+            });
+        } else {
+            this.sprite.setAngle(fallAngle);
+            this.sprite.y += 20;
+            this.sprite.setAlpha(0.5);
+        }
 
-            const summonableUnits = ['SKELETON_ARCHER', 'SKELETON_SOLDIER', 'ANIMATED_ARMOR'];
-            const availablePositions = [];
-            // Find available adjacent spots
-            for (let y = this.gridY - 1; y <= this.gridY + this.bossSize; y++) {
-                for (let x = this.gridX - 1; x <= this.gridX + this.bossSize; x++) {
-                    if (x < 0 || x >= CONFIG.GRID_WIDTH || y < 0 || y >= CONFIG.GRID_HEIGHT) continue;
-                    if (this.scene.unitManager.isValidPlacement(x, y)) {
-                        availablePositions.push({ x, y });
-                    }
+        if (!this.sprite.setText) {
+            this.sprite.setTint(0x666666);
+        }
+        this.sprite.removeInteractive();
+    }
+
+    if(this.healthBar) {
+        this.healthBar.clear();
+    }
+
+    // Clear unit info panel if this unit was selected
+    if(scene && scene.selectedUnit === this) {
+    const infoPanel = document.getElementById('unit-info');
+    if (infoPanel) {
+        infoPanel.innerHTML = '<em>Unit defeated</em>';
+    }
+}
+
+// Check victory condition
+if (scene && scene.unitManager) {
+    const enemies = scene.unitManager.getEnemyUnits();
+    const players = scene.unitManager.getPlayerUnits();
+
+    if (enemies.length === 0 && !scene.victoryShown) {
+        scene.victoryShown = true;
+        scene.showVictoryScreen(true);
+    } else if (players.length === 0 && !scene.victoryShown) {
+        scene.victoryShown = true;
+        scene.showVictoryScreen(false);
+    }
+}
+    }
+
+resetTurn() {
+    this.hasMoved = false;
+    this.hasAttacked = false;
+    this.hasHealed = false;
+    this.hasPulled = false;
+    this.hasCastFireball = false;
+
+    // Store starting position for Rogue's hit-and-run
+    if (this.type === 'ROGUE' || this.type === 'ORC_ROGUE' || this.type === 'LOOT_GOBLIN') {
+        this.turnStartX = this.gridX;
+        this.turnStartY = this.gridY;
+    }
+
+    // Summoner Lich: Summon units at start of turn
+    if (this.type === 'SUMMONER_LICH' && !this.isDead) {
+        const summonCount = this.firstSummon ? 2 : 1;
+        this.firstSummon = false;
+
+        this.scene.uiManager.showBuffText(this, 'SUMMON!', '#9B59B6');
+
+        const summonableUnits = ['SKELETON_ARCHER', 'SKELETON_SOLDIER', 'ANIMATED_ARMOR'];
+        const availablePositions = [];
+        // Find available adjacent spots
+        for (let y = this.gridY - 1; y <= this.gridY + this.bossSize; y++) {
+            for (let x = this.gridX - 1; x <= this.gridX + this.bossSize; x++) {
+                if (x < 0 || x >= CONFIG.GRID_WIDTH || y < 0 || y >= CONFIG.GRID_HEIGHT) continue;
+                if (this.scene.unitManager.isValidPlacement(x, y)) {
+                    availablePositions.push({ x, y });
                 }
             }
-
-            for (let i = 0; i < summonCount; i++) {
-                if (availablePositions.length === 0) break;
-
-                const unitType = summonableUnits[Math.floor(Math.random() * summonableUnits.length)];
-                const posIndex = Math.floor(Math.random() * availablePositions.length);
-                const pos = availablePositions.splice(posIndex, 1)[0];
-
-                this.scene.unitManager.addUnit(unitType, pos.x, pos.y);
-            }
-            // Update turn queue with new units
-            this.scene.turnSystem.updateQueue();
         }
 
-        // Octo'th Hroa'rath: Otherworldly Aura
-        if (this.type === 'OCTOTH_HROARATH' && !this.isDead) {
-            this.scene.uiManager.showBuffText(this, 'AURA!', '#9B59B6');
-            const adjacentUnits = this.scene.unitManager.getPlayerUnits().filter(u => {
-                const dist = this.scene.turnSystem.getDistanceToUnit(this, u);
-                return dist === 1;
-            });
-            adjacentUnits.forEach(unit => {
-                unit.takeDamage(15, false, this);
-                this.scene.uiManager.showDamageText(unit, 15);
-            });
-        }
+        for (let i = 0; i < summonCount; i++) {
+            if (availablePositions.length === 0) break;
 
-        // Ogre Chieftain: Regenerate 10% max HP at start of turn
-        if (this.type === 'OGRE_CHIEFTAIN' && !this.isDead) {
-            const regenAmount = Math.floor(this.maxHealth * 0.1);
-            this.heal(regenAmount);
-            if (this.scene && this.scene.uiManager) {
-                this.scene.uiManager.showFloatingText(`+${regenAmount} HP`, this.sprite.x, this.sprite.y - 60, '#4CAF50');
-            }
-        }
+            const unitType = summonableUnits[Math.floor(Math.random() * summonableUnits.length)];
+            const posIndex = Math.floor(Math.random() * availablePositions.length);
+            const pos = availablePositions.splice(posIndex, 1)[0];
 
-        // Handle regenerate healing at start of turn (permanent buffs have rounds = -1)
-        if (this.regenerateRounds > 0 || this.regenerateRounds === -1) {
-            this.heal(this.regenerateAmount);
-            if (this.regenerateRounds > 0) {
-                this.regenerateRounds--;
-                if (this.regenerateRounds === 0) {
-                    this.regenerateAmount = 0;
-                }
-            }
+            this.scene.unitManager.addUnit(unitType, pos.x, pos.y);
         }
+        // Update turn queue with new units
+        this.scene.turnSystem.updateQueue();
+    }
 
-        // Decrement buff durations (skip if permanent with rounds = -1)
-        if (this.hasteRounds > 0) {
-            this.hasteRounds--;
-            if (this.hasteRounds === 0) {
-                this.moveRange = UNIT_TYPES[this.type].moveRange;
-            }
+    // Octo'th Hroa'rath: Otherworldly Aura
+    if (this.type === 'OCTOTH_HROARATH' && !this.isDead) {
+        this.scene.uiManager.showBuffText(this, 'AURA!', '#9B59B6');
+        const adjacentUnits = this.scene.unitManager.getPlayerUnits().filter(u => {
+            const dist = this.scene.turnSystem.getDistanceToUnit(this, u);
+            return dist === 1;
+        });
+        adjacentUnits.forEach(unit => {
+            unit.takeDamage(15, false, this);
+            this.scene.uiManager.showDamageText(unit, 15);
+        });
+    }
+
+    // Ogre Chieftain: Regenerate 10% max HP at start of turn
+    if (this.type === 'OGRE_CHIEFTAIN' && !this.isDead) {
+        const regenAmount = Math.floor(this.maxHealth * 0.1);
+        this.heal(regenAmount);
+        if (this.scene && this.scene.uiManager) {
+            this.scene.uiManager.showFloatingText(`+${regenAmount} HP`, this.sprite.x, this.sprite.y - 60, '#4CAF50');
         }
+    }
 
-        if (this.shieldRounds > 0) {
-            this.shieldRounds--;
-            if (this.shieldRounds === 0) {
-                this.shieldValue = 0;
-            }
-        }
-
-        if (this.blessRounds > 0) {
-            this.blessRounds--;
-            if (this.blessRounds === 0) {
-                this.blessValue = 1;
-            }
-        }
-
-        if (this.iceSlowRounds > 0) {
-            this.iceSlowRounds--;
-            if (this.iceSlowRounds === 0) {
-                this.moveRange = UNIT_TYPES[this.type].moveRange;
-            }
-        }
-
-        // Ogre Chieftain slow debuff decay
-        if (this.slowDebuffRounds > 0) {
-            this.slowDebuffRounds--;
-            if (this.slowDebuffRounds === 0) {
-                this.moveRange += this.slowDebuffValue;
-                this.slowDebuffValue = 0;
+    // Handle regenerate healing at start of turn (permanent buffs have rounds = -1)
+    if (this.regenerateRounds > 0 || this.regenerateRounds === -1) {
+        this.heal(this.regenerateAmount);
+        if (this.regenerateRounds > 0) {
+            this.regenerateRounds--;
+            if (this.regenerateRounds === 0) {
+                this.regenerateAmount = 0;
             }
         }
     }
 
-    getDisplayStats() {
-        const rangedInfo = this.rangedRange > 0 ? ` | RNG: ${this.rangedRange}` : '';
-
-        let buffs = [];
-        if (this.hasteRounds > 0) buffs.push(`Haste(${this.hasteRounds})`);
-        else if (this.hasteRounds === -1) buffs.push(`Haste(∞)`);
-        if (this.shieldRounds > 0) buffs.push(`Shield(${this.shieldRounds})`);
-        else if (this.shieldRounds === -1) buffs.push(`Shield(∞)`);
-        if (this.blessRounds > 0) buffs.push(`Bless(${this.blessRounds})`);
-        else if (this.blessRounds === -1) buffs.push(`Bless(∞)`);
-        if (this.regenerateRounds > 0) buffs.push(`Regen(${this.regenerateRounds})`);
-        else if (this.regenerateRounds === -1) buffs.push(`Regen(∞)`);
-        if (this.iceSlowRounds > 0) buffs.push(`IceSlow(${this.iceSlowRounds})`);
-        if (this.slowDebuffRounds > 0) buffs.push(`Crippled(${this.slowDebuffRounds})`);
-
-        const buffDisplay = buffs.length > 0 ? `<br>✨ ${buffs.join(', ')}` : '';
-
-        const template = UNIT_TYPES[this.type];
-        let passiveDisplay = '';
-
-        // Handle multiple passives (e.g., Berserker)
-        if (template.passives) {
-            passiveDisplay = template.passives.map(p => `<br>⚔️ ${p.name}: ${p.description}`).join('');
-        } else if (template.passive) {
-            const passiveEmoji = this.type === 'KNIGHT' ? '🛡️' : '🔮';
-            passiveDisplay = `<br>${passiveEmoji} Passive: ${template.passive.name}`;
+    // Decrement buff durations (skip if permanent with rounds = -1)
+    if (this.hasteRounds > 0) {
+        this.hasteRounds--;
+        if (this.hasteRounds === 0) {
+            this.moveRange = UNIT_TYPES[this.type].moveRange;
         }
+    }
 
-        const specialDisplay = template.special ? `<br>⚡ Special: Hit & Run` : '';
+    if (this.shieldRounds > 0) {
+        this.shieldRounds--;
+        if (this.shieldRounds === 0) {
+            this.shieldValue = 0;
+        }
+    }
 
-        // Boss indicator
-        const bossDisplay = this.isBoss ? `<br>👑 BOSS (Size: ${this.bossSize}x${this.bossSize})` : '';
+    if (this.blessRounds > 0) {
+        this.blessRounds--;
+        if (this.blessRounds === 0) {
+            this.blessValue = 1;
+        }
+    }
 
-        return `${this.emoji} ${this.name}${bossDisplay}<br>
+    if (this.iceSlowRounds > 0) {
+        this.iceSlowRounds--;
+        if (this.iceSlowRounds === 0) {
+            this.moveRange = UNIT_TYPES[this.type].moveRange;
+        }
+    }
+
+    // Ogre Chieftain slow debuff decay
+    if (this.slowDebuffRounds > 0) {
+        this.slowDebuffRounds--;
+        if (this.slowDebuffRounds === 0) {
+            this.moveRange += this.slowDebuffValue;
+            this.slowDebuffValue = 0;
+        }
+    }
+}
+
+getDisplayStats() {
+    const rangedInfo = this.rangedRange > 0 ? ` | RNG: ${this.rangedRange}` : '';
+
+    let buffs = [];
+    if (this.hasteRounds > 0) buffs.push(`Haste(${this.hasteRounds})`);
+    else if (this.hasteRounds === -1) buffs.push(`Haste(∞)`);
+    if (this.shieldRounds > 0) buffs.push(`Shield(${this.shieldRounds})`);
+    else if (this.shieldRounds === -1) buffs.push(`Shield(∞)`);
+    if (this.blessRounds > 0) buffs.push(`Bless(${this.blessRounds})`);
+    else if (this.blessRounds === -1) buffs.push(`Bless(∞)`);
+    if (this.regenerateRounds > 0) buffs.push(`Regen(${this.regenerateRounds})`);
+    else if (this.regenerateRounds === -1) buffs.push(`Regen(∞)`);
+    if (this.iceSlowRounds > 0) buffs.push(`IceSlow(${this.iceSlowRounds})`);
+    if (this.slowDebuffRounds > 0) buffs.push(`Crippled(${this.slowDebuffRounds})`);
+
+    const buffDisplay = buffs.length > 0 ? `<br>✨ ${buffs.join(', ')}` : '';
+
+    const template = UNIT_TYPES[this.type];
+    let passiveDisplay = '';
+
+    // Handle multiple passives (e.g., Berserker)
+    if (template.passives) {
+        passiveDisplay = template.passives.map(p => `<br>⚔️ ${p.name}: ${p.description}`).join('');
+    } else if (template.passive) {
+        const passiveEmoji = this.type === 'KNIGHT' ? '🛡️' : '🔮';
+        passiveDisplay = `<br>${passiveEmoji} Passive: ${template.passive.name}`;
+    }
+
+    const specialDisplay = template.special ? `<br>⚡ Special: Hit & Run` : '';
+
+    // Boss indicator
+    const bossDisplay = this.isBoss ? `<br>👑 BOSS (Size: ${this.bossSize}x${this.bossSize})` : '';
+
+    return `${this.emoji} ${this.name}${bossDisplay}<br>
                 HP: ${this.health}/${this.maxHealth}<br>
                 DMG: ${Math.floor(this.damage * this.blessValue)} | MOV: ${this.moveRange}${rangedInfo}<br>
                 INIT: ${this.initiative}${buffDisplay}${passiveDisplay}${specialDisplay}`;
-    }
+}
 
-    updateHealthBar() {
-        if (this.healthBar) {
-            const percent = this.health / this.maxHealth;
-            this.healthBar.clear();
-            this.healthBar.fillStyle(0x000000);
-            this.healthBar.fillRect(-20, -40, 40, 6);
-            this.healthBar.fillStyle(percent > 0.5 ? 0x00ff00 : percent > 0.25 ? 0xffff00 : 0xff0000);
-            this.healthBar.fillRect(-20, -40, 40 * percent, 6);
-        }
+updateHealthBar() {
+    if (this.healthBar) {
+        const percent = this.health / this.maxHealth;
+        this.healthBar.clear();
+        this.healthBar.fillStyle(0x000000);
+        this.healthBar.fillRect(-20, -40, 40, 6);
+        this.healthBar.fillStyle(percent > 0.5 ? 0x00ff00 : percent > 0.25 ? 0xffff00 : 0xff0000);
+        this.healthBar.fillRect(-20, -40, 40 * percent, 6);
     }
+}
 }
 
 // ============================================
@@ -665,6 +678,7 @@ export class TurnSystem {
 
     startNewRound() {
         this.roundNumber++;
+        this.scene.addCombatLog(`══ Round ${this.roundNumber} ══`, 'round');
         this.scene.regenerateMana();
         this.scene.spellsCastThisRound = 0;
         // Reset spell button at start of new round

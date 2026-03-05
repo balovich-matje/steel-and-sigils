@@ -232,68 +232,71 @@ export class GridSystem {
             }
         }
 
-        if (!unit.canMove()) return;
+        if (unit.canMove()) {
+            // Calculate valid movement positions (BFS)
+            // For 2x2 units, we check if the entire 2x2 area is free
+            const queue = [{ x: unit.gridX, y: unit.gridY, dist: 0 }];
+            const visited = new Set([`${unit.gridX},${unit.gridY}`]);
 
-        // Calculate valid movement positions (BFS)
-        // For 2x2 units, we check if the entire 2x2 area is free
-        const queue = [{ x: unit.gridX, y: unit.gridY, dist: 0 }];
-        const visited = new Set([`${unit.gridX},${unit.gridY}`]);
+            while (queue.length > 0) {
+                const { x, y, dist } = queue.shift();
 
-        while (queue.length > 0) {
-            const { x, y, dist } = queue.shift();
-
-            if (dist > 0 && dist <= unit.moveRange) {
-                // Check if the entire boss area is free
-                if (this.scene.unitManager.isValidPlacement(x, y, bossSize)) {
-                    this.validMoves.push({ x, y });
-                    // Highlight all tiles of the boss area
-                    for (let dy = 0; dy < bossSize; dy++) {
-                        for (let dx = 0; dx < bossSize; dx++) {
-                            this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_MOVE, 0.4);
-                            this.highlightGraphics.fillRect(
-                                (x + dx) * CONFIG.TILE_SIZE + 4,
-                                (y + dy) * CONFIG.TILE_SIZE + 4,
-                                CONFIG.TILE_SIZE - 8,
-                                CONFIG.TILE_SIZE - 8
-                            );
+                if (dist > 0 && dist <= unit.moveRange) {
+                    // Check if the entire boss area is free
+                    if (this.scene.unitManager.isValidPlacement(x, y, bossSize)) {
+                        this.validMoves.push({ x, y });
+                        // Highlight all tiles of the boss area
+                        for (let dy = 0; dy < bossSize; dy++) {
+                            for (let dx = 0; dx < bossSize; dx++) {
+                                this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_MOVE, 0.4);
+                                this.highlightGraphics.fillRect(
+                                    (x + dx) * CONFIG.TILE_SIZE + 4,
+                                    (y + dy) * CONFIG.TILE_SIZE + 4,
+                                    CONFIG.TILE_SIZE - 8,
+                                    CONFIG.TILE_SIZE - 8
+                                );
+                            }
                         }
                     }
                 }
-            }
 
-            if (dist < unit.moveRange) {
-                const neighbors = [
-                    { x: x + 1, y }, { x: x - 1, y },
-                    { x, y: y + 1 }, { x, y: y - 1 }
-                ];
+                if (dist < unit.moveRange) {
+                    const neighbors = [
+                        { x: x + 1, y }, { x: x - 1, y },
+                        { x, y: y + 1 }, { x, y: y - 1 }
+                    ];
 
-                for (const n of neighbors) {
-                    if (n.x >= 0 && n.x <= CONFIG.GRID_WIDTH - bossSize &&
-                        n.y >= 0 && n.y <= CONFIG.GRID_HEIGHT - bossSize &&
-                        !visited.has(`${n.x},${n.y}`)) {
-                        visited.add(`${n.x},${n.y}`);
-                        queue.push({ x: n.x, y: n.y, dist: dist + 1 });
+                    for (const n of neighbors) {
+                        if (n.x >= 0 && n.x <= CONFIG.GRID_WIDTH - bossSize &&
+                            n.y >= 0 && n.y <= CONFIG.GRID_HEIGHT - bossSize &&
+                            !visited.has(`${n.x},${n.y}`)) {
+                            visited.add(`${n.x},${n.y}`);
+                            queue.push({ x: n.x, y: n.y, dist: dist + 1 });
+                        }
                     }
                 }
             }
         }
 
-        // Highlight attackable enemies (check adjacency to any part of enemy)
-        const enemies = this.scene.unitManager.getEnemyUnits();
-        for (const enemy of enemies) {
-            const dist = this.getDistanceBetweenUnits(unit, enemy);
-            if (dist === 1) {
-                // Highlight all tiles of attackable enemy
-                const enemySize = enemy.bossSize || 1;
-                for (let dy = 0; dy < enemySize; dy++) {
-                    for (let dx = 0; dx < enemySize; dx++) {
-                        this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_ATTACK, 0.5);
-                        this.highlightGraphics.fillRect(
-                            (enemy.gridX + dx) * CONFIG.TILE_SIZE + 4,
-                            (enemy.gridY + dy) * CONFIG.TILE_SIZE + 4,
-                            CONFIG.TILE_SIZE - 8,
-                            CONFIG.TILE_SIZE - 8
-                        );
+        // Highlight attackable enemies (melee and ranged) if unit can still attack
+        if (unit.canAttack()) {
+            const enemies = this.scene.unitManager.getEnemyUnits();
+            const attackRange = unit.rangedRange || 1;
+            for (const enemy of enemies) {
+                const dist = this.getDistanceBetweenUnits(unit, enemy);
+                if (dist <= attackRange) {
+                    // Highlight all tiles of attackable enemy
+                    const enemySize = enemy.bossSize || 1;
+                    for (let dy = 0; dy < enemySize; dy++) {
+                        for (let dx = 0; dx < enemySize; dx++) {
+                            this.highlightGraphics.fillStyle(CONFIG.COLORS.HIGHLIGHT_ATTACK, 0.5);
+                            this.highlightGraphics.fillRect(
+                                (enemy.gridX + dx) * CONFIG.TILE_SIZE + 4,
+                                (enemy.gridY + dy) * CONFIG.TILE_SIZE + 4,
+                                CONFIG.TILE_SIZE - 8,
+                                CONFIG.TILE_SIZE - 8
+                            );
+                        }
                     }
                 }
             }

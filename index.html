@@ -59,6 +59,30 @@
                 ⏹️ <span style="color: #FFD700;">E</span>nd Turn
             </button>
         </div>
+        <div class="action-divider"></div>
+        <button id="combat-log-btn" class="spell-button" onclick="gameScene.toggleCombatLog()" title="Combat Log"
+            style="padding: 6px 10px; font-size: 16px; min-width: auto;">
+            📜
+        </button>
+    </div>
+
+    <!-- Combat Log Modal -->
+    <div id="combat-log-modal" class="hidden" style="
+        position: fixed; top: 0; right: 0; bottom: 0; width: 340px; z-index: 1500;
+        background: rgba(20, 16, 12, 0.96); border-left: 2px solid #A68966;
+        display: flex; flex-direction: column; transform: translateX(100%);
+        transition: transform 0.25s ease-in-out;
+    ">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #A68966;">
+            <strong style="color: #A68966; font-size: 14px;">📜 Combat Log</strong>
+            <button onclick="gameScene.toggleCombatLog()"
+                style="background: none; border: none; color: #A68966; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        <div id="combat-log-content" style="
+            flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; line-height: 1.5;
+            color: #B8A896; font-family: monospace;
+        "></div>
     </div>
 
     <!-- Unit Info Panel (positioned on right side) -->

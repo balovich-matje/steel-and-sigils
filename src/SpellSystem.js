@@ -139,6 +139,7 @@ export class SpellSystem {
     executeTileSpell(spell, centerX, centerY) {
         const actualCost = Math.floor(spell.manaCost * (this.scene.manaCostMultiplier || 1));
         this.scene.spendMana(actualCost);
+        this.scene.addCombatLog(`Hero cast ${spell.name}!`, 'spell');
         this.scene.spellsCastThisRound++;
         this.updateArcaneFocus();
 
@@ -169,6 +170,7 @@ export class SpellSystem {
         const actualCost = Math.floor(spell.manaCost * (this.scene.manaCostMultiplier || 1));
         this.scene.spendMana(actualCost);
         this.scene.spellsCastThisRound++;
+        this.scene.addCombatLog(`Hero cast ${spell.name}!`, 'spell');
         this.updateArcaneFocus();
 
         // If armyBuffs is enabled and this is a buff spell, apply to whole army
@@ -258,6 +260,7 @@ export class SpellSystem {
             this.scene.time.delayedCall(200, () => {
                 const actualSpellDmg = unit.takeSpellDamage(damage);
                 this.scene.uiManager.showDamageText(unit, actualSpellDmg);
+                this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualSpellDmg} damage.`, 'damage');
                 this.scene.checkVictoryCondition();
             });
         }
@@ -286,6 +289,7 @@ export class SpellSystem {
                 unit.iceSlowRounds = 2;
                 unit.moveRange = Math.max(1, unit.moveRange - 1);
                 this.scene.uiManager.showDamageText(unit, actualIceDmg);
+                this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualIceDmg} damage.`, 'damage');
                 this.scene.uiManager.showBuffText(unit, 'SLOWED!', '#5B6B8B');
                 this.scene.checkVictoryCondition();
             });
@@ -299,6 +303,7 @@ export class SpellSystem {
         this.scene.time.delayedCall(200, () => {
             const actualSingleDmg = unit.takeSpellDamage(damage);
             this.scene.uiManager.showDamageText(unit, actualSingleDmg);
+            this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualSingleDmg} damage.`, 'damage');
             this.scene.checkVictoryCondition();
         });
     }
@@ -319,6 +324,7 @@ export class SpellSystem {
         unit.heal(healAmount);
         this.createHealEffect(unit);
         this.scene.uiManager.showHealText(unit, healAmount);
+        this.scene.addCombatLog(`${unit.name} was healed for ${healAmount} HP.`, 'heal');
     }
 
     executeHaste(spell, unit) {
@@ -326,24 +332,28 @@ export class SpellSystem {
         // If permanentBuffs is enabled, duration is -1 (permanent), otherwise use spell duration
         unit.hasteRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'HASTE!', '#ffff00');
+        this.scene.addCombatLog(`${unit.name} gained HASTE! (+${spell.power} Move).`, 'buff');
     }
 
     executeShield(spell, unit) {
         unit.shieldValue = spell.power;
         unit.shieldRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'SHIELD!', '#4A5E7E');
+        this.scene.addCombatLog(`${unit.name} gained SHIELD! (-${Math.floor(spell.power * 100)}% damage taken).`, 'buff');
     }
 
     executeBless(spell, unit) {
         unit.blessValue = spell.power;
         unit.blessRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'BLESSED!', '#A68966');
+        this.scene.addCombatLog(`${unit.name} gained BLESS! (+${Math.floor((spell.power - 1) * 100)}% DMG).`, 'buff');
     }
 
     executeRegenerate(spell, unit) {
         unit.regenerateAmount = spell.power;
         unit.regenerateRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'REGENERATE!', '#00ff00');
+        this.scene.addCombatLog(`${unit.name} gained REGENERATE! (${spell.power} HP/turn).`, 'buff');
     }
 
     executeTeleport(unit, newX, newY) {
@@ -355,6 +365,7 @@ export class SpellSystem {
         this.createTeleportEffect(unit);
         this.scene.unitManager.updateUnitPosition(unit, newX, newY);
         this.scene.uiManager.showBuffText(unit, 'TELEPORT!', '#6B5B8B');
+        this.scene.addCombatLog(`${unit.name} was teleported.`, 'spell');
 
         this.teleportUnit = null;
     }
@@ -383,6 +394,7 @@ export class SpellSystem {
                 this.createLightningEffect(unit);
                 const actualChainDmg = unit.takeSpellDamage(damage);
                 this.scene.uiManager.showDamageText(unit, actualChainDmg);
+                this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualChainDmg} damage.`, 'damage');
                 this.scene.checkVictoryCondition();
             });
         });

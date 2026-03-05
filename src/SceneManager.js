@@ -40,6 +40,8 @@ export class BattleScene extends Phaser.Scene {
         this.hasLootGoblin = false;
         this.lootGoblinReward = false;
         this.spellHotkeyListeners = [];
+        this.combatLog = [];
+        this.combatLogOpen = false;
 
         // PVP context
         this.isPVPContext = false;
@@ -109,13 +111,15 @@ export class BattleScene extends Phaser.Scene {
         if (data && data.magicBuffs) {
             this.magicBuffs = data.magicBuffs;
             for (const buff of this.magicBuffs) {
-                if (buff.type === 'manaRegen') this.manaRegen += buff.value;
-                if (buff.type === 'manaCost') this.manaCostMultiplier = Math.max(0.2, 1 - buff.value); // buff.value is reduction amount (0.2 = 20%)
+                if (buff.type === 'manaRegen') this.baseManaRegen = (this.baseManaRegen || 1) + buff.value;
+                if (buff.type === 'manaCost') this.manaCostMultiplier = Math.max(0.2, this.manaCostMultiplier - buff.value);
                 if (buff.type === 'spellPower') this.spellPowerMultiplier += buff.value;
+                if (buff.type === 'healingPower') this.healingPowerMultiplier = (this.healingPowerMultiplier || 1) + buff.value;
                 if (buff.type === 'spellsPerRound') this.spellsPerRound += buff.value;
-                if (buff.type === 'maxMana') this.maxMana += buff.value;
+                if (buff.type === 'maxMana') { this.maxMana += buff.value; this.mana += buff.value; }
                 if (buff.type === 'permanentBuffs') this.permanentBuffs = true;
                 if (buff.type === 'armyBuffs') this.armyBuffs = true;
+                // manaRestore is a one-time effect, don't restore it
             }
         }
 
@@ -326,6 +330,7 @@ export class BattleScene extends Phaser.Scene {
                 target.health = Math.min(target.maxHealth, target.health + healAmount);
                 target.updateHealthBar();
                 this.uiManager.showHealText(target, healAmount);
+                this.addCombatLog(`${unit.name} used Heal on ${target.name} restoring ${healAmount} HP.`, 'heal');
 
                 // End ability mode
                 unit.hasHealed = true;
@@ -346,6 +351,7 @@ export class BattleScene extends Phaser.Scene {
             // Sorcerer Fireball: cast fireball with army-wide passive boost
             const spell = SPELLS.fireball;
             this.spellSystem.executeAoEDamage(spell, gridX, gridY, 1);
+            this.addCombatLog(`${unit.name} cast Fireball!`, 'ability');
 
             // End ability mode
             unit.hasCastFireball = true;
@@ -529,6 +535,44 @@ export class BattleScene extends Phaser.Scene {
         this.uiManager.updateManaDisplay();
     }
 
+    // Combat Log System
+    addCombatLog(message, type = 'info') {
+        const colorMap = {
+            'round': '#A68966',
+            'damage': '#ff6644',
+            'spell': '#6B8BDB',
+            'heal': '#6B8B5B',
+            'buff': '#9B6BAB',
+            'kill': '#ff2222',
+            'ability': '#FF8C00',
+            'info': '#B8A896'
+        };
+        const color = colorMap[type] || '#B8A896';
+        this.combatLog.push({ message, color, type });
+
+        const content = document.getElementById('combat-log-content');
+        if (content) {
+            const entry = document.createElement('div');
+            entry.style.cssText = `color: ${color}; margin-bottom: 3px; border-bottom: 1px solid rgba(166, 137, 102, 0.15); padding-bottom: 3px;`;
+            entry.textContent = message;
+            content.appendChild(entry);
+            content.scrollTop = content.scrollHeight;
+        }
+    }
+
+    toggleCombatLog() {
+        const modal = document.getElementById('combat-log-modal');
+        if (!modal) return;
+        this.combatLogOpen = !this.combatLogOpen;
+        if (this.combatLogOpen) {
+            modal.classList.remove('hidden');
+            modal.style.transform = 'translateX(0)';
+        } else {
+            modal.style.transform = 'translateX(100%)';
+            this.time.delayedCall(250, () => modal.classList.add('hidden'));
+        }
+    }
+
     // Unit selection and movement
     selectUnit(unit) {
         // Handle spell targeting on units
@@ -663,6 +707,7 @@ export class BattleScene extends Phaser.Scene {
                     if (isBehindEnemy || isBehindPlayer) {
                         damage *= 4;
                         this.uiManager.showBuffText(attacker, 'BACKSTAB!', '#6B5B8B');
+                        this.addCombatLog(`${attacker.name} dealt melee attack to ${defender.name} dealing ${damage} damage. Backstab!`, 'damage');
                     }
                 }
 
@@ -672,6 +717,9 @@ export class BattleScene extends Phaser.Scene {
                 } else if (!attacker.hasCleave) {
                     const actualDmg = defender.takeDamage(damage, false, attacker);
                     this.uiManager.showDamageText(defender, actualDmg);
+                    if (!(attacker.type === 'ROGUE' && attacker.hasBackstab)) {
+                        this.addCombatLog(`${attacker.name} dealt melee attack to ${defender.name} dealing ${actualDmg} damage.`, 'damage');
+                    }
 
                     this.tweens.add({
                         targets: defender.sprite,
@@ -712,6 +760,7 @@ export class BattleScene extends Phaser.Scene {
                         if (!attacker.isDead && attacker.health > 0) {
                             this.uiManager.showBuffText(attacker, 'VANISH!', '#6B5B8B');
                             this.unitManager.updateUnitPosition(attacker, attacker.turnStartX, attacker.turnStartY);
+                            this.addCombatLog(`${attacker.name} used Vanish and returned to their starting position.`, 'info');
 
                             // Auto-end turn if unit has moved and attacked (checked again since Vanish moves them)
                             if (attacker.hasMoved && attacker.hasAttacked && attacker.isPlayer && this.turnSystem.currentUnit === attacker) {
@@ -747,6 +796,7 @@ export class BattleScene extends Phaser.Scene {
         const actualCleave = mainTarget.takeDamage(fullDamage, false, attacker);
         this.uiManager.showDamageText(mainTarget, actualCleave);
         this.uiManager.showBuffText(attacker, 'CLEAVE!', '#D4A574');
+        this.addCombatLog(`${attacker.name} dealt melee attack to ${mainTarget.name} dealing ${actualCleave} damage. Cleave!`, 'damage');
 
         this.tweens.add({
             targets: mainTarget.sprite,
@@ -766,6 +816,7 @@ export class BattleScene extends Phaser.Scene {
             if (dist <= 1) { // Adjacent in 3x3 area (including diagonals)
                 const actualCleaveSplash = enemy.takeDamage(cleaveDamage, false, attacker);
                 this.uiManager.showDamageText(enemy, actualCleaveSplash);
+                this.addCombatLog(`${attacker.name} cleave hit ${enemy.name} dealing ${actualCleaveSplash} damage.`, 'damage');
                 this.tweens.add({
                     targets: enemy.sprite,
                     alpha: 0.3,
@@ -806,6 +857,7 @@ export class BattleScene extends Phaser.Scene {
                 } else {
                     const actualRetDmg = target.takeDamage(damage, false, retaliator);
                     this.uiManager.showDamageText(target, actualRetDmg);
+                    this.addCombatLog(`${retaliator.name} dealt melee attack to ${target.name} dealing ${actualRetDmg} damage. Divine Retribution!`, 'damage');
 
                     this.tweens.add({
                         targets: target.sprite,
@@ -866,6 +918,7 @@ export class BattleScene extends Phaser.Scene {
                     const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
                     const actualRangedDmg = defender.takeDamage(damage, true, attacker);
                     this.uiManager.showDamageText(defender, actualRangedDmg);
+                    this.addCombatLog(`${attacker.name} dealt ranged attack to ${defender.name} dealing ${actualRangedDmg} damage.`, 'damage');
 
                     this.tweens.add({
                         targets: defender.sprite,
@@ -895,6 +948,7 @@ export class BattleScene extends Phaser.Scene {
         const actualRicochetDmg = mainTarget.takeDamage(damage, true, attacker);
         this.uiManager.showDamageText(mainTarget, actualRicochetDmg);
         this.uiManager.showBuffText(attacker, 'RICOCHET!', '#6B8B5B');
+        this.addCombatLog(`${attacker.name} dealt ranged attack to ${mainTarget.name} dealing ${actualRicochetDmg} damage. Ricochet!`, 'damage');
 
         this.tweens.add({
             targets: mainTarget.sprite,
@@ -934,6 +988,7 @@ export class BattleScene extends Phaser.Scene {
                             bounceArrow.destroy();
                             const actualBounceDmg = enemy.takeDamage(bounceDamage, true, attacker);
                             this.uiManager.showDamageText(enemy, actualBounceDmg);
+                            this.addCombatLog(`${attacker.name} ricochet hit ${enemy.name} dealing ${actualBounceDmg} damage.`, 'damage');
                             this.tweens.add({
                                 targets: enemy.sprite,
                                 alpha: 0.3,
@@ -989,6 +1044,7 @@ export class BattleScene extends Phaser.Scene {
                 this.time.delayedCall(delay, () => {
                     const actualPierceDmg = enemy.takeDamage(baseDamage, true, attacker);
                     this.uiManager.showDamageText(enemy, actualPierceDmg);
+                    this.addCombatLog(`${attacker.name} pierce hit ${enemy.name} dealing ${actualPierceDmg} damage.`, 'damage');
                     this.tweens.add({
                         targets: enemy.sprite,
                         alpha: 0.3,
@@ -1611,7 +1667,7 @@ export class BattleScene extends Phaser.Scene {
             }
 
             const card = this.uiManager.createRewardCard(
-                rarity === 'legendary' ? 'legendary' : (rarity === 'epic' ? 'epic' : 'buff'),
+                rarity === 'mythic' ? 'mythic' : (rarity === 'legendary' ? 'legendary' : (rarity === 'epic' ? 'epic' : 'buff')),
                 buff.id,
                 `
                     <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
@@ -2099,27 +2155,34 @@ export class BattleScene extends Phaser.Scene {
             }
         }
 
-        // Magic buffs are only added to the array here; effects applied during create()
+        // Apply magic buff effect
         const magicEffect = this.selectedRewards.magic.effectData;
         if (magicEffect) {
             this.uiManager.showFloatingText(`${magicEffect.name} Acquired!`, 400, 200, '#A68966');
 
+            // Fire the effect immediately for one-time effects like Mana Surge
+            if (magicEffect.effect) {
+                magicEffect.effect();
+            }
+
             if (magicEffect.buffType) {
-                const existingBuff = this.magicBuffs.find(b => b.type === magicEffect.buffType);
-                if (existingBuff && magicEffect.buffType === 'manaCost') {
-                    // Flat addition for mana cost reduction (capped at 0.8 = 80%)
-                    existingBuff.value = Math.min(0.8, existingBuff.value + magicEffect.buffValue);
-                } else if (existingBuff && magicEffect.buffType === 'maxMana') {
-                    existingBuff.value += magicEffect.buffValue;
-                } else if (existingBuff) {
-                    existingBuff.value += magicEffect.buffValue;
+                // Don't store one-time effects in the persistent buff list
+                if (magicEffect.buffType === 'manaRestore') {
+                    // Already fired effect() above, don't persist
                 } else {
-                    this.magicBuffs.push({
-                        type: magicEffect.buffType,
-                        value: magicEffect.buffValue,
-                        name: magicEffect.name,
-                        icon: magicEffect.icon
-                    });
+                    const existingBuff = this.magicBuffs.find(b => b.type === magicEffect.buffType);
+                    if (existingBuff && magicEffect.buffType === 'manaCost') {
+                        existingBuff.value = Math.min(0.8, existingBuff.value + magicEffect.buffValue);
+                    } else if (existingBuff) {
+                        existingBuff.value += magicEffect.buffValue;
+                    } else {
+                        this.magicBuffs.push({
+                            type: magicEffect.buffType,
+                            value: magicEffect.buffValue,
+                            name: magicEffect.name,
+                            icon: magicEffect.icon
+                        });
+                    }
                 }
                 this.uiManager.updateMagicBuffsDisplay();
             }
