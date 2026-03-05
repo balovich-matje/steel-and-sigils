@@ -22,6 +22,7 @@ The game revolves around turn-based tactical battles. Key mechanics include:
 *   **Placement Phase:** Before the battle, players strategically place their units on the battlefield.
 *   **Turn-Based Combat:** Units take turns based on their initiative, moving and attacking according to their stats and abilities.
 *   **Resource Management:** Mana is used to cast spells, which can affect the battlefield or individual units.
+*   **Perks and Upgrades:** Post-battle rewards introduce a rarity tier scaling from Common > Epic > Legendary > Mythic. Certain heroes feature uniquely tailored mechanics (like Paladin's Divine Retribution or Sorcerer's Arcane Pierce path logic).
 *   **Victory Conditions:** The game ends when one player eliminates all of the opponent's units. In PVP, the first to win 6 rounds (5 PVE + 1 PVP) is victorious.
 
 ## Key Architecture and Variables

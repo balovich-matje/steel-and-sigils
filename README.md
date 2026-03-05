@@ -1,4 +1,4 @@
-# ⚔️ Steel and Sigils v0.54
+# ⚔️ Steel and Sigils v0.69
 
 A browser-based turn-based tactical combat game inspired by Heroes of Might and Magic 5.
 
@@ -57,14 +57,24 @@ A browser-based turn-based tactical combat game inspired by Heroes of Might and 
 
 ### Legendary Powers ⭐
 
-After victory, there's a 50% chance to roll a **Legendary Power** in place of a regular buff. These can only be applied to units that don't already have them:
+After victory, there's a chance to roll a **Legendary Power** in place of a regular buff. These can only be applied to units that don't already have them:
 
 | Unit | Legendary Power | Effect |
 |------|-----------------|--------|
 | 🪓 Berserker | **Blood Frenzy** 🩸 | Strikes 2 times per attack |
 | 🛡️ Paladin | **Divine Wrath** ⚡ | 3x3 cleave attack (100% main target, 50% to adjacent), +40 damage |
 | 🎯 Ranger | **Ricochet Shot** 🏹 | Arrows bounce to nearby targets within 2 tiles (50% dmg), +40 damage |
-| 🧙 Wizard | **Arcane Pierce** 🔮 | 20 range, shots pierce through all enemies in line |
+| 🔮 Sorcerer | **Arcane Pierce** 🔮 | 999 range, shots pierce through all enemies in line |
+| 🗡️ Rogue | **Shadow Strike** 🗡️ | +100% backstab damage |
+
+### Mythic Powers ☄️
+
+Mythic powers are the pinnacle of unit enhancements, possessing an animated red glowing aura. 
+
+| Unit | Mythic Power | Effect |
+|------|-----------------|--------|
+| 🛡️ Paladin | **Divine Retribution** ⚔️ | Unlimited melee retaliation against melee attackers (double normal damage) |
+| 🔮 Sorcerer | **Arcane Focus** 🔥 | Consecutive casts of the same spell increase its damage by 50% |
 
 ### Spell System
 - **Mana**: 100 max, +1 base regen per turn (+1 per Wizard alive)
@@ -79,11 +89,13 @@ Magic buffs can be acquired from victory rewards:
 |------|--------|
 | **Eternal Magic** ♾️ | Spell buffs (Haste, Shield, Bless, Regenerate) never expire |
 | **Mass Enchantment** 🌟 | Buff spells target your entire army at once |
-| **Mana Flow** 🌊 | +2 mana regen per turn |
-| **Arcane Power** 🔮 | +20% spell damage |
+| **Mana Flow** 🌊 | +2 base mana regen |
+| **Arcane Power** 🔮 | +25% spell damage |
 | **Efficient Casting** ⚡ | -20% mana cost |
 | **Twin Cast** 🔄 | +1 spell per round (stackable) |
-| **Expanded Mana Pool** 💧 | +30 max mana |
+| **Expanded Mana Pool** 💧 | +50 max mana |
+| **Mana Surge** ✨ | fully restore missing mana instantly |
+| **Healing Surge** 💚 | +35% healing spell power |
 
 *Note: Having both Eternal Magic and Mass Enchantment means one buff spell permanently buffs your entire army!*
 
@@ -132,12 +144,17 @@ At the start of a PVE run, one of three enemy factions is randomly chosen. Enemi
 
 ### Unit Buffs (Victory Rewards)
 
-- **Veteran Training** ⚔️: +10 Damage
-- **Enhanced Toughness** 💪: +30 Max HP
-- **Greater Agility** 💨: +1 Movement
-- **Precision Strikes** 🎯: +5 Initiative & +5 Damage
-- **Ranged Training** 🏹: Gain Ranged Attack (Range 3)
-- **Legendary Status** ⭐: +20 HP, +5 DMG, +1 MOV
+Buffs now have specific rarity tiers (Common to Mythic):
+
+- **Veteran Training** ⚔️ (Common): +10 Damage
+- **Enhanced Toughness** 💪 (Common): +30 Max HP
+- **Greater Agility** 💨 (Common): +1 Movement
+- **Precision Strikes** 🎯 (Common): +5 Initiative & +5 Damage
+- **Ranged Training** 🏹 (Common): Gain Ranged Attack (Range 3)
+- **Champion's Favor** ⭐ (Epic): +20 HP, +5 DMG, +1 MOV
+- **Obsidian Armor** ⬛ (Epic): Max HP x2, Movement -2
+- **Glass Cannon** 💥 (Epic): Double damage, half max HP
+- **Temporal Shift** ⏳ (Epic): 2 actions per turn, half damage
 
 ## 🎨 Visual Style
 
