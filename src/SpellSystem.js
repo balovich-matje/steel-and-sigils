@@ -105,14 +105,16 @@ export class SpellSystem {
         }
     }
 
-    getSpellDamage(basePower) {
+    getSpellDamage(basePower, ignoreSorcererPassive = false) {
         let multiplier = this.scene.spellPowerMultiplier || 1;
 
         // Check for Sorcerer passive
-        const playerUnits = this.scene.unitManager.getPlayerUnits();
-        const sorcererCount = playerUnits.filter(u => u.type === 'SORCERER' && u.health > 0).length;
-        if (sorcererCount > 0) {
-            multiplier += sorcererCount * 0.5;
+        if (!ignoreSorcererPassive) {
+            const playerUnits = this.scene.unitManager.getPlayerUnits();
+            const sorcererCount = playerUnits.filter(u => u.type === 'SORCERER' && u.health > 0).length;
+            if (sorcererCount > 0) {
+                multiplier += sorcererCount * 0.5;
+            }
         }
 
         // Check for Sorcerer Arcane Focus mythic perk
@@ -216,7 +218,7 @@ export class SpellSystem {
         this.clearSpell();
     }
 
-    executeAoEDamage(spell, centerX, centerY, radius) {
+    executeAoEDamage(spell, centerX, centerY, radius, ignoreSorcererPassive = false) {
         const targets = [];
 
         for (let dy = -radius; dy <= radius; dy++) {
@@ -237,7 +239,7 @@ export class SpellSystem {
             this.createExplosionEffect(centerX, centerY, radius);
         }
 
-        const damage = this.getSpellDamage(spell.power);
+        const damage = this.getSpellDamage(spell.power, ignoreSorcererPassive);
         for (const unit of targets) {
             this.scene.time.delayedCall(200, () => {
                 unit.takeSpellDamage(damage);

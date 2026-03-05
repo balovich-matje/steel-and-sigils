@@ -46,12 +46,12 @@ const UNIT_TYPES = {
         rangedRange: 4,
         initiative: 10,
         isPlayer: true,
-        cost: 400,
+        cost: 500,
         passive: {
             name: 'Arcane Channeling',
-            description: 'Each Wizard increases mana regen by +1 per turn',
+            description: 'Each Wizard increases mana regen by +2 per turn',
             effect: 'manaRegen',
-            value: 1
+            value: 2
         }
     },
     PALADIN: {

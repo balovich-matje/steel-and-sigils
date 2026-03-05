@@ -266,6 +266,7 @@ export class Unit {
         this.hasAttacked = false;
         this.hasHealed = false;
         this.hasPulled = false;
+        this.hasCastFireball = false;
 
         // Store starting position for Rogue's hit-and-run
         if (this.type === 'ROGUE' || this.type === 'ORC_ROGUE' || this.type === 'LOOT_GOBLIN') {

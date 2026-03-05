@@ -295,6 +295,11 @@ export class BattleScene extends Phaser.Scene {
             this.uiManager.showFloatingText('Select target to Pull', 400, 300, '#8B5A2B');
             document.body.style.cursor = 'crosshair';
         }
+        else if (unit.type === 'SORCERER' && !unit.hasCastFireball) {
+            this.activeUnitAbility = 'SORCERER_FIREBALL';
+            this.uiManager.showFloatingText('Select target for Fireball', 400, 300, '#FF4500');
+            document.body.style.cursor = 'crosshair';
+        }
     }
 
     // Process unit abilities
@@ -331,6 +336,18 @@ export class BattleScene extends Phaser.Scene {
             // (Implementation for Octo pull can be added here or kept as is in Octo's AI)
             this.activeUnitAbility = null;
             document.body.style.cursor = 'default';
+        }
+        else if (this.activeUnitAbility === 'SORCERER_FIREBALL') {
+            // Sorcerer Fireball: cast fireball without the 50% passive boost
+            const spell = SPELLS.fireball;
+            this.spellSystem.executeAoEDamage(spell, gridX, gridY, 1, true); // true to ignore passive
+
+            // End ability mode
+            unit.hasCastFireball = true;
+            this.activeUnitAbility = null;
+            document.body.style.cursor = 'default';
+            this.gridSystem.highlightValidMoves(unit);
+            this.uiManager.updateUnitInfo(unit);
         }
     }
 
@@ -487,7 +504,7 @@ export class BattleScene extends Phaser.Scene {
     regenerateMana() {
         const wizardCount = this.unitManager.getPlayerUnits().filter(u => u.type === 'WIZARD').length;
         this.baseManaRegen = this.baseManaRegen || 1; // Default to 1
-        const totalRegen = this.baseManaRegen + wizardCount;
+        const totalRegen = this.baseManaRegen + (wizardCount * 2);
 
         if (this.mana < this.maxMana) {
             this.mana = Math.min(this.maxMana, this.mana + totalRegen);
@@ -496,7 +513,7 @@ export class BattleScene extends Phaser.Scene {
 
         if (totalRegen > this.baseManaRegen) {
             this.uiManager.showFloatingText(
-                `+${totalRegen} Mana (${this.baseManaRegen} + ${wizardCount} from Wizards)`,
+                `+${totalRegen} Mana (${this.baseManaRegen} + ${wizardCount * 2} from Wizards)`,
                 320, 50, '#4A729E'
             );
         }
@@ -1817,11 +1834,8 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        // Sorcerer mythic requires the unit to have Sorcerer Legendary (Placeholder, assuming we just check if it's there or give it to them if they have none for now)
-        // Wait, Sorcerer doesn't have a legendary yet. The prompt specifies: "acquired for a unit that already owns a legendary perk". But we have no Sorcerer legendary!
-        // We will assume that they must have some generic legendary/epic perk or we will just make it available if they are a Sorcerer since Sorcerer's only get Epic standard buffs right now
-        // Let's restrict it to if the Sorcerer has at least one epic buff? Actually standard legendary perks didn't exist for sorcerer yet. I will check for 'hasArcaneFocus' logic to prevent dupes.
-        if (playerUnits.some(u => u.type === 'SORCERER') && !hasProperty('SORCERER', 'hasArcaneFocus')) {
+        // Sorcerer mythic requires the unit to have Sorcerer Legendary `hasPiercing`
+        if (playerUnits.some(u => u.type === 'SORCERER') && hasProperty('SORCERER', 'hasPiercing') && !hasProperty('SORCERER', 'hasArcaneFocus')) {
             // Note: If you want this to STRICTLY require a legendary perk first, we'd have to create a Sorcerer legendary perk. For now we just make them eligible if they exist.
             availableMythicBuffs.push({
                 id: 'mythic_arcane_focus',
