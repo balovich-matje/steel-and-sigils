@@ -2,7 +2,7 @@
 // SCENE MANAGER - Phaser Scenes
 // ============================================
 
-import { CONFIG, SPELLS } from './GameConfig.js';
+import { CONFIG, SPELLS, STAGES } from './GameConfig.js';
 
 // Note: UNIT_TYPES is available globally from units.js (loaded as script tag)
 import { UnitManager, TurnSystem } from './EntityManager.js';
@@ -42,7 +42,7 @@ export class BattleScene extends Phaser.Scene {
         this.spellHotkeyListeners = [];
         this.combatLog = [];
         this.combatLogOpen = false;
-
+        this.currentStage = null;
     }
 
     preload() {
@@ -76,12 +76,27 @@ export class BattleScene extends Phaser.Scene {
     create(data) {
         document.getElementById('ui-panel').classList.remove('hidden');
         // Initialize systems
-        this.gridSystem = new GridSystem(this);
         this.unitManager = new UnitManager(this);
         this.turnSystem = new TurnSystem(this);
         this.spellSystem = new SpellSystem(this);
         this.uiManager = new UIManager(this);
 
+        // Determine stage for this run
+        if (data && data.stageId) {
+            this.currentStage = STAGES[data.stageId];
+        } else {
+            // Default to forest or random choice if starting fresh (though usually randomizer is in SceneManager)
+            this.currentStage = STAGES.forest;
+        }
+
+        // Initialize grid with stage dimensions
+        this.gridSystem = new GridSystem(this, this.currentStage.width, this.currentStage.height);
+        this.gridSystem.create();
+
+        // Generate obstacles if applicable
+        if (this.currentStage.hasObstacles) {
+            this.generateObstacles();
+        }
 
         // Track battle number for scaling
         if (data && data.battleNumber) {
@@ -475,34 +490,97 @@ export class BattleScene extends Phaser.Scene {
         }
     }
 
-    getEnemySpawnPositions() {
-        // Start from the right edge and look for at least 6 available spots
-        // If the rightmost columns are blocked by players, expand the search to the left
-        const minRequired = 6;
-        const positions = [];
+    generateObstacles() {
+        if (!this.currentStage || !this.currentStage.hasObstacles) return;
 
-        // Search in columns from right to left, 2 at a time
-        for (let searchCol = CONFIG.GRID_WIDTH - 2; searchCol >= 0; searchCol -= 2) {
-            const currentPair = [];
-            for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
-                for (let x = Math.max(0, searchCol); x < Math.min(CONFIG.GRID_WIDTH, searchCol + 2); x++) {
-                    const existingUnit = this.unitManager.getUnitAt(x, y);
-                    if (!existingUnit) {
-                        currentPair.push({ x, y });
-                    }
+        // Fortress of the Fallen logic:
+        // Player area is 5x5 in the middle of 15x15 (x: 5-9, y: 5-9)
+        // Add a few impassable walls around the player starting area
+        // Rules: No more than 3 cells length, max 4 wall segments total.
+
+        const playerArea = this.currentStage.playerArea;
+        const wallSegments = 4;
+
+        for (let i = 0; i < wallSegments; i++) {
+            const isHorizontal = Math.random() > 0.5;
+            const length = Math.floor(Math.random() * 3) + 1;
+
+            // Pick a starting point near the perimeter of the player area
+            let startX, startY;
+            const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+
+            if (side === 0) { // Top
+                startX = playerArea.x1 + Math.floor(Math.random() * (playerArea.x2 - playerArea.x1));
+                startY = playerArea.y1 - 1;
+            } else if (side === 1) { // Right
+                startX = playerArea.x2;
+                startY = playerArea.y1 + Math.floor(Math.random() * (playerArea.y2 - playerArea.y1));
+            } else if (side === 2) { // Bottom
+                startX = playerArea.x1 + Math.floor(Math.random() * (playerArea.x2 - playerArea.x1));
+                startY = playerArea.y2;
+            } else { // Left
+                startX = playerArea.x1 - 1;
+                startY = playerArea.y1 + Math.floor(Math.random() * (playerArea.y2 - playerArea.y1));
+            }
+
+            for (let j = 0; j < length; j++) {
+                const wallX = isHorizontal ? startX + j : startX;
+                const wallY = isHorizontal ? startY : startY + j;
+
+                // Stay within bounds and don't overwrite units (though units aren't spawned yet)
+                if (wallX >= 0 && wallX < this.gridSystem.width && wallY >= 0 && wallY < this.gridSystem.height) {
+                    this.gridSystem.addObstacle(wallX, wallY);
                 }
             }
+        }
+    }
 
-            // Randomize this pair of columns
-            for (let i = currentPair.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [currentPair[i], currentPair[j]] = [currentPair[j], currentPair[i]];
+    getEnemySpawnPositions() {
+        const positions = [];
+
+        if (this.currentStage.spawnLogic === 'perimeter') {
+            const width = this.currentStage.width;
+            const height = this.currentStage.height;
+            const pSize = 2; // Perimeter depth
+
+            // Top area
+            for (let y = 0; y < pSize; y++) {
+                for (let x = 0; x < width; x++) {
+                    positions.push({ x, y });
+                }
             }
+            // Bottom area
+            for (let y = height - pSize; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    positions.push({ x, y });
+                }
+            }
+            // Left area (excluding corners already added)
+            for (let y = pSize; y < height - pSize; y++) {
+                for (let x = 0; x < pSize; x++) {
+                    positions.push({ x, y });
+                }
+            }
+            // Right area (excluding corners already added)
+            for (let y = pSize; y < height - pSize; y++) {
+                for (let x = width - pSize; x < width; x++) {
+                    positions.push({ x, y });
+                }
+            }
+        } else {
+            // Default Forest spawning (right side columns)
+            const searchWidth = 2;
+            for (let x = this.gridSystem.width - searchWidth; x < this.gridSystem.width; x++) {
+                for (let y = 0; y < this.gridSystem.height; y++) {
+                    positions.push({ x, y });
+                }
+            }
+        }
 
-            positions.push(...currentPair);
-
-            // If we have enough positions to fill a wave, we can stop
-            if (positions.length >= minRequired) break;
+        // Shuffle positions
+        for (let i = positions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [positions[i], positions[j]] = [positions[j], positions[i]];
         }
 
         return positions;
@@ -2246,14 +2324,22 @@ export class PreGameScene extends Phaser.Scene {
         this.placedUnits = [];
         this.placementMode = false;
         this.selectedPlacementUnit = null;
-
+        this.currentStage = STAGES.forest; // Default
     }
 
     getStartingPoints() {
         return 1000;
     }
 
-    create() {
+    create(data) {
+        // Randomly select stage if not provided (e.g., first battle)
+        if (data && data.stageId) {
+            this.currentStage = STAGES[data.stageId];
+        } else {
+            const stageKeys = Object.keys(STAGES);
+            this.currentStage = STAGES[stageKeys[Math.floor(Math.random() * stageKeys.length)]];
+        }
+
         this.resetUnitCounts();
         this.showArmySelection();
         this.gridGraphics = this.add.graphics();
@@ -2264,14 +2350,13 @@ export class PreGameScene extends Phaser.Scene {
     drawGrid() {
         this.gridGraphics.clear();
 
-        // Determine placement zone (host=left columns 0-1, guest=right columns 8-9)
-        let placementStartX = 0;
-        let placementEndX = 2;
+        const gridWidth = this.currentStage.width;
+        const gridHeight = this.currentStage.height;
+        const { x1: placementStartX, x2: placementEndX, y1: placementStartY, y2: placementEndY } = this.currentStage.playerArea;
 
-
-        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
-            for (let x = 0; x < CONFIG.GRID_WIDTH; x++) {
-                const isPlacementZone = x >= placementStartX && x < placementEndX;
+        for (let y = 0; y < gridHeight; y++) {
+            for (let x = 0; x < gridWidth; x++) {
+                const isPlacementZone = x >= placementStartX && x < placementEndX && y >= placementStartY && y < placementEndY;
                 const baseColor = (x + y) % 2 === 0 ? CONFIG.COLORS.GRASS : CONFIG.COLORS.GRASS_DARK;
                 // Make placement zone brighter
                 const alpha = isPlacementZone ? 0.6 : 0.2;
@@ -2335,10 +2420,9 @@ export class PreGameScene extends Phaser.Scene {
         this.placedUnits = [];
         this.selectedPlacementUnit = null;
 
-        // Determine placement zone
-        let placementStartX = 0;
-        let placementEndX = 2;
-        let initialPlacementX = 0;
+        const gridHeight = this.currentStage.height;
+        const { x1: placementStartX, x2: placementEndX, y1: placementStartY, y2: placementEndY } = this.currentStage.playerArea;
+        let initialPlacementX = placementStartX;
 
 
         // Auto-place units
@@ -2346,7 +2430,7 @@ export class PreGameScene extends Phaser.Scene {
             for (let i = 0; i < count; i++) {
                 // Find first available Y in the initial column
                 let spawnY = -1;
-                for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+                for (let y = placementStartY; y < placementEndY; y++) {
                     const isOccupied = this.placedUnits.some(u => u.x === initialPlacementX && u.y === y);
                     if (!isOccupied) {
                         spawnY = y;
@@ -2374,7 +2458,7 @@ export class PreGameScene extends Phaser.Scene {
             const gridX = Math.floor(pointer.x / CONFIG.TILE_SIZE);
             const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
 
-            const inPlacementZone = gridX >= placementStartX && gridX < placementEndX;
+            const inPlacementZone = gridX >= placementStartX && gridX < placementEndX && gridY >= placementStartY && gridY < placementEndY;
             if (!inPlacementZone) {
                 if (this.selectedPlacementUnit) {
                     this.selectedPlacementUnit.sprite.setAlpha(1.0);
@@ -2422,7 +2506,7 @@ export class PreGameScene extends Phaser.Scene {
             const gridY = Math.floor(pointer.y / CONFIG.TILE_SIZE);
 
             if (gridX >= placementStartX && gridX < placementEndX &&
-                gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
+                gridY >= placementStartY && gridY < placementEndY) {
                 const isOccupied = this.placedUnits.some(u => u.x === gridX && u.y === gridY);
 
                 this.gridGraphics.fillStyle(isOccupied ? 0x9E4A4A : 0x6B8B5B, 0.5);
@@ -2439,14 +2523,11 @@ export class PreGameScene extends Phaser.Scene {
     randomizePlacement() {
         if (!this.placementMode || !this.placedUnits.length) return;
 
-        // Determine placement zone
-        let placementStartX = 0;
-        let placementEndX = 2;
-
+        const { x1: placementStartX, x2: placementEndX, y1: placementStartY, y2: placementEndY } = this.currentStage.playerArea;
 
         // Get all available cells in the zone
         const availableCells = [];
-        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+        for (let y = placementStartY; y < placementEndY; y++) {
             for (let x = placementStartX; x < placementEndX; x++) {
                 availableCells.push({ x, y });
             }
@@ -2490,8 +2571,8 @@ export class PreGameScene extends Phaser.Scene {
 
         this.scene.start('BattleScene', {
             placedUnits: finalPlacement,
-            battleNumber: 1
+            battleNumber: 1,
+            stageId: this.currentStage.id
         });
     }
-
 }

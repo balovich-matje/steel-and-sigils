@@ -9,20 +9,23 @@ import { SPELLS } from './GameConfig.js';
 // GRID SYSTEM
 // ============================================
 export class GridSystem {
-    constructor(scene) {
+    constructor(scene, width, height) {
         this.scene = scene;
+        this.width = width || CONFIG.GRID_WIDTH;
+        this.height = height || CONFIG.GRID_HEIGHT;
         this.tiles = [];
         this.highlightGraphics = null;
         this.aoePreviewGraphics = null;
         this.selectedUnit = null;
         this.validMoves = [];
+        this.obstacles = new Set(); // Store as "x,y" strings
     }
 
     create() {
         // Create tile graphics
-        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+        for (let y = 0; y < this.height; y++) {
             this.tiles[y] = [];
-            for (let x = 0; x < CONFIG.GRID_WIDTH; x++) {
+            for (let x = 0; x < this.width; x++) {
                 const color = (x + y) % 2 === 0 ? CONFIG.COLORS.GRASS : CONFIG.COLORS.GRASS_DARK;
                 const tile = this.scene.add.rectangle(
                     x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
@@ -161,11 +164,11 @@ export class GridSystem {
         let currY = unit.gridY + stepY;
 
         const path = [];
-        while (currX >= -0.5 && currX < CONFIG.GRID_WIDTH + 0.5 && currY >= -0.5 && currY < CONFIG.GRID_HEIGHT + 0.5) {
+        while (currX >= -0.5 && currX < this.width + 0.5 && currY >= -0.5 && currY < this.height + 0.5) {
             const gx = Math.round(currX);
             const gy = Math.round(currY);
 
-            if (gx >= 0 && gx < CONFIG.GRID_WIDTH && gy >= 0 && gy < CONFIG.GRID_HEIGHT) {
+            if (gx >= 0 && gx < this.width && gy >= 0 && gy < this.height) {
                 if (path.length === 0 || path[path.length - 1].x !== gx || path[path.length - 1].y !== gy) {
                     path.push({ x: gx, y: gy });
                 }
@@ -193,7 +196,7 @@ export class GridSystem {
                 const x = centerX + dx;
                 const y = centerY + dy;
 
-                if (x >= 0 && x < CONFIG.GRID_WIDTH && y >= 0 && y < CONFIG.GRID_HEIGHT) {
+                if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
                     const px = x * CONFIG.TILE_SIZE + 1;
                     const py = y * CONFIG.TILE_SIZE + 1;
                     this.aoePreviewGraphics.fillRect(px, py, CONFIG.TILE_SIZE - 2, CONFIG.TILE_SIZE - 2);
@@ -264,9 +267,10 @@ export class GridSystem {
                     ];
 
                     for (const n of neighbors) {
-                        if (n.x >= 0 && n.x <= CONFIG.GRID_WIDTH - bossSize &&
-                            n.y >= 0 && n.y <= CONFIG.GRID_HEIGHT - bossSize &&
-                            !visited.has(`${n.x},${n.y}`)) {
+                        if (n.x >= 0 && n.x <= this.width - bossSize &&
+                            n.y >= 0 && n.y <= this.height - bossSize &&
+                            !visited.has(`${n.x},${n.y}`) &&
+                            !this.isObstacle(n.x, n.y)) {
                             visited.add(`${n.x},${n.y}`);
                             queue.push({ x: n.x, y: n.y, dist: dist + 1 });
                         }
@@ -361,10 +365,10 @@ export class GridSystem {
     }
 
     isValidMoveAI(x, y) {
-        if (x < 0 || x >= CONFIG.GRID_WIDTH || y < 0 || y >= CONFIG.GRID_HEIGHT) {
+        if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
             return false;
         }
-        return !this.scene.unitManager.getUnitAt(x, y);
+        return !this.scene.unitManager.getUnitAt(x, y) && !this.isObstacle(x, y);
     }
 
     // Check if a position is valid for a unit of given size
@@ -373,8 +377,11 @@ export class GridSystem {
             for (let dx = 0; dx < bossSize; dx++) {
                 const checkX = x + dx;
                 const checkY = y + dy;
-                if (checkX < 0 || checkX >= CONFIG.GRID_WIDTH ||
-                    checkY < 0 || checkY >= CONFIG.GRID_HEIGHT) {
+                if (checkX < 0 || checkX >= this.width ||
+                    checkY < 0 || checkY >= this.height) {
+                    return false;
+                }
+                if (this.isObstacle(checkX, checkY)) {
                     return false;
                 }
                 if (this.scene.unitManager.getUnitAt(checkX, checkY)) {
@@ -383,5 +390,16 @@ export class GridSystem {
             }
         }
         return true;
+    }
+
+    addObstacle(x, y) {
+        this.obstacles.add(`${x},${y}`);
+        if (this.tiles[y] && this.tiles[y][x]) {
+            this.tiles[y][x].setFillStyle(CONFIG.COLORS.WALL);
+        }
+    }
+
+    isObstacle(x, y) {
+        return this.obstacles.has(`${x},${y}`);
     }
 }

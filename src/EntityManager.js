@@ -300,7 +300,7 @@ export class Unit {
             // Find available adjacent spots
             for (let y = this.gridY - 1; y <= this.gridY + this.bossSize; y++) {
                 for (let x = this.gridX - 1; x <= this.gridX + this.bossSize; x++) {
-                    if (x < 0 || x >= CONFIG.GRID_WIDTH || y < 0 || y >= CONFIG.GRID_HEIGHT) continue;
+                    if (x < 0 || x >= this.scene.gridSystem.width || y < 0 || y >= this.scene.gridSystem.height) continue;
                     if (this.scene.unitManager.isValidPlacement(x, y)) {
                         availablePositions.push({ x, y });
                     }
@@ -565,8 +565,12 @@ export class UnitManager {
                 const checkX = x + dx;
                 const checkY = y + dy;
                 // Check bounds
-                if (checkX < 0 || checkX >= CONFIG.GRID_WIDTH ||
-                    checkY < 0 || checkY >= CONFIG.GRID_HEIGHT) {
+                if (checkX < 0 || checkX >= this.scene.gridSystem.width ||
+                    checkY < 0 || checkY >= this.scene.gridSystem.height) {
+                    return false;
+                }
+                // Check obstacles
+                if (this.scene.gridSystem.isObstacle(checkX, checkY)) {
                     return false;
                 }
                 // Check if tile is occupied
@@ -766,84 +770,18 @@ export class TurnSystem {
             return;
         }
 
-        // Move towards player - use all available movement
-        let movesRemaining = unit.moveRange;
-        let totalMoves = 0;
+        // Move towards player - use A* pathfinding to find best path around obstacles
+        const path = this.findPath(unit, nearest.gridX, nearest.gridY);
 
-        while (movesRemaining > 0) {
-            const currentDist = this.getDistanceToUnit(unit, nearest);
+        if (path && path.length > 1) {
+            // Path[0] is current position, path[1] is next step
+            // Take up to moveRange steps
+            const stepsToTake = Math.min(unit.moveRange, path.length - 1);
 
-            if (currentDist === 1) {
-                break;
+            for (let i = 1; i <= stepsToTake; i++) {
+                const nextStep = path[i];
+                this.scene.moveUnitAI(unit, nextStep.x, nextStep.y);
             }
-
-            const dx = Math.sign(nearest.gridX - unit.gridX);
-            const dy = Math.sign(nearest.gridY - unit.gridY);
-
-            let moved = false;
-
-            // Try to move in both directions - prioritize the larger distance
-            const xDist = Math.abs(nearest.gridX - unit.gridX);
-            const yDist = Math.abs(nearest.gridY - unit.gridY);
-
-            if (xDist >= yDist && dx !== 0) {
-                // Try X first, then Y
-                const newX = unit.gridX + dx;
-                if (this.isValidMoveForUnit(unit, newX, unit.gridY)) {
-                    this.scene.moveUnitAI(unit, newX, unit.gridY);
-                    moved = true;
-                } else if (dy !== 0) {
-                    const newY = unit.gridY + dy;
-                    if (this.isValidMoveForUnit(unit, unit.gridX, newY)) {
-                        this.scene.moveUnitAI(unit, unit.gridX, newY);
-                        moved = true;
-                    }
-                }
-            } else if (dy !== 0) {
-                // Try Y first, then X
-                const newY = unit.gridY + dy;
-                if (this.isValidMoveForUnit(unit, unit.gridX, newY)) {
-                    this.scene.moveUnitAI(unit, unit.gridX, newY);
-                    moved = true;
-                } else if (dx !== 0) {
-                    const newX = unit.gridX + dx;
-                    if (this.isValidMoveForUnit(unit, newX, unit.gridY)) {
-                        this.scene.moveUnitAI(unit, newX, unit.gridY);
-                        moved = true;
-                    }
-                }
-            }
-
-            // If still not moved, try any valid direction as fallback
-            if (!moved) {
-                const directions = [
-                    { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
-                    { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
-                ];
-                // Shuffle directions for variety
-                directions.sort(() => 0.5 - Math.random());
-
-                for (const dir of directions) {
-                    const newX = unit.gridX + dir.dx;
-                    const newY = unit.gridY + dir.dy;
-                    if (this.isValidMoveForUnit(unit, newX, newY)) {
-                        // Only move if it gets us closer to target
-                        const newDist = Math.abs(nearest.gridX - newX) + Math.abs(nearest.gridY - newY);
-                        if (newDist < currentDist) {
-                            this.scene.moveUnitAI(unit, newX, newY);
-                            moved = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (!moved) {
-                break;
-            }
-
-            totalMoves++;
-            movesRemaining--;
         }
 
         // Mark unit as having moved after all movement is complete
@@ -984,8 +922,13 @@ export class TurnSystem {
                 const checkY = y + dy;
 
                 // Check bounds
-                if (checkX < 0 || checkX >= CONFIG.GRID_WIDTH ||
-                    checkY < 0 || checkY >= CONFIG.GRID_HEIGHT) {
+                if (checkX < 0 || checkX >= this.scene.gridSystem.width ||
+                    checkY < 0 || checkY >= this.scene.gridSystem.height) {
+                    return false;
+                }
+
+                // Check obstacles
+                if (this.scene.gridSystem.isObstacle(checkX, checkY)) {
                     return false;
                 }
 
@@ -997,6 +940,95 @@ export class TurnSystem {
             }
         }
         return true;
+    }
+
+    // A* Pathfinding implementation for AI
+    findPath(unit, targetX, targetY) {
+        const startX = unit.gridX;
+        const startY = unit.gridY;
+        const bossSize = unit.bossSize || 1;
+
+        // Open set contains the nodes to be evaluated
+        // Store as objects: {x, y, g, h, f, parent}
+        const openSet = [{ x: startX, y: startY, g: 0, h: this.heuristic(startX, startY, targetX, targetY), f: 0 }];
+        const closedSet = new Set();
+        const cameFrom = new Map();
+
+        openSet[0].f = openSet[0].g + openSet[0].h;
+
+        while (openSet.length > 0) {
+            // Get node with lowest f score
+            openSet.sort((a, b) => a.f - b.f);
+            const current = openSet.shift();
+
+            // If we're adjacent to the target, we've found a path
+            const dist = this.getDistanceToCoords(current.x, current.y, bossSize, targetX, targetY);
+            if (dist <= 1) {
+                return this.reconstructPath(cameFrom, current);
+            }
+
+            closedSet.add(`${current.x},${current.y}`);
+
+            const neighbors = [
+                { x: current.x + 1, y: current.y },
+                { x: current.x - 1, y: current.y },
+                { x: current.x, y: current.y + 1 },
+                { x: current.x, y: current.y - 1 }
+            ];
+
+            for (const neighbor of neighbors) {
+                if (closedSet.has(`${neighbor.x},${neighbor.y}`)) continue;
+
+                if (!this.isValidMoveForUnit(unit, neighbor.x, neighbor.y)) continue;
+
+                const tentativeG = current.g + 1;
+                let openNeighbor = openSet.find(n => n.x === neighbor.x && n.y === neighbor.y);
+
+                if (!openNeighbor) {
+                    openNeighbor = {
+                        x: neighbor.x,
+                        y: neighbor.y,
+                        g: tentativeG,
+                        h: this.heuristic(neighbor.x, neighbor.y, targetX, targetY),
+                        f: 0
+                    };
+                    openNeighbor.f = openNeighbor.g + openNeighbor.h;
+                    openSet.push(openNeighbor);
+                    cameFrom.set(`${neighbor.x},${neighbor.y}`, current);
+                } else if (tentativeG < openNeighbor.g) {
+                    openNeighbor.g = tentativeG;
+                    openNeighbor.f = openNeighbor.g + openNeighbor.h;
+                    cameFrom.set(`${neighbor.x},${neighbor.y}`, current);
+                }
+            }
+        }
+
+        return null; // No path found
+    }
+
+    heuristic(x1, y1, x2, y2) {
+        // Manhattan distance as heuristic
+        return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+    }
+
+    reconstructPath(cameFrom, current) {
+        const path = [current];
+        while (cameFrom.has(`${current.x},${current.y}`)) {
+            current = cameFrom.get(`${current.x},${current.y}`);
+            path.unshift(current);
+        }
+        return path;
+    }
+
+    getDistanceToCoords(fromX, fromY, bossSize, toX, toY) {
+        let minDist = Infinity;
+        for (let dy = 0; dy < bossSize; dy++) {
+            for (let dx = 0; dx < bossSize; dx++) {
+                const dist = Math.abs(toX - (fromX + dx)) + Math.abs(toY - (fromY + dy));
+                minDist = Math.min(minDist, dist);
+            }
+        }
+        return minDist;
     }
 
     // Orc Shaman King AI: Cast spells and keep distance

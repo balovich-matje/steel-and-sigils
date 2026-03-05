@@ -2,7 +2,7 @@
 // MAIN ENTRY POINT - Steel and Sigils
 // ============================================
 
-const GAME_VERSION = '0.76';
+const GAME_VERSION = '0.80';
 console.log(`Steel and Sigils v${GAME_VERSION}`);
 
 import { CONFIG } from './GameConfig.js';
@@ -13,8 +13,8 @@ import { BattleScene, PreGameScene } from './SceneManager.js';
 // Phaser Game Configuration
 const config = {
     type: Phaser.AUTO,
-    width: CONFIG.GRID_WIDTH * CONFIG.TILE_SIZE,
-    height: CONFIG.GRID_HEIGHT * CONFIG.TILE_SIZE,
+    width: 15 * CONFIG.TILE_SIZE,
+    height: 15 * CONFIG.TILE_SIZE,
     parent: 'game-container',
     backgroundColor: '#2d2d44',
     scene: [PreGameScene, BattleScene]

@@ -13,7 +13,28 @@ export const CONFIG = {
         HIGHLIGHT_ATTACK: 0xd94a4a,
         HIGHLIGHT_SELECTED: 0xffd700,
         PLAYER_SIDE: 0x4a7cd9,
-        ENEMY_SIDE: 0xd94a4a
+        ENEMY_SIDE: 0xd94a4a,
+        WALL: 0x5a5a5a
+    }
+};
+
+export const STAGES = {
+    forest: {
+        id: 'forest',
+        name: 'Whispering Woods',
+        width: 10,
+        height: 8,
+        playerArea: { x1: 0, x2: 2, y1: 0, y2: 8 },
+        hasObstacles: false
+    },
+    ruins: {
+        id: 'ruins',
+        name: 'Fortress of the Fallen',
+        width: 15,
+        height: 15,
+        playerArea: { x1: 5, x2: 10, y1: 5, y2: 10 },
+        hasObstacles: true,
+        spawnLogic: 'perimeter'
     }
 };
 
