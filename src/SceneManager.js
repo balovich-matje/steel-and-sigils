@@ -407,7 +407,8 @@ export class BattleScene extends Phaser.Scene {
         const validPositions = availablePositions.filter(pos => {
             const template = UNIT_TYPES[selectedBoss];
             const size = template.bossSize || 1;
-            return pos.x <= CONFIG.GRID_WIDTH - size && pos.y <= CONFIG.GRID_HEIGHT - size;
+            // Check if the entire boss area is within bounds and unoccupied
+            return this.unitManager.isValidPlacement(pos.x, pos.y, size);
         });
 
         if (validPositions.length === 0) {
@@ -451,22 +452,35 @@ export class BattleScene extends Phaser.Scene {
     }
 
     getEnemySpawnPositions() {
+        // Start from the right edge and look for at least 6 available spots
+        // If the rightmost columns are blocked by players, expand the search to the left
+        const minRequired = 6;
         const positions = [];
-        // Use the 2 rightmost columns for enemy spawns
-        for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
-            for (let x = CONFIG.GRID_WIDTH - 2; x < CONFIG.GRID_WIDTH; x++) {
-                // Check if position is occupied by a player unit
-                const existingUnit = this.unitManager.getUnitAt(x, y);
-                if (!existingUnit) {
-                    positions.push({ x, y });
+
+        // Search in columns from right to left, 2 at a time
+        for (let searchCol = CONFIG.GRID_WIDTH - 2; searchCol >= 0; searchCol -= 2) {
+            const currentPair = [];
+            for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
+                for (let x = Math.max(0, searchCol); x < Math.min(CONFIG.GRID_WIDTH, searchCol + 2); x++) {
+                    const existingUnit = this.unitManager.getUnitAt(x, y);
+                    if (!existingUnit) {
+                        currentPair.push({ x, y });
+                    }
                 }
             }
+
+            // Randomize this pair of columns
+            for (let i = currentPair.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [currentPair[i], currentPair[j]] = [currentPair[j], currentPair[i]];
+            }
+
+            positions.push(...currentPair);
+
+            // If we have enough positions to fill a wave, we can stop
+            if (positions.length >= minRequired) break;
         }
-        // Shuffle the positions to ensure random placement
-        for (let i = positions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [positions[i], positions[j]] = [positions[j], positions[i]];
-        }
+
         return positions;
     }
 
