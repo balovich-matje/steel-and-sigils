@@ -75,6 +75,7 @@ export class BattleScene extends Phaser.Scene {
 
     create(data) {
         document.getElementById('ui-panel').classList.remove('hidden');
+        document.getElementById('initiative-bar').classList.remove('hidden');
         // Initialize systems
         this.unitManager = new UnitManager(this);
         this.turnSystem = new TurnSystem(this);
@@ -2339,6 +2340,8 @@ export class PreGameScene extends Phaser.Scene {
             const stageKeys = Object.keys(STAGES);
             this.currentStage = STAGES[stageKeys[Math.floor(Math.random() * stageKeys.length)]];
         }
+
+        document.getElementById('initiative-bar').classList.add('hidden');
 
         this.resetUnitCounts();
         this.showArmySelection();
