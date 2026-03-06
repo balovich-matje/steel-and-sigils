@@ -151,6 +151,8 @@ export class BattleScene extends Phaser.Scene {
         if (data && data.placedUnits) {
             for (const unitData of data.placedUnits) {
                 const unit = this.unitManager.addUnit(unitData.type, unitData.x, unitData.y);
+                if (!unit) continue; // Skip if unit couldn't be created
+                
                 // Apply permanent stat modifiers if they exist
                 if (unitData.statModifiers) {
                     unit.statModifiers = unitData.statModifiers;
