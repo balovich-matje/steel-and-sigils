@@ -11,14 +11,19 @@ import { BattleScene, PreGameScene } from './SceneManager.js';
 // Note: UNIT_TYPES is available globally from units.js (loaded as script tag before this module)
 
 // Phaser Game Configuration
-// Fixed canvas size - maps stretch to fill
+// Responsive scaling - maps stretch to fill viewport
 const config = {
     type: Phaser.AUTO,
-    width: 640,  // 10 tiles * 64px
-    height: 512, // 8 tiles * 64px
+    width: 640,  // Base width - 10 tiles * 64px
+    height: 512, // Base height - 8 tiles * 64px
     parent: 'game-container',
     backgroundColor: '#1A1C1E',
-    scene: [PreGameScene, BattleScene]
+    scene: [PreGameScene, BattleScene],
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        parent: 'game-container'
+    }
 };
 
 // Global game reference

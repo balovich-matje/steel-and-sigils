@@ -13,16 +13,79 @@
 </head>
 
 <body>
-    <h1>⚔️ Steel and Sigils 🛡️</h1>
-
-    <!-- Initiative Bar (HOMM5 style) -->
+    <!-- Initiative Bar (HOMM5 style - now horizontal at top) -->
     <div id="initiative-bar" class="hidden">
         <div id="initiative-queue"></div>
     </div>
 
-    <div id="game-container"></div>
+    <!-- Main Game Layout -->
+    <div id="game-layout">
+        <!-- Left Side Panel -->
+        <div id="left-panel" class="hidden">
+            <!-- Mana Display -->
+            <div class="panel-section">
+                <div class="panel-title">🔮 Hero</div>
+                <div class="mana-display" id="mana-display">
+                    💧 Mana: <span id="mana-current">100</span>/<span id="mana-max">100</span>
+                </div>
+            </div>
 
-    <!-- Placement Bar (shown during placement phase, above UI panel) -->
+            <!-- Spell Book Button -->
+            <div class="panel-section">
+                <button id="spellbook-btn" class="spell-button" onclick="gameScene.openSpellBook()">
+                    📖 <span style="color: #FFD700;">S</span>pell Book
+                </button>
+            </div>
+
+            <!-- Magic Buffs Panel -->
+            <div class="panel-section flex-grow">
+                <div class="panel-title">✨ Magic Buffs</div>
+                <div id="magic-buffs-list">
+                    <div style="color: #8B7355; font-style: italic; text-align: center;">No active buffs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Container (Center) -->
+        <div id="game-container"></div>
+
+        <!-- Right Side Panel -->
+        <div id="right-panel" class="hidden">
+            <!-- Unit Info Panel -->
+            <div class="panel-section">
+                <div class="panel-title">⚔️ Unit Info</div>
+                <div id="unit-info">
+                    <em>Select a unit</em>
+                </div>
+            </div>
+
+            <!-- Unit Abilities -->
+            <div class="panel-section">
+                <div class="panel-title">⚡ Abilities</div>
+                <button id="unit-ability-btn" class="spell-button" onclick="gameScene.useUnitAbility()" disabled
+                    style="filter: grayscale(100%); opacity: 0.5; background: #3c3c3c; border-color: #555; color: #888; width: 100%;">
+                    ⭐ <span id="unit-ability-name"><span style="color: #FFD700;">U</span>nique ability</span>
+                </button>
+            </div>
+
+            <!-- End Turn Button -->
+            <div class="panel-section">
+                <button class="spell-button" onclick="gameScene.endTurn()" style="width: 100%;">
+                    ⏹️ <span style="color: #FFD700;">E</span>nd Turn
+                </button>
+            </div>
+
+            <!-- Combat Log Button (at bottom) -->
+            <div class="panel-section" style="margin-top: auto;">
+                <button id="combat-log-btn" class="spell-button" onclick="gameScene.toggleCombatLog()" title="Combat Log"
+                    style="width: 100%;">
+                    📜 Combat Log
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Placement Bar (shown during placement phase) -->
     <div id="placement-bar" class="hidden">
         <div class="placement-title">📍 Army Placement</div>
         <div class="action-divider"></div>
@@ -32,35 +95,6 @@
             <button id="confirm-placement" class="spell-button" onclick="gameScene.confirmPlacement()">Start
                 Battle</button>
         </div>
-    </div>
-
-    <!-- UI Panel -->
-    <div id="ui-panel">
-        <div class="action-section">
-            <strong style="color: #A68966;">Hero:</strong>
-            <div class="mana-display" id="mana-display">
-                💧 Mana: <span id="mana-current">100</span>/<span id="mana-max">100</span>
-            </div>
-            <button id="spellbook-btn" class="spell-button" onclick="gameScene.openSpellBook()">
-                📖 <span style="color: #FFD700;">S</span>pell Book
-            </button>
-        </div>
-        <div class="action-divider"></div>
-        <div class="action-section">
-            <strong style="color: #A68966;">Unit:</strong>
-            <button id="unit-ability-btn" class="spell-button" onclick="gameScene.useUnitAbility()" disabled
-                style="filter: grayscale(100%); opacity: 0.5; background: #3c3c3c; border-color: #555; color: #888;">
-                ⭐ <span id="unit-ability-name"><span style="color: #FFD700;">U</span>nique ability</span>
-            </button>
-            <button class="spell-button" onclick="gameScene.endTurn()">
-                ⏹️ <span style="color: #FFD700;">E</span>nd Turn
-            </button>
-        </div>
-        <div class="action-divider"></div>
-        <button id="combat-log-btn" class="spell-button" onclick="gameScene.toggleCombatLog()" title="Combat Log"
-            style="padding: 6px 10px; font-size: 16px; min-width: auto;">
-            📜
-        </button>
     </div>
 
     <!-- Combat Log Modal -->
@@ -82,13 +116,9 @@
         "></div>
     </div>
 
-    <!-- Unit Info Panel (positioned on right side) -->
-    <div class="unit-info" id="unit-info">
-        <em>Select a unit to view details</em>
-    </div>
-
     <!-- Pre-game Army Selection -->
     <div id="pregame-screen" class="victory-screen">
+        <h1 style="color: #A68966; margin-bottom: 10px;">⚔️ Steel and Sigils 🛡️</h1>
         <h2 style="color: #A68966;">⚔️ Army Selection ⚔️</h2>
 
         <!-- Stage Selection -->
@@ -403,18 +433,6 @@
             onclick="gameScene.confirmRewards()" disabled>
             Confirm Choices (0/3)
         </button>
-    </div>
-
-    <!-- Magic Buffs Panel (moved to bottom left to avoid overlap with unit-info) -->
-    <div id="magic-buffs-panel"
-        style="position: fixed; bottom: 20px; left: 20px; background: #2D241E; border: 2px solid #A68966; border-radius: 4px; padding: 12px; min-width: 180px; max-width: 220px; color: #E3D5B8; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">
-        <div
-            style="font-weight: bold; color: #A68966; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #5D4E3E; padding-bottom: 5px;">
-            🔮 Magic Buffs
-        </div>
-        <div id="magic-buffs-list" style="font-size: 12px;">
-            <div style="color: #8B7355; font-style: italic; text-align: center;">No active buffs</div>
-        </div>
     </div>
 
     <!-- Spellbook Modal -->

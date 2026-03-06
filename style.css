@@ -16,55 +16,137 @@
     box-sizing: border-box;
 }
 
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     background: #1A1C1E;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
     color: #E3D5B8;
 }
 
-h1 {
-    color: #A68966;
-    text-shadow: 2px 2px 4px #000;
-    margin-bottom: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
+/* ============================================
+   MAIN GAME LAYOUT
+   ============================================ */
+
+#game-layout {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
 }
 
-/* Initiative Bar (HOMM5 style) */
-#initiative-bar {
+/* Left and Right Side Panels */
+#left-panel,
+#right-panel {
+    width: 200px;
+    min-width: 200px;
     background: #2D241E;
     border: 2px solid #A68966;
-    border-radius: 4px;
-    padding: 8px 12px;
-    margin-bottom: 10px;
     display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+    overflow-y: auto;
+    z-index: 100;
 }
 
-#initiative-bar .initiative-label {
-    color: #A68966;
+#left-panel {
+    border-left: none;
+    border-top: none;
+    border-bottom: none;
+}
+
+#right-panel {
+    border-right: none;
+    border-top: none;
+    border-bottom: none;
+}
+
+/* Panel Sections */
+.panel-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.panel-section.flex-grow {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.panel-title {
     font-weight: bold;
-    font-size: 12px;
+    color: #A68966;
+    font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    padding: 5px 0;
-    border-right: 1px solid #5D4E3E;
-    padding-right: 8px;
+    border-bottom: 1px solid #5D4E3E;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+/* Game Container (Center) */
+#game-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1A1C1E;
+    overflow: hidden;
+    position: relative;
+}
+
+#game-container canvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* ============================================
+   INITIATIVE BAR (Top horizontal)
+   ============================================ */
+
+#initiative-bar {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2D241E;
+    border: 2px solid #A68966;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    z-index: 200;
+    max-width: calc(100vw - 440px);
 }
 
 #initiative-queue {
     display: flex;
     gap: 6px;
     flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #5D4E3E #2D241E;
+}
+
+#initiative-queue::-webkit-scrollbar {
+    height: 6px;
+}
+
+#initiative-queue::-webkit-scrollbar-track {
+    background: #2D241E;
+}
+
+#initiative-queue::-webkit-scrollbar-thumb {
+    background: #5D4E3E;
+    border-radius: 3px;
 }
 
 .initiative-unit {
@@ -79,6 +161,7 @@ h1 {
     justify-content: center;
     position: relative;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .initiative-unit.active {
@@ -104,63 +187,32 @@ h1 {
     font-weight: bold;
 }
 
-#game-container {
-    border: 3px solid #2D241E;
-    border-radius: 4px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
-}
+/* ============================================
+   UI PANELS & BUTTONS
+   ============================================ */
 
-/* UI Panel - Main Controls */
-#ui-panel {
-    margin-top: 15px;
-    padding: 12px 20px;
-    background: #2D241E;
-    border: 2px solid #A68966;
+/* Mana Display */
+.mana-display {
+    padding: 8px 12px;
+    background: #2B527E;
+    border: 2px solid #4A729E;
     border-radius: 4px;
-    color: #E3D5B8;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    flex-wrap: nowrap;
-    max-width: 900px;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
-}
-
-/* Placement Bar */
-#placement-bar {
-    margin-top: 15px;
-    padding: 12px 20px;
-    background: #2D241E;
-    border: 2px solid #A68966;
-    border-radius: 4px;
-    color: #E3D5B8;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    max-width: 900px;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
-}
-
-#placement-bar .placement-title {
+    color: #B8D5E8;
     font-weight: bold;
-    color: #A68966;
-}
-
-#placement-bar .placement-hint {
-    color: #B8A896;
     font-size: 14px;
+    text-align: center;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-#placement-bar #placement-info {
-    color: #E3D5B8;
-    font-weight: bold;
+.mana-display.low {
+    background: #7E2B2B;
+    border-color: #9E4A4A;
+    color: #E8B8B8;
 }
 
 /* Buttons - Leather/Clay Style */
 .spell-button {
-    padding: 10px 20px;
+    padding: 10px 16px;
     background: #5D2E2E;
     border: 2px solid #7D4E4E;
     border-radius: 4px;
@@ -168,8 +220,9 @@ h1 {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.15s;
-    font-size: 14px;
+    font-size: 13px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    text-align: center;
 }
 
 .spell-button:hover:not(:disabled) {
@@ -192,33 +245,66 @@ h1 {
     opacity: 0.6;
 }
 
-/* Turn Indicator */
-.turn-indicator {
-    padding: 8px 16px;
+/* Unit Info Panel (now inside right panel) */
+#unit-info {
     background: #1A1C1E;
+    border: 1px solid #5D4E3E;
     border-radius: 4px;
-    border: 2px solid #A68966;
+    padding: 10px;
     color: #E3D5B8;
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100px;
 }
 
-/* Unit Info Panel - Fixed Right Side */
-.unit-info {
-    padding: 15px;
-    background: #2D241E;
+/* Magic Buffs List */
+#magic-buffs-list {
+    background: #1A1C1E;
+    border: 1px solid #5D4E3E;
     border-radius: 4px;
-    border: 2px solid #A68966;
-    min-width: 220px;
-    max-width: 280px;
-    position: fixed;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 50;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    color: #E3D5B8;
-    font-size: 14px;
-    line-height: 1.6;
+    padding: 10px;
+    font-size: 12px;
+    min-height: 80px;
 }
+
+/* Placement Bar */
+#placement-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    background: #2D241E;
+    border: 2px solid #A68966;
+    border-radius: 4px;
+    color: #E3D5B8;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5), 0 4px 15px rgba(0, 0, 0, 0.6);
+    z-index: 150;
+}
+
+#placement-bar .placement-title {
+    font-weight: bold;
+    color: #A68966;
+}
+
+#placement-bar .placement-hint {
+    color: #B8A896;
+    font-size: 14px;
+}
+
+#placement-bar #placement-info {
+    color: #E3D5B8;
+    font-weight: bold;
+}
+
+/* ============================================
+   MODALS & SCREENS
+   ============================================ */
 
 /* Victory/Defeat Screen */
 .victory-screen {
@@ -243,102 +329,6 @@ h1 {
     font-size: 48px;
     margin-bottom: 20px;
     text-shadow: 2px 2px 4px #000;
-}
-
-/* Perk/Reward Cards */
-.perk-card {
-    background: #2D241E;
-    border: 2px solid #A68966;
-    border-radius: 4px;
-    padding: 20px;
-    margin: 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-    color: #E3D5B8;
-    min-width: 200px;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.perk-card:hover {
-    background: #3D342E;
-    border-color: #B69976;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.reward-card {
-    user-select: none;
-    display: flex;
-    flex-direction: column;
-}
-
-.reward-card:hover {
-    border-color: #A68966 !important;
-}
-
-#confirm-rewards:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* Rarity Sections */
-.rarity-section {
-    width: 100%;
-    margin-bottom: 25px;
-    padding: 15px;
-    background: rgba(45, 36, 30, 0.4);
-    border-radius: 8px;
-    border: 1px solid rgba(166, 137, 102, 0.2);
-}
-
-.rarity-title {
-    color: #A68966;
-    font-size: 18px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 15px;
-    text-align: center;
-    border-bottom: 1px solid rgba(166, 137, 102, 0.3);
-    padding-bottom: 8px;
-}
-
-/* Action Sections */
-.action-section {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.action-divider {
-    width: 2px;
-    height: 30px;
-    background: #5D4E3E;
-    margin: 0 5px;
-}
-
-/* Mana Display - Deep Sapphire */
-.mana-display {
-    padding: 8px 15px;
-    background: #2B527E;
-    border: 2px solid #4A729E;
-    border-radius: 4px;
-    color: #B8D5E8;
-    font-weight: bold;
-    font-size: 16px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.mana-display.low {
-    background: #7E2B2B;
-    border-color: #9E4A4A;
-    color: #E8B8B8;
 }
 
 /* Spellbook Modal */
@@ -385,6 +375,40 @@ h1 {
     margin-bottom: 20px;
 }
 
+.spellbook-close {
+    display: block;
+    margin: 0 auto;
+    padding: 12px 40px;
+    background: #5D2E2E;
+    border: 2px solid #7D4E4E;
+    border-radius: 4px;
+    color: #E3D5B8;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.15s;
+}
+
+.spellbook-close:hover {
+    background: #7D3E3E;
+    border-color: #9D6E6E;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Pre-game screen styles */
+#pregame-screen {
+    background: rgba(26, 28, 30, 0.98);
+}
+
+#pregame-screen h2 {
+    color: #A68966;
+}
+
+/* ============================================
+   CARDS & REWARDS
+   ============================================ */
+
+/* Spell Card */
 .spell-card {
     background: #1A1C1E;
     border: 2px solid #5D4E3E;
@@ -455,106 +479,162 @@ h1 {
     color: #9E4A4A;
 }
 
-.spellbook-close {
-    display: block;
-    margin: 0 auto;
-    padding: 12px 40px;
-    background: #5D2E2E;
-    border: 2px solid #7D4E4E;
-    border-radius: 4px;
-    color: #E3D5B8;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.15s;
-}
-
-.spellbook-close:hover {
-    background: #7D3E3E;
-    border-color: #9D6E6E;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Pre-game screen styles */
-#pregame-screen {
-    background: rgba(26, 28, 30, 0.98);
-}
-
-#pregame-screen h2 {
-    color: #A68966;
-}
-
-#placement-screen {
-    background: transparent;
-    flex-direction: column;
-    pointer-events: none;
-}
-
-#placement-screen>* {
-    pointer-events: auto;
-}
-
-#placement-screen h2 {
-    color: #A68966;
-    font-size: 36px;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 4px #000;
-}
-
-#placement-screen p {
-    text-shadow: 1px 1px 2px #000;
-}
-
-#placement-info {
+/* Perk/Reward Cards */
+.perk-card {
     background: #2D241E;
-    padding: 15px 30px;
-    border-radius: 4px;
     border: 2px solid #A68966;
-    font-size: 18px;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
     color: #E3D5B8;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-#current-placement-unit {
-    color: #A68966;
-    font-weight: bold;
+.perk-card:hover {
+    background: #3D342E;
+    border-color: #B69976;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-#placement-remaining {
-    color: #4A729E;
-    font-weight: bold;
+.reward-card {
+    user-select: none;
+    display: flex;
+    flex-direction: column;
 }
 
-#confirm-placement:disabled {
+.reward-card:hover {
+    border-color: #A68966 !important;
+}
+
+#confirm-rewards:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: #3D3D3D !important;
-    border-color: #555 !important;
 }
 
-#confirm-placement:not(:disabled) {
-    background: #2E5D2E !important;
-    border-color: #4E7D4E !important;
+/* ============================================
+   RARITY SECTIONS & STYLES
+   ============================================ */
+
+.rarity-section {
+    width: 100%;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: rgba(45, 36, 30, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(166, 137, 102, 0.2);
 }
 
-#confirm-placement:not(:disabled):hover {
-    background: #3E7D3E !important;
-    border-color: #5E9D5E !important;
+.rarity-title {
+    color: #A68966;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(166, 137, 102, 0.3);
+    padding-bottom: 8px;
 }
 
-/* Magic Buffs Panel */
-#magic-buffs-panel {
-    background: #2D241E !important;
-    border: 2px solid #A68966 !important;
-    border-radius: 4px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+/* Legendary glow animation */
+@keyframes legendary-glow {
+    0%, 100% {
+        box-shadow: 0 0 3px #ff8c00, 0 0 6px rgba(255, 140, 0, 0.6), inset 0 0 4px rgba(255, 140, 0, 0.2);
+        border-color: #ff8c00;
+    }
+    50% {
+        box-shadow: 0 0 5px #ff8c00, 0 0 10px rgba(255, 140, 0, 0.8), inset 0 0 6px rgba(255, 140, 0, 0.3);
+        border-color: #ffa500;
+    }
 }
 
-#magic-buffs-panel>div:first-child {
-    color: #A68966 !important;
-    border-bottom-color: #5D4E3E !important;
+.legendary-card {
+    animation: legendary-glow 2.5s ease-in-out infinite;
+    border: 2px solid #ff8c00 !important;
+    background: linear-gradient(135deg, #2D241E 0%, #3D2814 100%) !important;
 }
 
-/* Utility Classes */
+.legendary-card:hover {
+    animation: legendary-glow 1.5s ease-in-out infinite;
+    border-color: #ffa500 !important;
+}
+
+/* Specialist glow animation */
+@keyframes specialist-glow {
+    0%, 100% {
+        box-shadow: 0 0 2px #8B5B9B, 0 0 4px rgba(139, 91, 155, 0.4), inset 0 0 3px rgba(139, 91, 155, 0.15);
+        border-color: #8B5B9B;
+    }
+    50% {
+        box-shadow: 0 0 4px #8B5B9B, 0 0 6px rgba(139, 91, 155, 0.5), inset 0 0 4px rgba(139, 91, 155, 0.2);
+        border-color: #9B6BAB;
+    }
+}
+
+.specialist-card {
+    animation: specialist-glow 3s ease-in-out infinite;
+    border: 2px solid #8B5B9B !important;
+    background: linear-gradient(135deg, #2D241E 0%, #302438 100%) !important;
+}
+
+.specialist-card:hover {
+    animation: specialist-glow 2s ease-in-out infinite;
+    border-color: #9B6BAB !important;
+}
+
+/* Mythic glow animation */
+@keyframes mythic-glow {
+    0%, 100% {
+        box-shadow: 0 0 4px #e50000, 0 0 8px rgba(229, 0, 0, 0.5), inset 0 0 5px rgba(229, 0, 0, 0.3);
+        border-color: #cc0000;
+    }
+    50% {
+        box-shadow: 0 0 8px #ff1a1a, 0 0 12px rgba(255, 26, 26, 0.8), inset 0 0 8px rgba(255, 26, 26, 0.5);
+        border-color: #ff3333;
+    }
+}
+
+.mythic-card {
+    animation: mythic-glow 2s ease-in-out infinite;
+    border: 2px solid #e50000 !important;
+    background: linear-gradient(135deg, #2D1A1A 0%, #3D0000 100%) !important;
+}
+
+.mythic-card:hover {
+    animation: mythic-glow 1s ease-in-out infinite;
+    border-color: #ff1a1a !important;
+}
+
+/* Stage Selection Buttons */
+.stage-btn {
+    transition: all 0.2s ease;
+    border: 2px solid #5D4E3E;
+}
+
+.stage-btn:hover {
+    border-color: #A68966;
+    transform: translateY(-2px);
+}
+
+.stage-btn.active {
+    border-color: #4a7c59;
+    box-shadow: 0 0 10px rgba(74, 124, 89, 0.5);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.hidden {
+    display: none !important;
+}
+
 .text-gold {
     color: #A68966;
 }
@@ -579,95 +659,83 @@ h1 {
     border-color: #A68966;
 }
 
-/* Legendary glow animation for special units and buffs */
-@keyframes legendary-glow {
+.action-divider {
+    width: 2px;
+    height: 30px;
+    background: #5D4E3E;
+    margin: 0 5px;
+}
 
-    0%,
-    100% {
-        box-shadow: 0 0 3px #ff8c00, 0 0 6px rgba(255, 140, 0, 0.6), inset 0 0 4px rgba(255, 140, 0, 0.2);
-        border-color: #ff8c00;
+/* Confirm placement button states */
+#confirm-placement:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #3D3D3D !important;
+    border-color: #555 !important;
+}
+
+#confirm-placement:not(:disabled) {
+    background: #2E5D2E !important;
+    border-color: #4E7D4E !important;
+}
+
+#confirm-placement:not(:disabled):hover {
+    background: #3E7D3E !important;
+    border-color: #5E9D5E !important;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 1024px) {
+    #left-panel,
+    #right-panel {
+        width: 170px;
+        min-width: 170px;
+        padding: 10px;
     }
-
-    50% {
-        box-shadow: 0 0 5px #ff8c00, 0 0 10px rgba(255, 140, 0, 0.8), inset 0 0 6px rgba(255, 140, 0, 0.3);
-        border-color: #ffa500;
-    }
-}
-
-.legendary-card {
-    animation: legendary-glow 2.5s ease-in-out infinite;
-    border: 2px solid #ff8c00 !important;
-    background: linear-gradient(135deg, #2D241E 0%, #3D2814 100%) !important;
-}
-
-.legendary-card:hover {
-    animation: legendary-glow 1.5s ease-in-out infinite;
-    border-color: #ffa500 !important;
-}
-
-/* Specialist glow animation (subtle purple for Cleric, Rogue, Wizard) */
-@keyframes specialist-glow {
-
-    0%,
-    100% {
-        box-shadow: 0 0 2px #8B5B9B, 0 0 4px rgba(139, 91, 155, 0.4), inset 0 0 3px rgba(139, 91, 155, 0.15);
-        border-color: #8B5B9B;
-    }
-
-    50% {
-        box-shadow: 0 0 4px #8B5B9B, 0 0 6px rgba(139, 91, 155, 0.5), inset 0 0 4px rgba(139, 91, 155, 0.2);
-        border-color: #9B6BAB;
-    }
-}
-
-.specialist-card {
-    animation: specialist-glow 3s ease-in-out infinite;
-    border: 2px solid #8B5B9B !important;
-    background: linear-gradient(135deg, #2D241E 0%, #302438 100%) !important;
-}
-
-.specialist-card:hover {
-    animation: specialist-glow 2s ease-in-out infinite;
-    border-color: #9B6BAB !important;
-}
-
-/* Mythic glow animation (glowing red for mythic upgrades) */
-@keyframes mythic-glow {
-
-    0%,
-    100% {
-        box-shadow: 0 0 4px #e50000, 0 0 8px rgba(229, 0, 0, 0.5), inset 0 0 5px rgba(229, 0, 0, 0.3);
-        border-color: #cc0000;
-    }
-
-    50% {
-        box-shadow: 0 0 8px #ff1a1a, 0 0 12px rgba(255, 26, 26, 0.8), inset 0 0 8px rgba(255, 26, 26, 0.5);
-        border-color: #ff3333;
+    
+    .spell-button {
+        padding: 8px 12px;
+        font-size: 12px;
     }
 }
 
-.mythic-card {
-    animation: mythic-glow 2s ease-in-out infinite;
-    border: 2px solid #e50000 !important;
-    background: linear-gradient(135deg, #2D1A1A 0%, #3D0000 100%) !important;
-}
-
-.mythic-card:hover {
-    animation: mythic-glow 1s ease-in-out infinite;
-    border-color: #ff1a1a !important;
-}
-/* Stage Selection Buttons */
-.stage-btn {
-    transition: all 0.2s ease;
-    border: 2px solid #5D4E3E;
-}
-
-.stage-btn:hover {
-    border-color: #A68966;
-    transform: translateY(-2px);
-}
-
-.stage-btn.active {
-    border-color: #4a7c59;
-    box-shadow: 0 0 10px rgba(74, 124, 89, 0.5);
+@media (max-width: 768px) {
+    #game-layout {
+        flex-direction: column;
+    }
+    
+    #left-panel,
+    #right-panel {
+        width: 100%;
+        min-width: auto;
+        max-height: 120px;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 10px;
+        border: none;
+        border-top: 2px solid #A68966;
+    }
+    
+    #left-panel {
+        order: 2;
+        border-bottom: 2px solid #A68966;
+    }
+    
+    #right-panel {
+        order: 3;
+    }
+    
+    #game-container {
+        order: 1;
+        flex: 1;
+    }
+    
+    .panel-section.flex-grow {
+        flex: 0 0 auto;
+        min-width: 150px;
+    }
 }
