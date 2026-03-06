@@ -74,24 +74,27 @@
 
         <!-- Right Side Panel -->
         <div id="right-panel">
-            <!-- Initiative Bar View -->
-            <div id="initiative-view" class="panel-section" style="flex: 1; display: flex; flex-direction: column;">
-                <div class="panel-title">📊 Initiative</div>
-                <div id="initiative-queue" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 5px; background: #1A1C1E; border: 1px solid #5D4E3E; border-radius: 4px;">
-                    <!-- Initiative units will be inserted here -->
+            <!-- Scrollable Content Area -->
+            <div class="panel-content-area">
+                <!-- Initiative Bar View -->
+                <div id="initiative-view" class="panel-section">
+                    <div class="panel-title">📊 Initiative</div>
+                    <div id="initiative-queue">
+                        <!-- Initiative units will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Combat Log View (hidden by default) -->
+                <div id="combat-log-view" class="panel-section hidden">
+                    <div class="panel-title">📜 Battle Log</div>
+                    <div id="combat-log-panel-content">
+                        <!-- Combat log entries will be inserted here -->
+                    </div>
                 </div>
             </div>
 
-            <!-- Combat Log View (hidden by default) -->
-            <div id="combat-log-view" class="panel-section hidden" style="flex: 1; display: flex; flex-direction: column;">
-                <div class="panel-title">📜 Battle Log</div>
-                <div id="combat-log-panel-content" style="flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; line-height: 1.5; color: #B8A896; font-family: monospace; background: #1A1C1E; border: 1px solid #5D4E3E; border-radius: 4px;">
-                    <!-- Combat log entries will be inserted here -->
-                </div>
-            </div>
-
-            <!-- Toggle Button at Bottom -->
-            <div class="panel-section" style="margin-top: auto;">
+            <!-- Toggle Button at Bottom (fixed) -->
+            <div class="panel-toggle-section">
                 <button id="view-toggle-btn" class="spell-button" onclick="toggleRightPanelView()" style="width: 100%;">
                     📜 Show Battle Log
                 </button>
