@@ -639,6 +639,7 @@ export class TurnSystem {
     }
 
     initQueue() {
+        this.scene.addCombatLog(`══ Round ${this.roundNumber} ══`, 'round');
         this.updateQueue();
         this.nextTurn();
     }

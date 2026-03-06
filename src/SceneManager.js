@@ -147,6 +147,9 @@ export class BattleScene extends Phaser.Scene {
         // Create game elements
         this.gridSystem.create();
 
+        // Center camera on the game world
+        this.centerCameraOnMap();
+
         // Create player units from placement data
         if (data && data.placedUnits) {
             for (const unitData of data.placedUnits) {
@@ -289,6 +292,15 @@ export class BattleScene extends Phaser.Scene {
                 this.uiManager.showFloatingText('Ability cancelled', 400, 300, '#A68966');
             }
         });
+    }
+
+    centerCameraOnMap() {
+        // Calculate the actual world bounds based on the grid
+        const mapWidth = this.currentStage.width * this.tileSize;
+        const mapHeight = this.currentStage.height * this.tileSize;
+        
+        // Center the camera on the map
+        this.cameras.main.centerOn(mapWidth / 2, mapHeight / 2);
     }
 
     useUnitAbility() {
