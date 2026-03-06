@@ -145,7 +145,7 @@
             <h1 style="color: #A68966; margin-bottom: 30px;">⚔️ Steel and Sigils 🛡️</h1>
             <h2 style="color: #A68966; margin-bottom: 40px;">Choose Your Battlefield</h2>
 
-            <div style="display: flex; gap: 30px; justify-content: center; align-items: stretch; margin-bottom: 40px;">
+            <div style="display: flex; gap: 30px; justify-content: center; align-items: stretch; margin-bottom: 40px; flex-wrap: wrap;">
                 <!-- Forest Map Option -->
                 <button class="map-select-btn" onclick="selectMap('forest')" data-stage="forest">
                     <div class="map-preview forest-preview">🌲</div>
@@ -154,6 +154,17 @@
                         10×8 Grid<br>
                         1000 Points<br>
                         Grass Terrain
+                    </div>
+                </button>
+
+                <!-- Mountain Map Option -->
+                <button class="map-select-btn" onclick="selectMap('mountain')" data-stage="mountain">
+                    <div class="map-preview mountain-preview">⛰️</div>
+                    <div class="map-name">Mountain Pass</div>
+                    <div class="map-stats">
+                        13×11 Grid<br>
+                        1300 Points<br>
+                        Chokepoint
                     </div>
                 </button>
 
@@ -181,13 +192,17 @@
             <!-- Compact Unit Grid -->
             <div class="compact-unit-grid">
                 <!-- Row 1: Common & Specialist -->
+                <!-- Common Units Row -->
                 <div class="unit-card compact" data-type="KNIGHT">
                     <div class="unit-header">
                         <span class="unit-emoji">⚔️</span>
                         <span class="unit-name">Knight</span>
                         <span class="unit-cost">💰200</span>
                     </div>
-                    <div class="unit-stats">HP:100 DMG:25 MOV:4 INIT:12</div>
+                    <div class="unit-stats">HP:100 | DMG:25 | MOV:4 | INIT:12</div>
+                    <div class="unit-skills">
+                        <span class="passive">🛡️ Passive: -50% ranged dmg</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', -1)">-</button>
                         <span id="count-KNIGHT" class="unit-count">0</span>
@@ -201,7 +216,10 @@
                         <span class="unit-name">Archer</span>
                         <span class="unit-cost">💰300</span>
                     </div>
-                    <div class="unit-stats">HP:60 DMG:35 MOV:2 RNG:6</div>
+                    <div class="unit-stats">HP:60 | DMG:35 | MOV:2 | RNG:6</div>
+                    <div class="unit-skills">
+                        <span class="passive">📐 Ranged unit</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', -1)">-</button>
                         <span id="count-ARCHER" class="unit-count">0</span>
@@ -209,13 +227,17 @@
                     </div>
                 </div>
 
+                <!-- Specialist Units Row -->
                 <div class="unit-card compact specialist" data-type="WIZARD">
                     <div class="unit-header">
                         <span class="unit-emoji">🧙</span>
                         <span class="unit-name">Wizard</span>
                         <span class="unit-cost">💰500</span>
                     </div>
-                    <div class="unit-stats">HP:40 DMG:45 MOV:2 🔮+2 Mana</div>
+                    <div class="unit-stats">HP:40 | DMG:45 | MOV:2 | RNG:4</div>
+                    <div class="unit-skills">
+                        <span class="passive">🔮 Passive: +2 Mana/turn</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', -1)">-</button>
                         <span id="count-WIZARD" class="unit-count">0</span>
@@ -229,7 +251,11 @@
                         <span class="unit-name">Cleric</span>
                         <span class="unit-cost">💰500</span>
                     </div>
-                    <div class="unit-stats">HP:80 DMG:15 MOV:2 💚Heal</div>
+                    <div class="unit-stats">HP:80 | DMG:15 | MOV:2 | RNG:4</div>
+                    <div class="unit-skills">
+                        <span class="active">💚 Active: Cast Heal</span>
+                        <span class="passive">+50% army healing</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', -1)">-</button>
                         <span id="count-CLERIC" class="unit-count">0</span>
@@ -243,7 +269,10 @@
                         <span class="unit-name">Rogue</span>
                         <span class="unit-cost">💰500</span>
                     </div>
-                    <div class="unit-stats">HP:55 DMG:40 MOV:8 INIT:16 👤Hit&Run</div>
+                    <div class="unit-stats">HP:55 | DMG:40 | MOV:8 | INIT:16</div>
+                    <div class="unit-skills">
+                        <span class="passive">👤 Passive: Hit & Run</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', -1)">-</button>
                         <span id="count-ROGUE" class="unit-count">0</span>
@@ -251,14 +280,18 @@
                     </div>
                 </div>
 
-                <!-- Row 2: Legendary -->
+                <!-- Legendary Units Row -->
                 <div class="unit-card compact legendary" data-type="PALADIN">
                     <div class="unit-header">
                         <span class="unit-emoji">🛡️</span>
                         <span class="unit-name">Paladin</span>
                         <span class="unit-cost">💰800</span>
                     </div>
-                    <div class="unit-stats">HP:150 DMG:50 🛡️-50% ranged</div>
+                    <div class="unit-stats">HP:150 | DMG:50 | MOV:4 | INIT:9</div>
+                    <div class="unit-skills">
+                        <span class="passive">🛡️ -50% ranged dmg</span>
+                        <span class="passive">💚 +50% healing</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', -1)">-</button>
                         <span id="count-PALADIN" class="unit-count">0</span>
@@ -272,7 +305,10 @@
                         <span class="unit-name">Ranger</span>
                         <span class="unit-cost">💰800</span>
                     </div>
-                    <div class="unit-stats">HP:70 DMG:50 MOV:2 RNG:10</div>
+                    <div class="unit-stats">HP:70 | DMG:50 | MOV:2 | RNG:10</div>
+                    <div class="unit-skills">
+                        <span class="passive">📐 Longest range unit</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', -1)">-</button>
                         <span id="count-RANGER" class="unit-count">0</span>
@@ -286,7 +322,11 @@
                         <span class="unit-name">Berserker</span>
                         <span class="unit-cost">💰800</span>
                     </div>
-                    <div class="unit-stats">HP:90 DMG:50 ⚔️Bloodlust</div>
+                    <div class="unit-stats">HP:90 | DMG:50 | MOV:4 | INIT:11</div>
+                    <div class="unit-skills">
+                        <span class="passive">⚔️ Passive: Bloodlust</span>
+                        <span class="passive">Reckless</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', -1)">-</button>
                         <span id="count-BERSERKER" class="unit-count">0</span>
@@ -300,7 +340,11 @@
                         <span class="unit-name">Sorcerer</span>
                         <span class="unit-cost">💰800</span>
                     </div>
-                    <div class="unit-stats">HP:50 DMG:55 ✨+50% spell dmg</div>
+                    <div class="unit-stats">HP:50 | DMG:55 | MOV:2 | RNG:4</div>
+                    <div class="unit-skills">
+                        <span class="active">🔥 Active: Cast Fireball</span>
+                        <span class="passive">✨ +50% spell dmg</span>
+                    </div>
                     <div class="unit-controls">
                         <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', -1)">-</button>
                         <span id="count-SORCERER" class="unit-count">0</span>

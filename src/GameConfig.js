@@ -47,6 +47,17 @@ export const STAGES = {
         hasObstacles: true,
         spawnLogic: 'perimeter',
         startingPoints: 1700
+    },
+    mountain: {
+        id: 'mountain',
+        name: 'Mountain Pass',
+        width: 13,
+        height: 11,
+        playerArea: { x1: 0, x2: 3, y1: 3, y2: 8 },  // Left side, middle area
+        hasObstacles: true,
+        obstacleType: 'mountain',  // Custom obstacle generation
+        spawnLogic: 'right_flank',  // Enemies on right and corners
+        startingPoints: 1300
     }
 };
 

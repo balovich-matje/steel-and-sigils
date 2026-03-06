@@ -515,31 +515,33 @@ export class BattleScene extends Phaser.Scene {
     generateObstacles() {
         if (!this.currentStage || !this.currentStage.hasObstacles) return;
 
-        // Ruins of a Castle logic:
+        const playerArea = this.currentStage.playerArea;
+
+        // Mountain Pass: Create a chokepoint in the middle
+        if (this.currentStage.obstacleType === 'mountain') {
+            this.generateMountainObstacles();
+            return;
+        }
+
+        // Ruins of a Castle logic (default):
         // Player area is on the left side (x: 0-3, y: 0-15)
         // Add impassable walls around the player starting area
-        // Rules: No more than 3 cells length, max 4 wall segments total.
-        // Walls must NOT spawn inside player area (x: 0-3, any y)
-
-        const playerArea = this.currentStage.playerArea;
         const wallSegments = 4;
 
         for (let i = 0; i < wallSegments; i++) {
             const isHorizontal = Math.random() > 0.5;
             const length = Math.floor(Math.random() * 3) + 1;
 
-            // Pick a starting point near the perimeter of the player area
-            // Only spawn walls on the RIGHT side of player area (x >= playerArea.x2)
             let startX, startY;
-            const side = Math.floor(Math.random() * 3); // 0: top-right, 1: right, 2: bottom-right
+            const side = Math.floor(Math.random() * 3);
 
-            if (side === 0) { // Top-right area
+            if (side === 0) {
                 startX = playerArea.x2 + Math.floor(Math.random() * 3);
                 startY = Math.floor(Math.random() * (playerArea.y2 - playerArea.y1) * 0.3);
-            } else if (side === 1) { // Right side (column 4-6)
+            } else if (side === 1) {
                 startX = playerArea.x2 + Math.floor(Math.random() * 3);
                 startY = playerArea.y1 + Math.floor(Math.random() * (playerArea.y2 - playerArea.y1));
-            } else { // Bottom-right area
+            } else {
                 startX = playerArea.x2 + Math.floor(Math.random() * 3);
                 startY = playerArea.y2 - Math.floor(Math.random() * (playerArea.y2 - playerArea.y1) * 0.3);
             }
@@ -548,7 +550,6 @@ export class BattleScene extends Phaser.Scene {
                 const wallX = isHorizontal ? startX + j : startX;
                 const wallY = isHorizontal ? startY : startY + j;
 
-                // Stay within bounds and NEVER place inside player area
                 const inPlayerArea = wallX >= playerArea.x1 && wallX < playerArea.x2 && 
                                      wallY >= playerArea.y1 && wallY < playerArea.y2;
                 
@@ -556,9 +557,60 @@ export class BattleScene extends Phaser.Scene {
                     wallX >= 0 && wallX < this.gridSystem.width && 
                     wallY >= 0 && wallY < this.gridSystem.height) {
                     this.gridSystem.addObstacle(wallX, wallY);
-                } else {
                 }
             }
+        }
+    }
+
+    generateMountainObstacles() {
+        // Mountain Pass: Create two mountain ranges with a narrow chokepoint in the middle
+        // This creates tactical gameplay - players must defend the pass
+        const width = this.gridSystem.width;
+        const height = this.gridSystem.height;
+        const playerArea = this.currentStage.playerArea;
+        
+        // Mountain ranges on top and bottom, leaving a 3-tile wide passage in the middle
+        const passageY1 = 4;  // Passage starts at row 4
+        const passageY2 = 6;  // Passage ends at row 6 (3 tiles wide: 4, 5, 6)
+        
+        // Left mountain range (from right of player area to middle)
+        for (let x = playerArea.x2; x < 6; x++) {
+            for (let y = 0; y < passageY1; y++) {
+                // Top mountain - leave some gaps
+                if (Math.random() > 0.3) {
+                    this.gridSystem.addObstacle(x, y);
+                }
+            }
+            for (let y = passageY2 + 1; y < height; y++) {
+                // Bottom mountain - leave some gaps
+                if (Math.random() > 0.3) {
+                    this.gridSystem.addObstacle(x, y);
+                }
+            }
+        }
+        
+        // Right mountain range (from middle to right edge)
+        for (let x = 7; x < width; x++) {
+            for (let y = 0; y < passageY1; y++) {
+                if (Math.random() > 0.3) {
+                    this.gridSystem.addObstacle(x, y);
+                }
+            }
+            for (let y = passageY2 + 1; y < height; y++) {
+                if (Math.random() > 0.3) {
+                    this.gridSystem.addObstacle(x, y);
+                }
+            }
+        }
+        
+        // Add some rocks in the passage area (but keep path clear)
+        // Add a few obstacles at the edges of the passage for cover
+        const chokePointX = 6;  // Middle column
+        if (Math.random() > 0.5) {
+            this.gridSystem.addObstacle(chokePointX, passageY1);  // Top of passage
+        }
+        if (Math.random() > 0.5) {
+            this.gridSystem.addObstacle(chokePointX, passageY2);  // Bottom of passage
         }
     }
 
@@ -591,6 +643,32 @@ export class BattleScene extends Phaser.Scene {
             // Right area (excluding corners already added)
             for (let y = pSize; y < height - pSize; y++) {
                 for (let x = width - pSize; x < width; x++) {
+                    positions.push({ x, y });
+                }
+            }
+        } else if (this.currentStage.spawnLogic === 'right_flank') {
+            // Mountain Pass: Enemies spawn on right side and top/bottom corners
+            const width = this.gridSystem.width;
+            const height = this.gridSystem.height;
+            const pSize = 3; // Larger perimeter for more spawn options
+            
+            // Right side (main spawn area)
+            for (let y = 0; y < height; y++) {
+                for (let x = width - 4; x < width; x++) {
+                    positions.push({ x, y });
+                }
+            }
+            
+            // Top-left corner (flanking position)
+            for (let y = 0; y < pSize; y++) {
+                for (let x = 4; x < 7; x++) {
+                    positions.push({ x, y });
+                }
+            }
+            
+            // Bottom-left corner (flanking position)
+            for (let y = height - pSize; y < height; y++) {
+                for (let x = 4; x < 7; x++) {
                     positions.push({ x, y });
                 }
             }
