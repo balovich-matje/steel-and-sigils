@@ -463,21 +463,18 @@ export class UnitManager {
 
         const unit = new Unit(type, gridX, gridY, this.scene);
 
-        // Get padding from grid system (for positioning offset)
-        const padding = this.scene.gridSystem?.padding || 0;
-
         // For 2x2 units, center the sprite over the 2x2 area
         let spriteX, spriteY;
         if (bossSize > 1) {
             // Center of the 2x2 block
-            spriteX = gridX * this.scene.tileSize + (bossSize * this.scene.tileSize) / 2 + padding;
-            spriteY = gridY * this.scene.tileSize + (bossSize * this.scene.tileSize) / 2 + padding;
+            spriteX = gridX * this.scene.tileSize + (bossSize * this.scene.tileSize) / 2;
+            spriteY = gridY * this.scene.tileSize + (bossSize * this.scene.tileSize) / 2;
         } else {
-            spriteX = gridX * this.scene.tileSize + this.scene.tileSize / 2 + padding;
-            spriteY = gridY * this.scene.tileSize + this.scene.tileSize / 2 + padding;
+            spriteX = gridX * this.scene.tileSize + this.scene.tileSize / 2;
+            spriteY = gridY * this.scene.tileSize + this.scene.tileSize / 2;
         }
         // For images: position bottom 5px above tile bottom (adjusted for boss size)
-        const yBottom = (gridY + bossSize) * this.scene.tileSize - 5 + padding;
+        const yBottom = (gridY + bossSize) * this.scene.tileSize - 5;
 
         // Check if unit has an image and if it's loaded
         const imageKey = template.image ? type.toLowerCase() + '_img' : null;

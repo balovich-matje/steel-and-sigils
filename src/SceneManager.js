@@ -296,15 +296,11 @@ export class BattleScene extends Phaser.Scene {
 
     centerCameraOnMap() {
         // Calculate the actual world bounds based on the grid
-        const padding = this.gridSystem.padding || 0;
-        const mapWidth = this.currentStage.width * this.tileSize + padding * 2;
-        const mapHeight = this.currentStage.height * this.tileSize + padding * 2;
+        const mapWidth = this.currentStage.width * this.tileSize;
+        const mapHeight = this.currentStage.height * this.tileSize;
         
-        // Center the camera on the map (accounting for padding)
-        this.cameras.main.centerOn(
-            this.currentStage.width * this.tileSize / 2 + padding,
-            this.currentStage.height * this.tileSize / 2 + padding
-        );
+        // Center the camera on the map
+        this.cameras.main.centerOn(mapWidth / 2, mapHeight / 2);
     }
 
     useUnitAbility() {
