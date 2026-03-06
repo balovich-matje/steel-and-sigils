@@ -2303,7 +2303,8 @@ export class BattleScene extends Phaser.Scene {
             battleNumber: nextBattleNumber,
             placedUnits: playerUnits,
             magicBuffs: this.magicBuffs,
-            currentEnemyFaction: this.currentEnemyFaction
+            currentEnemyFaction: this.currentEnemyFaction,
+            stageId: this.currentStage.id
         });
     }
 
