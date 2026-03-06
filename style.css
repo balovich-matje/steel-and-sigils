@@ -129,6 +129,15 @@ body {
     right: 200px;
 }
 
+/* When panels are collapsed, buttons sit at the edge */
+#left-panel.collapsed ~ #left-toggle {
+    left: 0;
+}
+
+#right-panel.collapsed ~ #right-toggle {
+    right: 0;
+}
+
 /* When panels are hidden (pregame/placement), hide toggles too */
 #left-panel.hidden ~ #left-toggle,
 #right-panel.hidden ~ #right-toggle {
@@ -172,6 +181,8 @@ body {
 #game-container canvas {
     display: block;
     margin: auto;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 /* ============================================
@@ -773,6 +784,14 @@ body {
     #right-panel:not(.collapsed) ~ #right-toggle,
     #right-panel:not(.hidden) ~ #right-toggle {
         right: 170px;
+    }
+    
+    #left-panel.collapsed ~ #left-toggle {
+        left: 0;
+    }
+
+    #right-panel.collapsed ~ #right-toggle {
+        right: 0;
     }
     
     .spell-button {

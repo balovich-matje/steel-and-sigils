@@ -48,7 +48,7 @@
 
         <!-- Left Panel Toggle (after panel in DOM for sibling selector) -->
         <button id="left-toggle" class="panel-toggle left" onclick="toggleLeftPanel()" title="Toggle Hero Panel">
-            🔮
+            ‹
         </button>
 
         <!-- Game Container (Center) -->
@@ -91,7 +91,7 @@
 
         <!-- Right Panel Toggle (after panel in DOM for sibling selector) -->
         <button id="right-toggle" class="panel-toggle right" onclick="toggleRightPanel()" title="Toggle Unit Panel">
-            ⚔️
+            ›
         </button>
     </div>
 
@@ -464,14 +464,16 @@
             const panel = document.getElementById('left-panel');
             const toggle = document.getElementById('left-toggle');
             panel.classList.toggle('collapsed');
-            toggle.classList.toggle('collapsed');
+            // Flip arrow direction: ‹ when open, › when collapsed
+            toggle.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
         }
 
         function toggleRightPanel() {
             const panel = document.getElementById('right-panel');
             const toggle = document.getElementById('right-toggle');
             panel.classList.toggle('collapsed');
-            toggle.classList.toggle('collapsed');
+            // Flip arrow direction: › when open, ‹ when collapsed
+            toggle.textContent = panel.classList.contains('collapsed') ? '‹' : '›';
         }
     </script>
 
