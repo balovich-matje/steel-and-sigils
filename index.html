@@ -20,13 +20,8 @@
 
     <!-- Main Game Layout -->
     <div id="game-layout">
-        <!-- Left Panel Toggle -->
-        <button id="left-toggle" class="panel-toggle left" onclick="toggleLeftPanel()" title="Toggle Hero Panel">
-            🔮
-        </button>
-
         <!-- Left Side Panel -->
-        <div id="left-panel" class="hidden">
+        <div id="left-panel">
             <!-- Mana Display -->
             <div class="panel-section">
                 <div class="panel-title">🔮 Hero</div>
@@ -51,16 +46,16 @@
             </div>
         </div>
 
+        <!-- Left Panel Toggle (after panel in DOM for sibling selector) -->
+        <button id="left-toggle" class="panel-toggle left" onclick="toggleLeftPanel()" title="Toggle Hero Panel">
+            🔮
+        </button>
+
         <!-- Game Container (Center) -->
         <div id="game-container"></div>
 
-        <!-- Right Panel Toggle -->
-        <button id="right-toggle" class="panel-toggle right" onclick="toggleRightPanel()" title="Toggle Unit Panel">
-            ⚔️
-        </button>
-
         <!-- Right Side Panel -->
-        <div id="right-panel" class="hidden">
+        <div id="right-panel">
             <!-- Unit Info Panel -->
             <div class="panel-section">
                 <div class="panel-title">⚔️ Unit Info</div>
@@ -93,6 +88,11 @@
                 </button>
             </div>
         </div>
+
+        <!-- Right Panel Toggle (after panel in DOM for sibling selector) -->
+        <button id="right-toggle" class="panel-toggle right" onclick="toggleRightPanel()" title="Toggle Unit Panel">
+            ⚔️
+        </button>
     </div>
 
     <!-- Placement Bar (shown during placement phase) -->

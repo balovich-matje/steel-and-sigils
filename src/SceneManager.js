@@ -78,8 +78,8 @@ export class BattleScene extends Phaser.Scene {
     }
 
     create(data) {
-        document.getElementById('left-panel').classList.remove('hidden');
-        document.getElementById('right-panel').classList.remove('hidden');
+        document.getElementById('left-panel').classList.remove('hidden', 'collapsed');
+        document.getElementById('right-panel').classList.remove('hidden', 'collapsed');
         document.getElementById('initiative-bar').classList.remove('hidden');
         // Initialize systems
         this.unitManager = new UnitManager(this);
@@ -2271,8 +2271,8 @@ export class BattleScene extends Phaser.Scene {
 
     nextBattle() {
         document.getElementById('victory-screen').classList.add('hidden');
-        document.getElementById('left-panel').classList.remove('hidden');
-        document.getElementById('right-panel').classList.remove('hidden');
+        document.getElementById('left-panel').classList.remove('hidden', 'collapsed');
+        document.getElementById('right-panel').classList.remove('hidden', 'collapsed');
         document.getElementById('placement-bar').classList.add('hidden');
 
         const playerUnits = this.unitManager.getPlayerUnits().map(u => ({
@@ -2488,6 +2488,8 @@ export class PreGameScene extends Phaser.Scene {
     startPlacementPhase() {
         document.getElementById('left-panel').classList.add('hidden');
         document.getElementById('right-panel').classList.add('hidden');
+        document.getElementById('left-panel').classList.remove('collapsed');
+        document.getElementById('right-panel').classList.remove('collapsed');
         this.placementMode = true;
         this.placedUnits = [];
         this.selectedPlacementUnit = null;
