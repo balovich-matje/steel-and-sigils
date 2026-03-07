@@ -143,6 +143,16 @@ export class SpellSystem {
         this.scene.spellsCastThisRound++;
         this.updateArcaneFocus();
 
+        // Face towards the target tile
+        // Base images face LEFT by default
+        // flipX = true means face RIGHT, flipX = false means face LEFT
+        const caster = this.scene.turnSystem?.currentUnit;
+        if (caster && caster.sprite) {
+            const casterX = caster.gridX;
+            const shouldFaceRight = centerX > casterX;
+            caster.sprite.setFlipX(shouldFaceRight);
+        }
+
         switch (spell.effect) {
             case 'aoeDamage':
                 this.executeAoEDamage(spell, centerX, centerY, 1);
@@ -172,6 +182,12 @@ export class SpellSystem {
         this.scene.spellsCastThisRound++;
         this.scene.addCombatLog(`Hero cast ${spell.name}!`, 'spell');
         this.updateArcaneFocus();
+
+        // Face the target
+        const caster = this.scene.turnSystem.currentUnit;
+        if (caster && this.scene.faceTarget) {
+            this.scene.faceTarget(caster, unit);
+        }
 
         // If armyBuffs is enabled and this is a buff spell, apply to whole army
         const isBuffSpell = ['haste', 'shield', 'bless', 'regenerate', 'heal'].includes(spell.effect);

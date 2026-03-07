@@ -876,6 +876,9 @@ export class BattleScene extends Phaser.Scene {
             attacker.hasAttacked = true;
         }
 
+        // Face the target
+        this.faceTarget(attacker, defender);
+
         // Visual lunge
         const originalX = attacker.sprite.x;
         const originalY = attacker.sprite.y;
@@ -973,6 +976,11 @@ export class BattleScene extends Phaser.Scene {
                         this.endTurn();
                     });
                 }
+
+                // Restore original facing after attack completes
+                this.time.delayedCall(500, () => {
+                    this.restoreFacing(attacker);
+                });
 
                 this.checkVictoryCondition();
             }
@@ -1080,6 +1088,9 @@ export class BattleScene extends Phaser.Scene {
         attacker.hasAttacked = true;
         document.body.style.cursor = 'default';
 
+        // Face the target
+        this.faceTarget(attacker, defender);
+
         // Create arrow/projectile
         const isWizard = attacker.type === 'WIZARD';
         const projectile = this.add.text(
@@ -1127,6 +1138,11 @@ export class BattleScene extends Phaser.Scene {
                 }
 
                 this.checkVictoryCondition();
+
+                // Restore original facing after ranged attack completes
+                this.time.delayedCall(200, () => {
+                    this.restoreFacing(attacker);
+                });
             }
         });
 
@@ -1136,6 +1152,39 @@ export class BattleScene extends Phaser.Scene {
         } else {
             this.gridSystem.clearHighlights();
         }
+    }
+
+    /**
+     * Make a unit face towards a target temporarily
+     * @param {Unit} unit - The unit to rotate
+     * @param {Unit} target - The target to face towards
+     */
+    faceTarget(unit, target) {
+        if (!unit.sprite || !target) return;
+        
+        // Save original facing if not already saved
+        if (unit._originalFlipX === undefined) {
+            unit._originalFlipX = unit.sprite.flipX;
+        }
+        
+        // Determine direction based on grid positions
+        // Base images face LEFT by default
+        // flipX = true means face RIGHT, flipX = false means face LEFT
+        // If target is to the right (higher X), we need flipX = true to face right
+        // If target is to the left (lower X), we need flipX = false to face left
+        const shouldFaceRight = target.gridX > unit.gridX;
+        unit.sprite.setFlipX(shouldFaceRight);
+    }
+
+    /**
+     * Restore unit's original facing direction
+     * @param {Unit} unit - The unit to restore
+     */
+    restoreFacing(unit) {
+        if (!unit.sprite || unit._originalFlipX === undefined) return;
+        
+        unit.sprite.setFlipX(unit._originalFlipX);
+        delete unit._originalFlipX;
     }
 
     performRicochetAttack(attacker, mainTarget) {

@@ -1297,6 +1297,14 @@ export class TurnSystem {
         const power = Math.floor(SPELLS.chain_lightning.power * scene.spellPowerMultiplier);
         const chains = SPELLS.chain_lightning.chains;
 
+        // Face the target
+        // Base images face LEFT by default
+        // flipX = true means face RIGHT, flipX = false means face LEFT
+        if (caster.sprite) {
+            const shouldFaceRight = target.gridX > caster.gridX;
+            caster.sprite.setFlipX(shouldFaceRight);
+        }
+
         // Visual effect
         scene.uiManager.showBuffText(target, 'ZAP!', '#9B59B6');
 
@@ -1326,6 +1334,14 @@ export class TurnSystem {
     castFireball(caster, target) {
         const scene = this.scene;
         const power = Math.floor(SPELLS.fireball.power * scene.spellPowerMultiplier);
+
+        // Face the target
+        // Base images face LEFT by default
+        // flipX = true means face RIGHT, flipX = false means face LEFT
+        if (caster.sprite) {
+            const shouldFaceRight = target.gridX > caster.gridX;
+            caster.sprite.setFlipX(shouldFaceRight);
+        }
 
         // Hit all enemies in 3x3 area
         const playerUnits = scene.unitManager.getPlayerUnits();

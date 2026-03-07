@@ -10,8 +10,8 @@ const https = require('https');
 
 const API_KEY = 'pk_ZYeFJPLbJvYAewAl';
 const API_BASE_URL = 'https://gen.pollinations.ai';
-const OUTPUT_DIR = path.join(__dirname, 'images', 'tiles');
-const OBSTACLE_DIR = path.join(__dirname, 'images', 'obstacles');
+const OUTPUT_DIR = path.join(__dirname, '..', 'images', 'tiles');
+const OBSTACLE_DIR = path.join(__dirname, '..', 'images', 'obstacles');
 
 // Ensure directories exist
 if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });

@@ -451,30 +451,45 @@ export class GridSystem {
     }
 
     setGridVisible(visible) {
-        // Toggle grid lines/overlay
+        // Toggle grid lines
         if (this.gridGraphics) {
             this.gridGraphics.clear();
         }
         
         if (visible) {
-            // Draw grid lines
+            // Draw darker, more visible grid lines
             if (!this.gridGraphics) {
                 this.gridGraphics = this.scene.add.graphics();
             }
-            this.gridGraphics.lineStyle(1, 0x5D4E3E, 0.5);
+            
             const tileSize = this.tileSize;
+            const width = this.width * tileSize;
+            const height = this.height * tileSize;
             
-            // Draw vertical lines
-            for (let x = 0; x <= this.width; x++) {
-                this.gridGraphics.moveTo(x * tileSize, 0);
-                this.gridGraphics.lineTo(x * tileSize, this.height * tileSize);
+            // Darker, more visible grid color
+            const gridColor = 0x3a3028; 
+            
+            // Draw outer border
+            this.gridGraphics.lineStyle(2, gridColor, 1.0);
+            this.gridGraphics.strokeRect(0, 0, width, height);
+            
+            // Draw inner grid lines
+            this.gridGraphics.lineStyle(1, gridColor, 0.8);
+            
+            // Vertical lines
+            for (let x = 1; x < this.width; x++) {
+                const xPos = x * tileSize;
+                this.gridGraphics.moveTo(xPos, 0);
+                this.gridGraphics.lineTo(xPos, height);
             }
             
-            // Draw horizontal lines
-            for (let y = 0; y <= this.height; y++) {
-                this.gridGraphics.moveTo(0, y * tileSize);
-                this.gridGraphics.lineTo(this.width * tileSize, y * tileSize);
+            // Horizontal lines
+            for (let y = 1; y < this.height; y++) {
+                const yPos = y * tileSize;
+                this.gridGraphics.moveTo(0, yPos);
+                this.gridGraphics.lineTo(width, yPos);
             }
+            
             this.gridGraphics.strokePath();
         }
     }

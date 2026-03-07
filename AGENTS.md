@@ -117,9 +117,59 @@ unit.glowEffect.setTint(0xff0000); // red for mythic
 - `prepareSaveData()` / `restoreFromSave()` in SceneManager
 - Preserves legendary/mythic buffs via `statModifiers`
 
+## Image Generation
+
+Sprite generation scripts are in `utils/` folder:
+
+```
+utils/
+├── generate-sprites.js     # Generate unit sprites
+├── generate_tiles.js       # Generate background tiles & obstacles
+└── temp/                   # Test images (gitignored)
+```
+
+### Generate Unit Sprites
+
+Uses Pollinations.ai API with `zimage` model (best for pixel art):
+
+```bash
+cd utils
+node generate-sprites.js
+```
+
+**Features:**
+- Reads `src/units.js` to find all image paths
+- Generates only missing images
+- Saves to `images/` folder in appropriate subdirectories
+- Uses consistent prompt style for grim-dark fantasy aesthetic
+
+### Generate Background Tiles
+
+```bash
+cd utils
+node generate_tiles.js
+```
+
+**Generates:**
+- `grass.png`, `dirt.png`, `road.png` (64×64) - muted/greyed for backgrounds
+- `wall_large.png`, `rock_large.png` (72×72) - slightly larger obstacles that overflow cells
+
+### Model Testing
+
+To test different Pollinations models:
+
+1. Generate test images to `utils/temp/`
+2. Compare quality and style
+3. Currently using **zimage** (cheapest + best pixel art consistency at 0.002/img)
+
+**Pricing reference:**
+- flux / flux-2-dev: 0.001/img (cheapest but may have backgrounds)
+- zimage: 0.002/img (recommended for pixel art)
+- imagen-4: 0.0025/img (higher quality but adds text/watermarks)
+
 ## Development Tips
 
 - Version is in `src/main.js` - increment by 0.01 per commit
-- Use `generate-sprites.js` (gitignored) to generate missing unit images
+- Use `generate-sprites.js` to generate missing unit images
 - All sprites face left-to-right; enemies flipped with `setFlipX(true)`
 - Grid is dynamic - tile size calculated per stage to fit 640×512 canvas
