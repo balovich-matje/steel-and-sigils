@@ -14,7 +14,8 @@ const path = require('path');
 const https = require('https');
 
 // Configuration
-const UNITS_JS_PATH = path.join(__dirname, 'src', 'units.js');
+const UNITS_JS_PATH = path.join(__dirname, 'units.js');
+const IMAGES_BASE_PATH = path.join(__dirname, '..', 'images');
 const API_KEY = 'pk_ZYeFJPLbJvYAewAl';
 const API_BASE_URL = 'https://gen.pollinations.ai';
 const MODEL = 'zimage';
@@ -62,7 +63,7 @@ const UNIT_PROMPTS = {
  * Parse units.js and extract image paths
  */
 function extractImagePaths() {
-    console.log('📖 Reading unit definitions from src/units.js...');
+    console.log('📖 Reading unit definitions from units.js...');
     
     const content = fs.readFileSync(UNITS_JS_PATH, 'utf8');
     const imagePaths = [];
@@ -84,7 +85,7 @@ function extractImagePaths() {
  * Check if an image file exists and has content (>0 bytes)
  */
 function imageExists(imagePath) {
-    const fullPath = path.join(__dirname, imagePath);
+    const fullPath = path.join(__dirname, '..', imagePath);
     if (!fs.existsSync(fullPath)) {
         return false;
     }
@@ -98,7 +99,7 @@ function imageExists(imagePath) {
 function ensureDirectory(dirPath) {
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
-        console.log(`   📁 Created: ${path.relative(__dirname, dirPath)}`);
+        console.log(`   📁 Created: ${path.relative(path.join(__dirname, '..'), dirPath)}`);
     }
 }
 
@@ -207,8 +208,8 @@ async function main() {
     
     for (const imagePath of missing) {
         const filename = path.basename(imagePath);
-        const dirPath = path.join(__dirname, path.dirname(imagePath));
-        const fullOutputPath = path.join(__dirname, imagePath);
+        const dirPath = path.join(__dirname, '..', path.dirname(imagePath));
+        const fullOutputPath = path.join(__dirname, '..', imagePath);
         
         const prompt = UNIT_PROMPTS[filename];
         if (!prompt) {

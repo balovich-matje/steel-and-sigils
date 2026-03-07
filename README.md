@@ -21,6 +21,7 @@ Choose your battlefield before each run:
 |-------|------|--------|---------|----------|
 | 🌲 Whispering Woods | 10×8 | 1000 | Grass | Open field, no obstacles |
 | 🏰 Ruins of a Castle | 15×15 | 1700 | Dirt | Stone walls, larger battles |
+| ⛰️ Mountain Pass | 13×11 | 1300 | Mountains | Obstacles, right-flank enemy spawn |
 
 ## 🎮 Game Modes
 

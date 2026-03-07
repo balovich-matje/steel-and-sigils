@@ -45,10 +45,10 @@ The game revolves around turn-based tactical battles. Key mechanics include:
 
 ### How to Generate Unit Sprites
 
-To generate new unit sprites, use the `generate-sprites.js` script in the `image_utils/` folder:
+To generate new unit sprites, use the `generate-sprites.js` script in the `src/` folder:
 
 ```bash
-cd image_utils
+cd src
 node generate-sprites.js
 ```
 
