@@ -43,32 +43,26 @@ class GlowManager {
 
         // Glow settings by type
         const settings = {
-            legendary: { color: 0xff8c00, alpha: 0.7 },
-            mythic: { color: 0xff3333, alpha: 0.8 },
-            active: { color: 0xffffff, alpha: 0.6 }
+            legendary: { color: 0xff6600, alpha: 0.8 },
+            mythic: { color: 0xff0000, alpha: 0.9 },
+            active: { color: 0xffffff, alpha: 0.5 }
         };
 
         const config = settings[type] || settings.legendary;
 
-        // Create container for glow at unit position
-        const container = this.scene.add.container(unit.sprite.x, unit.sprite.y);
-
-        // Draw the glow shape
+        // Create graphics object directly (no container)
         const graphics = this.scene.add.graphics();
-        
-        if (type === 'active') {
-            // Dotted outline for active unit
-            this.drawDottedOutline(graphics, 0, 0, size, config.color, config.alpha);
-        } else {
-            // Filled ellipse for legendary/mythic - draw multiple layers
-            this.drawGlowEllipse(graphics, 0, 0, size, config.color, config.alpha);
-        }
 
-        container.add(graphics);
+        if (type === 'active') {
+            // Simple circle outline for active unit
+            this.drawActiveRing(graphics, unit.sprite.x, unit.sprite.y, size, config.color, config.alpha);
+        } else {
+            // Glowing ellipse on ground for legendary/mythic
+            this.drawGroundGlow(graphics, unit.sprite.x, unit.sprite.y, size, config.color, config.alpha);
+        }
 
         // Store glow data
         const glowData = {
-            container: container,
             graphics: graphics,
             type: type,
             unit: unit,
@@ -78,45 +72,116 @@ class GlowManager {
         this.glows.set(unit, glowData);
 
         // Set depth behind unit but above tiles
-        container.setDepth(5);
-        unit.sprite.setDepth(10);
+        graphics.setDepth(5);
 
         return glowData;
     }
 
     /**
-     * Draw a glow ellipse behind the unit
+     * Draw a glow on the ground behind the unit
      */
-    drawGlowEllipse(graphics, x, y, size, color, alpha) {
-        const width = size * 0.9;
-        const height = size * 0.6;
-        const offsetY = size * 0.1;
+    drawGroundGlow(graphics, x, y, size, color, alpha) {
+        const width = size * 0.8;
+        const height = size * 0.5;
+        const offsetY = size * 0.15;
 
-        graphics.fillStyle(color, alpha);
+        // Draw outer glow (larger, more transparent)
+        graphics.fillStyle(color, alpha * 0.4);
+        graphics.fillEllipse(x, y + offsetY, width * 1.5, height * 1.5);
+
+        // Draw inner glow (smaller, more opaque)
+        graphics.fillStyle(color, alpha * 0.7);
         graphics.fillEllipse(x, y + offsetY, width, height);
-        
-        // Add a second, larger, more transparent layer
-        graphics.fillStyle(color, alpha * 0.5);
-        graphics.fillEllipse(x, y + offsetY, width * 1.3, height * 1.3);
+
+        // Draw center highlight
+        graphics.fillStyle(color, alpha);
+        graphics.fillEllipse(x, y + offsetY, width * 0.6, height * 0.6);
     }
 
     /**
-     * Draw a dotted outline for active unit
+     * Draw a simple ring for active unit
      */
-    drawDottedOutline(graphics, x, y, size, color, alpha) {
-        const width = size * 0.85;
-        const height = size * 0.7;
-        const offsetY = size * 0.05;
-        const dotCount = 12;
-        const dotSize = 3;
+    drawActiveRing(graphics, x, y, size, color, alpha) {
+        const radius = size * 0.4;
+        const offsetY = size * 0.1;
 
-        graphics.fillStyle(color, alpha);
+        // Draw ring
+        graphics.lineStyle(3, color, alpha);
+        graphics.strokeCircle(x, y + offsetY, radius);
 
-        for (let i = 0; i < dotCount; i++) {
-            const angle = (i / dotCount) * Math.PI * 2;
-            const dotX = x + Math.cos(angle) * (width / 2);
-            const dotY = (y + offsetY) + Math.sin(angle) * (height / 2);
-            graphics.fillCircle(dotX, dotY, dotSize);
+        // Draw inner fill (subtle)
+        graphics.fillStyle(color, alpha * 0.2);
+        graphics.fillCircle(x, y + offsetY, radius);
+    }
+
+    /**
+     * Remove glow from a unit
+     */
+    removeGlow(unit) {
+        const glowData = this.glows.get(unit);
+        if (glowData) {
+            glowData.graphics.destroy();
+            this.glows.delete(unit);
+        }
+    }
+
+    /**
+     * Set the active unit (white ring glow)
+     */
+    setActiveUnit(unit) {
+        // Remove old active unit glow
+        if (this.activeUnitGlow) {
+            this.removeGlow(this.activeUnitGlow);
+            this.activeUnitGlow = null;
+        }
+
+        // Add new active unit glow
+        if (unit) {
+            this.addGlow(unit, 'active');
+            this.activeUnitGlow = unit;
+        }
+    }
+
+    /**
+     * Apply legendary/mythic glow based on unit's perks
+     */
+    applyPerkGlow(unit) {
+        if (!unit) return;
+
+        // Check for mythic first (takes precedence)
+        if (unit.hasDivineRetribution || unit.hasArcaneFocus) {
+            this.addGlow(unit, 'mythic');
+        }
+        // Then check for legendary
+        else if (unit.hasDoubleStrike || unit.hasCleave || unit.hasRicochet || 
+                 unit.hasPiercing || unit.hasBackstab) {
+            this.addGlow(unit, 'legendary');
+        }
+    }
+
+    /**
+     * Update all glow positions to follow units
+     */
+    update() {
+        for (const [unit, glowData] of this.glows) {
+            if (unit.sprite && glowData.graphics) {
+                glowData.graphics.x = unit.sprite.x;
+                glowData.graphics.y = unit.sprite.y;
+            }
+        }
+    }
+
+    /**
+     * Clear all glows
+     */
+    clear() {
+        for (const glowData of this.glows.values()) {
+            glowData.graphics.destroy();
+        }
+        this.glows.clear();
+        this.activeUnitGlow = null;
+    }
+}
         }
     }
 
