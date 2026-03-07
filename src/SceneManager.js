@@ -76,6 +76,13 @@ export class BattleScene extends Phaser.Scene {
         // Load wall/obstacle images
         this.load.image('wall_img', 'images/obstacles/wall.png');
         this.load.image('rock_img', 'images/obstacles/rock.png');
+        this.load.image('wall_large_img', 'images/obstacles/wall_large.png');
+        this.load.image('rock_large_img', 'images/obstacles/rock_large.png');
+        
+        // Load tile background images
+        this.load.image('grass_tile', 'images/tiles/grass.png');
+        this.load.image('dirt_tile', 'images/tiles/dirt.png');
+        this.load.image('road_tile', 'images/tiles/road.png');
     }
 
     create(data) {

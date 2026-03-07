@@ -36,7 +36,8 @@ export const STAGES = {
         height: 8,
         playerArea: { x1: 0, x2: 2, y1: 0, y2: 8 },
         hasObstacles: false,
-        startingPoints: 1000
+        startingPoints: 1000,
+        tileType: 'grass'
     },
     ruins: {
         id: 'ruins',
@@ -46,7 +47,8 @@ export const STAGES = {
         playerArea: { x1: 5, x2: 10, y1: 5, y2: 10 },
         hasObstacles: true,
         spawnLogic: 'perimeter',
-        startingPoints: 1700
+        startingPoints: 1700,
+        tileType: 'dirt'
     },
     mountain: {
         id: 'mountain',
@@ -57,7 +59,8 @@ export const STAGES = {
         hasObstacles: true,
         obstacleType: 'mountain',  // Custom obstacle generation
         spawnLogic: 'right_flank',  // Enemies on right and corners
-        startingPoints: 1300
+        startingPoints: 1300,
+        tileType: 'dirt'
     }
 };
 

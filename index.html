@@ -94,9 +94,12 @@
             </div>
 
             <!-- Toggle Button at Bottom (fixed) -->
-            <div class="panel-toggle-section">
-                <button id="view-toggle-btn" class="spell-button" onclick="toggleRightPanelView()" style="width: 100%;">
+            <div class="panel-toggle-section" style="display: flex; gap: 8px;">
+                <button id="view-toggle-btn" class="spell-button" onclick="toggleRightPanelView()" style="flex: 1;">
                     📜 Show Battle Log
+                </button>
+                <button id="grid-toggle-btn" class="spell-button" onclick="toggleGrid()" title="Toggle Grid" style="opacity: 0.5;">
+                    ⬜
                 </button>
             </div>
         </div>
@@ -454,6 +457,20 @@
                 initiativeView.classList.add('hidden');
                 combatLogView.classList.remove('hidden');
                 toggleBtn.innerHTML = '📊 Show Initiative';
+            }
+        }
+
+        // Grid toggle state
+        let gridVisible = false;
+
+        function toggleGrid() {
+            gridVisible = !gridVisible;
+            const btn = document.getElementById('grid-toggle-btn');
+            btn.style.opacity = gridVisible ? '1' : '0.5';
+            
+            // Toggle grid visibility in game scene
+            if (window.gameScene && window.gameScene.gridSystem) {
+                window.gameScene.gridSystem.setGridVisible(gridVisible);
             }
         }
 

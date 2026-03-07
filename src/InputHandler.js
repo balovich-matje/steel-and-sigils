@@ -23,24 +23,41 @@ export class GridSystem {
     }
 
     create() {
-        // Determine colors based on stage
-        const isRuins = this.scene.currentStage && this.scene.currentStage.id === 'ruins';
-        const colorA = isRuins ? CONFIG.COLORS.DIRT : CONFIG.COLORS.GRASS;
-        const colorB = isRuins ? CONFIG.COLORS.DIRT_DARK : CONFIG.COLORS.GRASS_DARK;
+        // Determine tile image key based on stage
+        const tileType = this.scene.currentStage?.tileType || 'grass';
+        const tileImageKey = tileType === 'dirt' ? 'dirt_tile' : 'grass_tile';
         const tileSize = this.tileSize;
+        const hasTileImage = this.scene.textures.exists(tileImageKey);
 
         // Create tile graphics
         for (let y = 0; y < this.height; y++) {
             this.tiles[y] = [];
             for (let x = 0; x < this.width; x++) {
-                const color = (x + y) % 2 === 0 ? colorA : colorB;
-                const tile = this.scene.add.rectangle(
-                    x * tileSize + tileSize / 2,
-                    y * tileSize + tileSize / 2,
-                    tileSize - 2,
-                    tileSize - 2,
-                    color
-                );
+                let tile;
+                
+                if (hasTileImage) {
+                    // Use tile image sprite
+                    tile = this.scene.add.image(
+                        x * tileSize + tileSize / 2,
+                        y * tileSize + tileSize / 2,
+                        tileImageKey
+                    );
+                    tile.setDisplaySize(tileSize, tileSize);
+                } else {
+                    // Fallback to colored rectangle
+                    const isRuins = this.scene.currentStage && this.scene.currentStage.id === 'ruins';
+                    const colorA = isRuins ? CONFIG.COLORS.DIRT : CONFIG.COLORS.GRASS;
+                    const colorB = isRuins ? CONFIG.COLORS.DIRT_DARK : CONFIG.COLORS.GRASS_DARK;
+                    const color = (x + y) % 2 === 0 ? colorA : colorB;
+                    tile = this.scene.add.rectangle(
+                        x * tileSize + tileSize / 2,
+                        y * tileSize + tileSize / 2,
+                        tileSize - 2,
+                        tileSize - 2,
+                        color
+                    );
+                }
+                
                 tile.setInteractive();
                 tile.gridX = x;
                 tile.gridY = y;
@@ -402,16 +419,26 @@ export class GridSystem {
     addObstacle(x, y, type = 'wall') {
         this.obstacles.add(`${x},${y}`);
         if (this.tiles[y] && this.tiles[y][x]) {
-            // Hide the tile and add an obstacle image instead
+            // Hide the tile
             this.tiles[y][x].setVisible(false);
             const tileSize = this.tileSize;
-            const imageKey = type === 'rock' ? 'rock_img' : 'wall_img';
+            
+            // Use larger obstacle images (72x72) that overflow the cell
+            const isRock = type === 'rock';
+            const imageKey = isRock ? 'rock_large_img' : 'wall_large_img';
+            const hasLargeImage = this.scene.textures.exists(imageKey);
+            
+            // Fallback to standard size if large not available
+            const useLarge = hasLargeImage;
+            const finalImageKey = useLarge ? imageKey : (isRock ? 'rock_img' : 'wall_img');
+            const displaySize = useLarge ? tileSize + 8 : tileSize - 4;
+            
             const obstacleImage = this.scene.add.image(
                 x * tileSize + tileSize / 2,
                 y * tileSize + tileSize / 2,
-                imageKey
+                finalImageKey
             );
-            obstacleImage.setDisplaySize(tileSize - 4, tileSize - 4);
+            obstacleImage.setDisplaySize(displaySize, displaySize);
             obstacleImage.setDepth(1); // Ensure obstacle is visible above grid
             if (!this.wallImages) this.wallImages = [];
             this.wallImages.push({ x, y, image: obstacleImage });
@@ -421,5 +448,34 @@ export class GridSystem {
 
     isObstacle(x, y) {
         return this.obstacles.has(`${x},${y}`);
+    }
+
+    setGridVisible(visible) {
+        // Toggle grid lines/overlay
+        if (this.gridGraphics) {
+            this.gridGraphics.clear();
+        }
+        
+        if (visible) {
+            // Draw grid lines
+            if (!this.gridGraphics) {
+                this.gridGraphics = this.scene.add.graphics();
+            }
+            this.gridGraphics.lineStyle(1, 0x5D4E3E, 0.5);
+            const tileSize = this.tileSize;
+            
+            // Draw vertical lines
+            for (let x = 0; x <= this.width; x++) {
+                this.gridGraphics.moveTo(x * tileSize, 0);
+                this.gridGraphics.lineTo(x * tileSize, this.height * tileSize);
+            }
+            
+            // Draw horizontal lines
+            for (let y = 0; y <= this.height; y++) {
+                this.gridGraphics.moveTo(0, y * tileSize);
+                this.gridGraphics.lineTo(this.width * tileSize, y * tileSize);
+            }
+            this.gridGraphics.strokePath();
+        }
     }
 }
