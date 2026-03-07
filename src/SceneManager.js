@@ -1617,11 +1617,11 @@ export class BattleScene extends Phaser.Scene {
         const grid = document.getElementById('loot-goblin-target-grid');
         playerUnits.forEach(unit => {
             const card = document.createElement('div');
-            card.className = 'spell-card';
+            card.className = 'unit-select-card';
             card.innerHTML = `
-                <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
-                <div style="color: #A68966; font-weight: bold;">${unit.name}</div>
-                <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
+                <div style="font-size: 28px; margin-bottom: 5px;">${unit.emoji}</div>
+                <div style="color: #A68966; font-weight: bold; font-size: 14px;">${unit.name}</div>
+                <div style="font-size: 11px; color: #B8A896; margin-top: 4px; line-height: 1.4;">
                     HP: ${unit.health}/${unit.maxHealth} | DMG: ${unit.damage}<br>
                     MOV: ${unit.moveRange} | INIT: ${unit.initiative}
                 </div>
@@ -2166,11 +2166,11 @@ export class BattleScene extends Phaser.Scene {
         const grid = document.getElementById('buff-target-grid');
         playerUnits.forEach(unit => {
             const card = document.createElement('div');
-            card.className = 'spell-card';
+            card.className = 'unit-select-card';
             card.innerHTML = `
-                <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
-                <div style="color: #A68966; font-weight: bold;">${unit.name}</div>
-                <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
+                <div style="font-size: 28px; margin-bottom: 5px;">${unit.emoji}</div>
+                <div style="color: #A68966; font-weight: bold; font-size: 14px;">${unit.name}</div>
+                <div style="font-size: 11px; color: #B8A896; margin-top: 4px; line-height: 1.4;">
                     HP: ${unit.health}/${unit.maxHealth} | DMG: ${unit.damage}<br>
                     MOV: ${unit.moveRange} | INIT: ${unit.initiative}
                 </div>
@@ -2235,12 +2235,12 @@ export class BattleScene extends Phaser.Scene {
         const grid = document.getElementById('legendary-target-grid');
         playerUnits.forEach(unit => {
             const card = document.createElement('div');
-            card.className = 'spell-card';
-            card.style.cssText = 'border: 2px solid #8B6914; min-height: auto; padding: 10px;';
+            card.className = 'unit-select-card';
+            card.style.cssText = 'border: 2px solid #8B6914;';
             card.innerHTML = `
-                <div style="font-size: 32px; margin-bottom: 5px;">${unit.emoji}</div>
-                <div style="color: #D4A574; font-weight: bold;">${unit.name}</div>
-                <div style="font-size: 11px; color: #B8A896; margin-top: 4px;">
+                <div style="font-size: 28px; margin-bottom: 5px;">${unit.emoji}</div>
+                <div style="color: #D4A574; font-weight: bold; font-size: 14px;">${unit.name}</div>
+                <div style="font-size: 11px; color: #B8A896; margin-top: 4px; line-height: 1.4;">
                     HP: ${unit.health}/${unit.maxHealth} | DMG: ${unit.damage}<br>
                     MOV: ${unit.moveRange} | INIT: ${unit.initiative}
                 </div>
