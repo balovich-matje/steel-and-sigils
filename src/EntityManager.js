@@ -88,10 +88,11 @@ export class Unit {
             this.glowEffect = null;
         }
 
-        // Determine glow color
+        // Determine glow color and settings
         const tint = type === 'mythic' ? 0xff3333 : 0xff8c00;
-        const scale = type === 'mythic' ? 1.3 : 1.15;
-        const alpha = type === 'mythic' ? 0.7 : 0.5;
+        const scale = type === 'mythic' ? 1.5 : 1.3;
+        const alpha = type === 'mythic' ? 0.8 : 0.6;
+        const pulseDuration = type === 'mythic' ? 600 : 1000;
 
         // Get unit's display size for proper glow sizing
         const template = UNIT_TYPES[this.type];
@@ -104,37 +105,35 @@ export class Unit {
         const spriteY = this.sprite.y;
 
         if (hasImage) {
-            // For image-based units, create glow sprite
+            // For image-based units, create glow sprite behind the unit
             this.glowEffect = this.scene.add.sprite(spriteX, spriteY, imageKey);
             this.glowEffect.setScale(this.sprite.scaleX * scale);
             this.glowEffect.setOrigin(0.5, 1.0);
             this.glowEffect.setFlipX(this.sprite.flipX);
+            
+            // Apply glow effect
+            this.glowEffect.setTint(tint);
+            this.glowEffect.setBlendMode(Phaser.BlendModes.ADD);
+            this.glowEffect.setAlpha(alpha);
         } else {
             // For emoji-based units, create a circular glow
             this.glowEffect = this.scene.add.graphics();
             this.glowEffect.fillStyle(tint, alpha);
-            const radius = bossSize > 1 ? 40 : 25;
+            const radius = bossSize > 1 ? 45 : 30;
             this.glowEffect.fillCircle(0, 0, radius);
             this.glowEffect.x = spriteX;
             this.glowEffect.y = spriteY - 10;
         }
 
-        // Apply tint and blend mode for glow effect
-        if (this.glowEffect.setTint) {
-            this.glowEffect.setTint(tint);
-            this.glowEffect.setBlendMode(Phaser.BlendModes.ADD);
-            this.glowEffect.setAlpha(alpha);
-        }
-
-        // Ensure glow is behind the unit sprite
+        // Ensure glow is behind the unit sprite so it outlines it
         this.glowEffect.setDepth(this.sprite.depth - 1);
 
         // Add pulsing animation
         if (this.glowEffect.setAlpha) {
             this.scene.tweens.add({
                 targets: this.glowEffect,
-                alpha: { from: alpha, to: alpha * 0.5 },
-                duration: type === 'mythic' ? 800 : 1200,
+                alpha: { from: alpha, to: alpha * 0.3 },
+                duration: pulseDuration,
                 yoyo: true,
                 repeat: -1,
                 ease: 'Sine.easeInOut'
