@@ -641,7 +641,10 @@ export class BattleScene extends Phaser.Scene {
                     // Check if this would create a 2x2 block (traps 1x1 units)
                     if (!creates2x2Block(x, y)) {
                         rockSet.add(`${x},${y}`);
-                        obstacles.push({ x, y });
+                        // Random rock variation
+                        const rockTypes = ['rock', 'rock_tall', 'rock_wide', 'rock_jagged'];
+                        const rockType = rockTypes[Math.floor(Math.random() * rockTypes.length)];
+                        obstacles.push({ x, y, type: rockType });
                     }
                 }
             }
@@ -666,7 +669,7 @@ export class BattleScene extends Phaser.Scene {
         
         // Add all rocks to the grid
         for (const obs of obstacles) {
-            this.gridSystem.addObstacle(obs.x, obs.y, 'rock');
+            this.gridSystem.addObstacle(obs.x, obs.y, obs.type || 'rock');
         }
     }
     

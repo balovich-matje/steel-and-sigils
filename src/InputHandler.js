@@ -423,15 +423,30 @@ export class GridSystem {
             this.tiles[y][x].setVisible(false);
             const tileSize = this.tileSize;
             
-            // Use larger obstacle images (72x72) that overflow the cell
-            const isRock = type === 'rock';
-            const imageKey = isRock ? 'rock_large_img' : 'wall_large_img';
-            const hasLargeImage = this.scene.textures.exists(imageKey);
+            // Determine image key based on obstacle type
+            let imageKey;
+            const isRock = type.startsWith('rock');
             
-            // Fallback to standard size if large not available
-            const useLarge = hasLargeImage;
-            const finalImageKey = useLarge ? imageKey : (isRock ? 'rock_img' : 'wall_img');
-            const displaySize = useLarge ? tileSize + 8 : tileSize - 4;
+            if (isRock) {
+                // Map rock types to their image keys
+                const rockImageMap = {
+                    'rock': 'rock_large_img',
+                    'rock_tall': 'rock_tall_img',
+                    'rock_wide': 'rock_wide_img',
+                    'rock_jagged': 'rock_jagged_img'
+                };
+                imageKey = rockImageMap[type] || 'rock_large_img';
+                // Fallback to standard rock if specific variation not loaded
+                if (!this.scene.textures.exists(imageKey)) {
+                    imageKey = 'rock_large_img';
+                }
+            } else {
+                imageKey = 'wall_large_img';
+            }
+            
+            const hasImage = this.scene.textures.exists(imageKey);
+            const finalImageKey = hasImage ? imageKey : (isRock ? 'rock_img' : 'wall_img');
+            const displaySize = isRock ? tileSize + 8 : tileSize - 4;
             
             const obstacleImage = this.scene.add.image(
                 x * tileSize + tileSize / 2,
@@ -442,7 +457,6 @@ export class GridSystem {
             obstacleImage.setDepth(1); // Ensure obstacle is visible above grid
             if (!this.wallImages) this.wallImages = [];
             this.wallImages.push({ x, y, image: obstacleImage });
-        } else {
         }
     }
 

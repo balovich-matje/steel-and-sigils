@@ -675,7 +675,10 @@
                         // Check if this would create a 2x2 block (traps 1x1 units)
                         if (!creates2x2Block(x, y)) {
                             rockSet.add(`${x},${y}`);
-                            obstacles.push({ x, y, type: 'rock' });
+                            // Random rock variation
+                            const rockTypes = ['rock', 'rock_tall', 'rock_wide', 'rock_jagged'];
+                            const rockType = rockTypes[Math.floor(Math.random() * rockTypes.length)];
+                            obstacles.push({ x, y, type: rockType });
                         }
                     }
                 }
@@ -790,10 +793,42 @@
                         const wall = this.add.rectangle(x, y, tileSize - 2, tileSize - 2, 0x5a5a5a);
                         const wallDetail = this.add.rectangle(x, y, tileSize - 6, tileSize - 6, 0x6a6a6a);
                         this.obstacleContainer.add([wall, wallDetail]);
-                    } else if (obs.type === 'rock') {
-                        // Mountain rock - brownish gray circle
-                        const rock = this.add.circle(x, y, tileSize/2 - 2, 0x757575);
-                        const rockDetail = this.add.circle(x, y, tileSize/3, 0x858585);
+                    } else if (obs.type && obs.type.startsWith('rock')) {
+                        // Mountain rocks with varied shapes and colors
+                        let mainColor, detailColor, scaleX = 1, scaleY = 1;
+                        
+                        switch (obs.type) {
+                            case 'rock_tall':
+                                mainColor = 0x6a6a6a;    // Slightly lighter
+                                detailColor = 0x8a8a8a;
+                                scaleY = 1.3;
+                                scaleX = 0.85;
+                                break;
+                            case 'rock_wide':
+                                mainColor = 0x707070;    // Medium gray
+                                detailColor = 0x909090;
+                                scaleX = 1.3;
+                                scaleY = 0.85;
+                                break;
+                            case 'rock_jagged':
+                                mainColor = 0x656565;    // Darker
+                                detailColor = 0x858585;
+                                break;
+                            default: // 'rock'
+                                mainColor = 0x757575;
+                                detailColor = 0x858585;
+                        }
+                        
+                        // Draw rock with variation
+                        const rockRadius = (tileSize/2 - 2) * Math.min(scaleX, scaleY);
+                        const rock = this.add.circle(x, y, rockRadius, mainColor);
+                        const detailRadius = (tileSize/3) * Math.min(scaleX, scaleY);
+                        const rockDetail = this.add.circle(x, y - rockRadius * 0.2, detailRadius, detailColor);
+                        
+                        // Apply scaling for tall/wide variations
+                        rock.setScale(scaleX, scaleY);
+                        rockDetail.setScale(scaleX, scaleY);
+                        
                         this.obstacleContainer.add([rock, rockDetail]);
                     }
                 });
