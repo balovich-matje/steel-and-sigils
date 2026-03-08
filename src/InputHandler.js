@@ -3,7 +3,6 @@
 // ============================================
 
 import { CONFIG } from './GameConfig.js';
-import { SPELLS } from './GameConfig.js';
 
 // ============================================
 // GRID SYSTEM

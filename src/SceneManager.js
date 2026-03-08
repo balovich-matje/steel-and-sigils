@@ -43,7 +43,7 @@ export class BattleScene extends Phaser.Scene {
         this.combatLog = [];
         this.combatLogOpen = false;
         this.currentStage = null;
-        this.tileSize = this.tileSize;
+        this.tileSize = CONFIG.TILE_SIZE || 64;
         this.silenceActive = false; // The Silence boss ability
     }
 
@@ -351,16 +351,6 @@ export class BattleScene extends Phaser.Scene {
                     );
                 }
             });
-        }
-        else if (unit.type === 'OCTO' && !unit.hasPulled) {
-            this.activeUnitAbility = 'PULL';
-            this.uiManager.showFloatingText('Select target to Pull', 400, 300, '#8B5A2B');
-            document.body.style.cursor = 'crosshair';
-        }
-        else if (unit.type === 'PULL_FROG' && !unit.hasPulled) {
-            this.activeUnitAbility = 'PULL';
-            this.uiManager.showFloatingText('Select target to Pull', 400, 300, '#8B5A2B');
-            document.body.style.cursor = 'crosshair';
         }
         else if (unit.type === 'SORCERER' && !unit.hasCastFireball) {
             this.activeUnitAbility = 'SORCERER_FIREBALL';

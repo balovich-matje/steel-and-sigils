@@ -1,149 +1,261 @@
-# ⚔️ Steel and Sigils v0.96
+# ⚔️ Steel and Sigils v0.90
 
-A browser-based tactical combat game inspired by Heroes of Might and Magic 5. Built with Phaser 3, vanilla JavaScript, and CSS. No build tools required - runs directly in your browser.
+A browser-based tactical combat game inspired by Heroes of Might and Magic. Built with Phaser 3, vanilla JavaScript (ES6 modules), and CSS. No build tools required - runs directly in your browser.
 
 **Play:** Open `index.html` in a modern browser
 
+---
+
 ## 🎮 Features
 
-- **Turn-based tactical combat** on a hexless grid
-- **9 playable unit types** with distinct roles and abilities
-- **3 enemy factions** with unique bosses
-- **Spell system** with 12 spells and mana management
-- **Buff progression:** Common → Epic → Legendary → Mythic tiers
-- **3 battle maps:** Whispering Woods, Ruins of a Castle, Mountain Pass
+- **Turn-based tactical combat** on a hexless grid with initiative-based turn order
+- **9 playable unit types** with distinct roles, passives, and abilities
+- **3 enemy factions** with unique units and boss encounters
+- **12 powerful spells** organized into 4 magical schools
+- **Progression system** with unit buffs and magic enhancements between battles
+- **3 battle maps** with different sizes, terrain, and tactical challenges
+- **Boss waves every 5th battle** featuring massive 2×2 bosses with unique mechanics
 - **Permadeath roguelike** - defeat means starting over
-- **Save/load system** - continue your run later
+- **Legendary & Mythic perks** that units can acquire through progression
+
+---
 
 ## 🛡️ Player Units
 
-### Core Units
+### Common Units
 
-| Unit | Role | HP | DMG | Special |
-|------|------|-----|-----|---------|
-| 🛡️ **Knight** | Tank | 100 | 15 | High defense, reliable |
-| 🏹 **Archer** | Ranged | 70 | 12 | Ranged attacks, precision |
-| 🔮 **Wizard** | Mage | 60 | 10 | Spell casting, low HP |
+| Unit | Emoji | HP | DMG | MOV | INIT | Cost | Special |
+|------|-------|-----|-----|-----|------|------|---------|
+| **Knight** | ⚔️ | 100 | 25 | 4 | 12 | 200 | Heavy Armor: -50% damage from ranged attacks |
+| **Archer** | 🏹 | 60 | 35 | 2 | 15 | 300 | Ranged: 6 tile range |
 
-### Advanced Units
+### Specialist Units
 
-| Unit | Role | HP | DMG | Special |
-|------|------|-----|-----|---------|
-| 🪓 **Berserker** | Melee DPS | 90 | 18 | High damage, Blood Frenzy |
-| 🛡️ **Paladin** | Tank/Support | 110 | 14 | Divine Wrath cleave, healing |
-| 🎯 **Ranger** | Ranged DPS | 75 | 14 | Ricochet shots, mobility |
-| 🗡️ **Rogue** | Assassin | 65 | 16 | Backstab (4x from behind), Vanish |
-| ✨ **Cleric** | Healer | 70 | 8 | Mass healing, support spells |
-| 🔮 **Sorcerer** | Mage | 55 | 12 | Arcane Pierce (infinite range) |
+| Unit | Emoji | HP | DMG | MOV | INIT | Cost | Special |
+|------|-------|-----|-----|-----|------|------|---------|
+| **Wizard** | 🧙 | 40 | 45 | 2 | 10 | 500 | Ranged: 4 tiles. Arcane Channeling: +2 mana regen per Wizard |
+| **Cleric** | ✝️ | 80 | 15 | 2 | 10 | 500 | Ranged: 4 tiles. Blessed Touch: Can cast Heal once per turn. Army-wide +50% healing |
+| **Rogue** | 🗡️ | 55 | 40 | 8 | 16 | 500 | Shadow Step: Returns to starting position after attack |
 
-### Legendary Perks
+### Legendary Units
 
-Units can acquire legendary perks at the end of battle waves:
+| Unit | Emoji | HP | DMG | MOV | INIT | Cost | Special |
+|------|-------|-----|-----|-----|------|------|---------|
+| **Paladin** | 🛡️ | 150 | 50 | 4 | 9 | 800 | Divine Protection: -50% ranged damage, +50% healing received |
+| **Ranger** | 🎯 | 70 | 50 | 2 | 13 | 800 | Eagle Eye: 10 tile range (longest in game) |
+| **Berserker** | 🪓 | 90 | 50 | 4 | 11 | 800 | Bloodlust: Killing blow permanently increases damage by 15. Reckless: +50% damage taken |
+| **Sorcerer** | 🔮 | 50 | 55 | 2 | 14 | 800 | Ranged: 4 tiles. Arcane Mastery: +50% spell damage. Active: Cast Fireball |
 
-| Unit | Legendary Perk | Effect |
-|------|---------------|--------|
-| Berserker | **Blood Frenzy** | Attack twice per turn |
-| Paladin | **Divine Wrath** | 3×3 cleave attack (+40 damage) |
-| Ranger | **Ricochet Shot** | Arrows bounce to nearby targets |
-| Sorcerer | **Arcane Pierce** | Infinite range, pierces all enemies |
-| Rogue | **Shadow Strike** | 4× damage when attacking from behind |
-
-### Mythic Perks
-
-Mythic perks can only be acquired by units that already have their legendary perk:
-
-| Unit | Mythic Perk | Effect |
-|------|-------------|--------|
-| Paladin | **Divine Retribution** | Reflects melee damage to attackers |
-| Sorcerer | **Arcane Focus** | Consecutive same spells increase damage 50% |
+---
 
 ## 👹 Enemy Factions
 
 ### Greenskin Horde
-- Orc Warrior, Orc Brute, Orc Rogue, Goblin Stone Thrower
-- **Boss:** War Chieftain Gormak (2×2, chain lightning, flees from melee)
+
+| Unit | Emoji | HP | DMG | MOV | INIT | Cost | Special |
+|------|-------|-----|-----|-----|------|------|---------|
+| Orc Warrior | 👹 | 50 | 25 | 4 | 10 | 250 | Basic melee fighter |
+| Orc Brute | 🐗 | 200 | 50 | 2 | 6 | 500 | Tanky slow fighter |
+| Orc Rogue | 🥷 | 60 | 35 | 6 | 16 | 500 | Hit and Run tactic |
+| Goblin Stone Thrower | 🪨 | 40 | 15 | 3 | 12 | 200 | Ranged: 4 tiles |
 
 ### Dungeon Dwellers
-- Animated Armor, Skeleton Archer, Skeleton Soldier, Lost Spirit
-- **Boss:** Sentinel of the Depths (2×2, powerful melee)
-- **Boss:** Summoner Lich (summons skeletons, 2×2)
+
+| Unit | Emoji | HP | DMG | MOV | INIT | Cost | Special |
+|------|-------|-----|-----|-----|------|------|---------|
+| Animated Armor | 🤖 | 220 | 45 | 2 | 5 | 550 | Slow but durable |
+| Skeleton Archer | 💀🏹 | 50 | 30 | 2 | 14 | 300 | Ranged: 6 tiles |
+| Skeleton Soldier | 💀⚔️ | 90 | 25 | 4 | 11 | 250 | Shielded: -50% ranged damage |
+| Lost Spirit | 👻 | 70 | 50 | 6 | 15 | 800 | Ethereal: -75% physical damage. Arcane Weakness: +50% spell damage |
 
 ### Old God Worshippers (Cultists)
-- Cultist Acolyte, Cultist Neophyte, Gibbering Horror, Flesh-Warped Stalker
-- **Boss:** Octoth Hroarath (2×2, eldritch powers)
-- **Boss:** **The Silence** (2×2, silences all spell casting during fight)
-- **Boss:** **Void Herald** (2×2, mass slow + 38 damage Voidball)
+
+| Unit | Emoji | HP | DMG | MOV | INIT | Cost | Special |
+|------|-------|-----|-----|-----|------|------|---------|
+| Cultist Acolyte | 👤 | 40 | 20 | 4 | 10 | 150 | Basic cultist fighter |
+| Cultist Neophyte | 🤫 | 35 | 15 | 3 | 9 | 200 | Ranged: 4 tiles |
+| Gibbering Horror | 🐙 | 80 | 40 | 3 | 11 | 500 | Ranged: 5 tiles |
+| Flesh-warped Stalker | 🦎 | 70 | 40 | 7 | 16 | 550 | Fast melee attacker |
+
+---
+
+## 👑 Boss Units
+
+Bosses appear every 5th battle and occupy 2×2 cells on the grid.
+
+### Greenskin Horde Bosses
+
+| Boss | Emoji | HP | DMG | MOV | INIT | Special |
+|------|-------|-----|-----|-----|------|---------|
+| **Ogre Chieftain** | 👑 | 500 | 80 | 3 | 8 | Brutal Regeneration: Heals 10% max HP per turn. Attacks slow enemies by 0.5 MOV for 2 turns |
+| **Orc Shaman King** | 🔮 | 350 | 40 | 4 | 14 | Arcane Mastery: Casts Chain Lightning and Fireball spells. Keeps distance from enemies |
+| **Loot Goblin** | 💰 | 150 | 50 | 8 | 18 | Hit and Run: Returns to starting position after attacking. Drops legendary loot on death |
+
+### Dungeon Dwellers Bosses
+
+| Boss | Emoji | HP | DMG | MOV | INIT | Special |
+|------|-------|-----|-----|-----|------|---------|
+| **Summoner Lich** | 💀👑 | 300 | 10 | 1 | 7 | Summon Undead: Summons 1 undead ally per turn (2 on first turn) |
+
+### Old God Worshippers Bosses
+
+| Boss | Emoji | HP | DMG | MOV | INIT | Special |
+|------|-------|-----|-----|-----|------|---------|
+| **Octo'th Hroa'rath** | 🦑 | 250 | 75 | 4 | 10 | Otherworldly Aura: Deals 15 damage to adjacent units at start of turn. Tendril Pull: Pulls distant enemies into melee range |
+| **The Silence** | 🤐 | 400 | 55 | 3 | 8 | Aura of Silence: All spellcasting is disabled during the fight. Melee only! |
+| **Void Herald** | 🌑 | 320 | 35 | 4 | 12 | Void Slow: Reduces all enemy movement by 3 at fight start (min 1). Voidball: Casts 38 damage voidball each turn |
+
+---
 
 ## 🗺️ Battle Maps
 
-| Map | Size | Features |
-|-----|------|----------|
-| **Whispering Woods** | 10×8 | Forest terrain, open field |
-| **Ruins of a Castle** | 15×15 | Stone walls border 5×5 center area, 2-cell gaps for passage |
-| **Mountain Pass** | 19×19 | Rock formations create chokepoint, enemies spawn on right side |
+| Map | Size | Points | Features |
+|-----|------|--------|----------|
+| **Whispering Woods** | 10×8 | 1000 | Grass terrain, open field, no obstacles |
+| **Mountain Pass** | 13×11 | 1300 | Dirt terrain, rock formations create chokepoints, enemies spawn on right flank |
+| **Ruins of a Castle** | 15×15 | 1700 | Dirt terrain, stone walls border 5×5 center area with 2-cell gaps for passage |
+
+---
 
 ## ✨ Spells
 
-### Destructo (Damage)
-- **Fireball** - 3×3 explosion, 40 damage
-- **Lightning Bolt** - Single target, 50 damage
-- **Chain Lightning** - Chains to nearby enemies
-- **Meteor** - Large 5×5 explosion, 60 damage
+Spells are organized into 4 magical schools and cost mana to cast. Mana regenerates each turn (base +1, +2 per Wizard).
 
-### Restoratio (Healing)
-- **Healing Light** - Single target, 40 heal
-- **Mass Heal** - All allies, 25 heal each
+### 🔥 Destructo (Damage)
 
-### Benedictio (Buffs)
-- **Bless** - +50% damage for 3 turns
-- **Shield** - +10 defense for 3 turns
-- **Haste** - +2 movement for 3 turns
-- **Regenerate** - Heal 10 HP per turn for 5 turns
+| Spell | Icon | Mana | Effect |
+|-------|------|------|--------|
+| **Fireball** | 🔥 | 25 | 3×3 area, 30 damage to all enemies |
+| **Lightning Bolt** | ⚡ | 15 | Single target, 45 damage |
+| **Ice Storm** | ❄️ | 30 | 3×3 area, 20 damage and reduces enemy movement by 1 for 2 turns |
+| **Meteor** | ☄️ | 50 | Devastating 5×5 area, 60 damage |
+| **Chain Lightning** | ⚡ | 40 | Hits target and chains to 2 nearby enemies for 35 damage each |
 
-### Utilitas (Utility)
-- **Ice Storm** - Slow enemies in area
+### 💚 Restoratio (Healing)
+
+| Spell | Icon | Mana | Effect |
+|-------|------|------|--------|
+| **Heal** | 💚 | 20 | Restores 40 HP to a friendly unit |
+| **Cure Wounds** | 💗 | 35 | Powerful healing that restores 80 HP |
+| **Regenerate** | 🌿 | 25 | Heals 15 HP at the start of each turn for 4 turns |
+
+### 🛡️ Benedictio (Buffs)
+
+| Spell | Icon | Mana | Effect |
+|-------|------|------|--------|
+| **Haste** | 💨 | 15 | Increases movement range by 2 for 3 turns |
+| **Shield** | 🛡️ | 15 | Reduces damage taken by 50% for 2 turns |
+| **Bless** | ✨ | 25 | Increases damage dealt by 50% for 3 turns |
+
+### ✨ Utilitas (Utility)
+
+| Spell | Icon | Mana | Effect |
+|-------|------|------|--------|
+| **Teleport** | 🌀 | 30 | Instantly moves a unit to any empty tile within range 8 |
+
+---
 
 ## 🎯 How to Play
 
-1. **Choose your army** - Select units within the point limit
-2. **Pick a map** - Each offers different tactical challenges
-3. **Deploy units** - Place them in the player spawn area
-4. **Combat** - Take turns moving and attacking
-5. **Spells** - Use mana to cast powerful spells
-6. **Victory rewards** - Choose buffs to strengthen your army
-7. **Survive** - Face increasingly difficult waves
+### Setup Phase
+1. **Choose your battlefield** - Select from 3 maps with different tactical challenges
+2. **Build your army** - Spend points to recruit units (200-800 cost each)
+3. **Deploy units** - Place them in the player spawn area before battle begins
 
-### Controls
-- **Click** unit to select
-- **Click** highlighted tile to move
-- **Click** enemy to attack (if in range)
-- **Click** spell, then target to cast
-- **End Turn** button when done
+### Combat Phase
+1. **Turn Order** - Units act based on initiative (higher = earlier)
+2. **Movement** - Click highlighted tiles to move (blue = valid moves)
+3. **Attacks** - Click enemies to attack if in range (red = valid attacks)
+4. **Spells** - Open Spell Book (S key) to cast powerful spells using mana
+5. **Abilities** - Use unit-specific abilities (U key) like Cleric's Heal
+6. **End Turn** - Press E or click End Turn when done
 
-## 🏆 Victory Conditions
+### Victory & Progression
+- Defeat all enemies to win the battle
+- Choose rewards: new units, buffs for existing units, or magic enhancements
+- Survive increasingly difficult waves
+- Face a boss every 5th battle
+- If all your units die, the run ends
 
-- Defeat all enemies in the wave
-- Survive 5 waves to face the boss
-- Defeat the boss to win the battle
+---
 
-## 💀 Defeat
+## 🎮 Controls
 
-If all your units die, the run ends. Learn from each attempt and try different strategies!
+| Key | Action |
+|-----|--------|
+| **Click** | Select unit, move, attack, or cast spells |
+| **S** | Open Spell Book |
+| **E** | End Turn |
+| **U** | Use Unit Ability |
+| **ESC** | Cancel spell/ability or close Spell Book |
+| **Arrow Keys** | Navigate Spell Book pages |
+| **Hotkeys** | Press first letter of spell name to cast (when Spell Book is open) |
+
+---
+
+## 🏆 Legendary & Mythic Perks
+
+Units can acquire powerful perks through progression:
+
+### Legendary Perks
+
+| Unit | Perk | Effect |
+|------|------|--------|
+| Berserker | **Double Strike** | Attack twice per turn |
+| Paladin | **Cleave** | 3×3 area damage on attack (+50% splash) |
+| Ranger | **Ricochet** | Arrows bounce to nearby targets within 2 tiles |
+| Sorcerer | **Piercing** | Ranged attacks pierce through all enemies in line |
+| Rogue | **Backstab** | 4× damage when attacking from behind |
+
+### Mythic Perks
+
+| Unit | Perk | Effect |
+|------|------|--------|
+| Paladin | **Divine Retribution** | Reflects melee damage to attackers (2× damage) |
+| Sorcerer | **Arcane Focus** | Consecutive same spells increase damage by 50% per stack |
+
+---
 
 ## 🎨 Visual Style
 
-Grim Dark Fantasy aesthetic with aged gold (#A68966), dark wood (#2D241E), and parchment (#E3D5B8) colors.
+Grim Dark Fantasy aesthetic with:
+- **Aged Gold** (#A68966) - Primary accent color
+- **Dark Wood** (#2D241E) - Background tones
+- **Parchment** (#E3D5B8) - Text color
+- **Pixel art sprites** (64×64) for all units
+- Units face left-to-right and flip programmatically for enemies
 
-All unit sprites are pixel art (64×64). Units face left-to-right and are flipped programmatically for enemies.
+---
 
 ## 🛠️ Tech Stack
 
-- **Phaser 3** - Game engine
-- **Vanilla JavaScript** (ES6 modules) - No build step
-- **CSS** - Styling
-- **Pollinations.ai** - Sprite generation (zimage model)
+| Technology | Purpose |
+|------------|---------|
+| **Phaser 3** | Game engine and rendering |
+| **Vanilla JavaScript (ES6 modules)** | Game logic - no build step required |
+| **CSS3** | UI styling and animations |
+| **HTML5** | Page structure |
 
-## 📄 License
+### File Structure
+```
+steel-and-sigils-main/
+├── index.html              # Main HTML file
+├── style.css               # Stylesheet
+├── src/
+│   ├── main.js            # Entry point
+│   ├── units.js           # Unit definitions
+│   ├── GameConfig.js      # Spells, stages, config
+│   ├── SceneManager.js    # Main game logic
+│   ├── SpellSystem.js     # Spell casting
+│   ├── EntityManager.js   # Units & turn system
+│   ├── InputHandler.js    # Grid & input
+│   └── UIHandler.js       # UI management
+└── images/                # Sprites and assets
+```
+
+---
+
+## 📝 License
 
 See LICENSE file
 
