@@ -446,7 +446,7 @@ export class GridSystem {
             
             const hasImage = this.scene.textures.exists(imageKey);
             const finalImageKey = hasImage ? imageKey : (isRock ? 'rock_img' : 'wall_img');
-            const displaySize = isRock ? tileSize + 8 : tileSize - 4;
+            const displaySize = isRock ? tileSize * 1.35 : tileSize - 4;
             
             const obstacleImage = this.scene.add.image(
                 x * tileSize + tileSize / 2,

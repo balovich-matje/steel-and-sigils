@@ -598,16 +598,17 @@ export class BattleScene extends Phaser.Scene {
     generateMountainObstacles() {
         // Mountain Pass: Generate rocks randomly without trapping units
         // Ensure 2x2 bosses can spawn and move
+        // Chokepoint layout: density gradient based on Y position
         const width = this.gridSystem.width;
         const height = this.gridSystem.height;
         const playerArea = this.currentStage.playerArea;
-        
+
         const obstacles = [];
         const rockSet = new Set();
-        
+
         // Helper to check if a position has a rock
         const hasRock = (x, y) => rockSet.has(`${x},${y}`);
-        
+
         // Helper to check if placing a rock at (x,y) would create a 2x2 block
         const creates2x2Block = (x, y) => {
             // Check all four possible 2x2 squares that include (x,y)
@@ -617,7 +618,7 @@ export class BattleScene extends Phaser.Scene {
                 [[x-1, y], [x, y], [x-1, y+1], [x, y+1]],  // bottom-left
                 [[x, y], [x+1, y], [x, y+1], [x+1, y+1]]   // bottom-right
             ];
-            
+
             for (const square of checks) {
                 let rockCount = 0;
                 let validCells = 0;
@@ -636,22 +637,36 @@ export class BattleScene extends Phaser.Scene {
             }
             return false;
         };
-        
+
         // Helper to check if position is in player spawn area (keep clear)
         const isSpawnArea = (x, y) => {
-            return x >= playerArea.x1 && x < playerArea.x2 && 
+            return x >= playerArea.x1 && x < playerArea.x2 &&
                    y >= playerArea.y1 && y < playerArea.y2;
         };
-        
+
+        // Density gradient based on Y position for chokepoint effect
+        // For Mountain Pass (19x19 grid, height=19):
+        // Top edge (rows 0-3): 35% density
+        // Upper area (rows 4-6): 25% density
+        // Middle chokepoint (rows 7-11): 10% density - OPEN
+        // Lower area (rows 12-14): 25% density
+        // Bottom edge (rows 15-18): 35% density
+        const rockChance = (y) => {
+            if (y < 4) return 0.35;           // Top edge
+            if (y < 7) return 0.25;           // Upper
+            if (y < 12) return 0.10;          // Middle (chokepoint - OPEN)
+            if (y < 15) return 0.25;          // Lower
+            return 0.35;                       // Bottom edge
+        };
+
         // Generate rocks with constraints
-        const rockDensity = 0.15;  // 15% coverage
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 // Skip spawn area
                 if (isSpawnArea(x, y)) continue;
-                
-                // Random placement with density
-                if (Math.random() < rockDensity) {
+
+                // Random placement with density based on Y position (chokepoint gradient)
+                if (Math.random() < rockChance(y)) {
                     // Check if this would create a 2x2 block (traps 1x1 units)
                     if (!creates2x2Block(x, y)) {
                         rockSet.add(`${x},${y}`);

@@ -620,6 +620,7 @@
         }
 
         // Generate mountain rocks - ensure no 2x2 traps, bosses can move
+        // Chokepoint layout: density gradient based on Y position
         function generateMountainRocks(config) {
             const size = config.gridSize;
             const obstacles = [];
@@ -663,15 +664,29 @@
                 return x >= center - 2 && x <= center + 2 && y >= center - 2 && y <= center + 2;
             };
             
+            // Density gradient based on Y position for chokepoint effect
+            // For Mountain Pass (19x19 grid, height=19):
+            // Top edge (rows 0-3): 35% density
+            // Upper area (rows 4-6): 25% density
+            // Middle chokepoint (rows 7-11): 10% density - OPEN
+            // Lower area (rows 12-14): 25% density
+            // Bottom edge (rows 15-18): 35% density
+            const rockChance = (y) => {
+                if (y < 4) return 0.35;           // Top edge
+                if (y < 7) return 0.25;           // Upper
+                if (y < 12) return 0.10;          // Middle (chokepoint - OPEN)
+                if (y < 15) return 0.25;          // Lower
+                return 0.35;                       // Bottom edge
+            };
+            
             // Generate rocks with constraints
-            const rockDensity = 0.15;  // 15% coverage
             for (let y = 0; y < size; y++) {
                 for (let x = 0; x < size; x++) {
                     // Skip spawn area
                     if (isSpawnArea(x, y)) continue;
                     
-                    // Random placement with density
-                    if (Math.random() < rockDensity) {
+                    // Random placement with density based on Y position (chokepoint gradient)
+                    if (Math.random() < rockChance(y)) {
                         // Check if this would create a 2x2 block (traps 1x1 units)
                         if (!creates2x2Block(x, y)) {
                             rockSet.add(`${x},${y}`);
@@ -826,13 +841,13 @@
                                 detailColor = 0x858585;
                         }
                         
-                        // Draw rock with variation
-                        const rockRadius = (tileSize/2 - 2) * Math.min(scaleX, scaleY);
+                        // Draw rock with variation - 35% bigger (1.35 scale)
+                        const rockRadius = (tileSize/2 - 2) * Math.min(scaleX, scaleY) * 1.35;
                         const rock = this.add.circle(x, y, rockRadius, mainColor);
-                        const detailRadius = (tileSize/3) * Math.min(scaleX, scaleY);
+                        const detailRadius = (tileSize/3) * Math.min(scaleX, scaleY) * 1.35;
                         const rockDetail = this.add.circle(x, y - rockRadius * 0.2, detailRadius, detailColor);
                         
-                        // Apply scaling for tall/wide variations
+                        // Apply scaling for tall/wide variations (on top of the 1.35 base)
                         rock.setScale(scaleX, scaleY);
                         rockDetail.setScale(scaleX, scaleY);
                         
