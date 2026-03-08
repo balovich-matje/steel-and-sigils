@@ -789,9 +789,16 @@
                     const y = obs.y * tileSize + tileSize / 2;
                     
                     if (obs.type === 'wall') {
-                        // Castle wall - gray block
+                        // Castle wall - gray block with random rotation
                         const wall = this.add.rectangle(x, y, tileSize - 2, tileSize - 2, 0x5a5a5a);
                         const wallDetail = this.add.rectangle(x, y, tileSize - 6, tileSize - 6, 0x6a6a6a);
+                        
+                        // Random 180° rotation for visual variety
+                        if (Math.random() > 0.5) {
+                            wall.setRotation(Math.PI);
+                            wallDetail.setRotation(Math.PI);
+                        }
+                        
                         this.obstacleContainer.add([wall, wallDetail]);
                     } else if (obs.type && obs.type.startsWith('rock')) {
                         // Mountain rocks with varied shapes and colors
@@ -828,6 +835,12 @@
                         // Apply scaling for tall/wide variations
                         rock.setScale(scaleX, scaleY);
                         rockDetail.setScale(scaleX, scaleY);
+                        
+                        // Random 180° rotation for visual variety
+                        if (Math.random() > 0.5) {
+                            rock.setRotation(Math.PI);
+                            rockDetail.setRotation(Math.PI);
+                        }
                         
                         this.obstacleContainer.add([rock, rockDetail]);
                     }

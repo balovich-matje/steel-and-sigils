@@ -455,6 +455,12 @@ export class GridSystem {
             );
             obstacleImage.setDisplaySize(displaySize, displaySize);
             obstacleImage.setDepth(1); // Ensure obstacle is visible above grid
+            
+            // Random rotation for visual variety (50% chance of 180° flip)
+            if (Math.random() > 0.5) {
+                obstacleImage.setRotation(Math.PI); // 180 degrees
+            }
+            
             if (!this.wallImages) this.wallImages = [];
             this.wallImages.push({ x, y, image: obstacleImage });
         }
