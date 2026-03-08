@@ -1,165 +1,134 @@
-# ⚔️ Steel and Sigils v0.90
+# ⚔️ Steel and Sigils v0.95
 
-A browser-based turn-based tactical combat game inspired by Heroes of Might and Magic 5.
+A browser-based tactical combat game inspired by Heroes of Might and Magic 5. Built with Phaser 3, vanilla JavaScript, and CSS. No build tools required - runs directly in your browser.
 
-## 🎮 How to Play
+**Play:** Open `index.html` in a modern browser
 
-1. Open `index.html` in your browser
-2. **Stage Selection**: Choose your battlefield:
-   - 🌲 **Whispering Woods** (10×8): 1000 starting points, open grassland
-   - 🏰 **Ruins of a Castle** (15×15): 1700 starting points, dirt terrain with walls
-3. **Army Selection**: Spend points to buy starting units
-4. **Unit Placement**: Place your units in your designated area
-5. **Combat**: Click units to select, move (blue tiles), and attack enemies (red tiles)
-6. **Victory**: Defeat all enemies to win and choose upgrades for the next battle
+## 🎮 Features
 
-## 🗺️ Stage Selection
+- **Turn-based tactical combat** on a hexless grid
+- **9 playable unit types** with distinct roles and abilities
+- **3 enemy factions** with unique bosses
+- **Spell system** with 12 spells and mana management
+- **Buff progression:** Common → Epic → Legendary → Mythic tiers
+- **3 battle maps:** Whispering Woods, Ruins of a Castle, Mountain Pass
+- **Permadeath roguelike** - defeat means starting over
+- **Save/load system** - continue your run later
 
-Choose your battlefield before each run:
+## 🛡️ Player Units
 
-| Stage | Size | Points | Terrain | Features |
-|-------|------|--------|---------|----------|
-| 🌲 Whispering Woods | 10×8 | 1000 | Grass | Open field, no obstacles |
-| 🏰 Ruins of a Castle | 15×15 | 1700 | Dirt | Stone walls, larger battles |
-| ⛰️ Mountain Pass | 13×11 | 1300 | Mountains | Obstacles, right-flank enemy spawn |
+### Core Units
 
-## 🎮 Game Modes
+| Unit | Role | HP | DMG | Special |
+|------|------|-----|-----|---------|
+| 🛡️ **Knight** | Tank | 100 | 15 | High defense, reliable |
+| 🏹 **Archer** | Ranged | 70 | 12 | Ranged attacks, precision |
+| 🔮 **Wizard** | Mage | 60 | 10 | Spell casting, low HP |
 
-### PVE Mode (Player vs AI)
-- Progress through increasingly difficult battles
-- Victory rewards: new units, buffs, magic enhancements
-- Boss waves every 5 rounds
-- Maps scale to fit screen (smaller maps = larger tiles)
+### Advanced Units
 
-## 📋 Core Mechanics
+| Unit | Role | HP | DMG | Special |
+|------|------|-----|-----|---------|
+| 🪓 **Berserker** | Melee DPS | 90 | 18 | High damage, Blood Frenzy |
+| 🛡️ **Paladin** | Tank/Support | 110 | 14 | Divine Wrath cleave, healing |
+| 🎯 **Ranger** | Ranged DPS | 75 | 14 | Ricochet shots, mobility |
+| 🗡️ **Rogue** | Assassin | 65 | 16 | Backstab (4x from behind), Vanish |
+| ✨ **Cleric** | Healer | 70 | 8 | Mass healing, support spells |
+| 🔮 **Sorcerer** | Mage | 55 | 12 | Arcane Pierce (infinite range) |
 
-### Turn Order
-- Initiative-based: higher INIT = earlier turn
-- Each unit can move and attack once per turn
+### Legendary Perks
 
-### Player Units
+Units can acquire legendary perks at the end of battle waves:
 
-#### Basic Units (200-400 points)
-| Unit | HP | DMG | MOV | RNG | INIT | Cost | Passive |
-|------|----|-----|-----|-----|------|------|---------|
-| ⚔️ Knight | 100 | 25 | **4** | - | 12 | 200 | 🛡️ -50% ranged damage |
-| 🏹 Archer | 60 | 35 | 2 | **6** | 15 | 300 | - |
-| 🧙 Wizard | 40 | 45 | 2 | 4 | 10 | 400 | 🔮 +1 mana regen/turn |
+| Unit | Legendary Perk | Effect |
+|------|---------------|--------|
+| Berserker | **Blood Frenzy** | Attack twice per turn |
+| Paladin | **Divine Wrath** | 3×3 cleave attack (+40 damage) |
+| Ranger | **Ricochet Shot** | Arrows bounce to nearby targets |
+| Sorcerer | **Arcane Pierce** | Infinite range, pierces all enemies |
+| Rogue | **Shadow Strike** | 4× damage when attacking from behind |
 
-#### Specialist Units (500 points)
-| Unit | HP | DMG | MOV | RNG | INIT | Cost | Passive |
-|------|----|-----|-----|-----|------|------|---------|
-| ✝️ Cleric | 80 | 15 | 2 | 4 | 10 | 500 | 💚 +50% healing done |
-| 🗡️ Rogue | 55 | 40 | **8** | - | **16** | 500 | 👤 Returns to start after attack |
+### Mythic Perks
 
-#### Elite Units (800 points)
-| Unit | HP | DMG | MOV | RNG | INIT | Cost | Passive |
-|------|----|-----|-----|-----|------|------|---------|
-| 🛡️ Paladin | **150** | 50 | 4 | - | 9 | 800 | 🛡️ -50% ranged dmg, +50% healing |
-| 🎯 Ranger | 70 | 50 | 2 | **10** | 13 | 800 | 🦅 10 tile range |
-| 🪓 Berserker | 90 | 50 | 4 | - | 11 | 800 | ⚔️ Reckless (+50% dmg taken), Bloodlust (+15 dmg per kill) |
-| 🔮 Sorcerer | 50 | 55 | 2 | 4 | 14 | 800 | ✨ +50% spell damage |
+Mythic perks can only be acquired by units that already have their legendary perk:
 
-### Legendary Powers ⭐
+| Unit | Mythic Perk | Effect |
+|------|-------------|--------|
+| Paladin | **Divine Retribution** | Reflects melee damage to attackers |
+| Sorcerer | **Arcane Focus** | Consecutive same spells increase damage 50% |
 
-After victory, there's a chance to roll a **Legendary Power** in place of a regular buff. These can only be applied to units that don't already have them. Units with legendary perks display a subtle **orange glow**.
+## 👹 Enemy Factions
 
-| Unit | Legendary Power | Effect |
-|------|-----------------|--------|
-| 🪓 Berserker | **Blood Frenzy** 🩸 | Strikes 2 times per attack |
-| 🛡️ Paladin | **Divine Wrath** ⚡ | 3x3 cleave attack (100% main target, 50% to adjacent), +40 damage |
-| 🎯 Ranger | **Ricochet Shot** 🏹 | Arrows bounce to nearby targets within 2 tiles (50% dmg), +40 damage |
-| 🔮 Sorcerer | **Arcane Pierce** 🔮 | 999 range, shots pierce through all enemies in line |
-| 🗡️ Rogue | **Shadow Strike** 🗡️ | +100% backstab damage |
+### Greenskin Horde
+- Orc Warrior, Orc Brute, Orc Rogue, Goblin Stone Thrower
+- **Boss:** War Chieftain Gormak (2×2, chain lightning, flees from melee)
 
-### Mythic Powers ☄️
+### Dungeon Dwellers
+- Animated Armor, Skeleton Archer, Skeleton Soldier, Lost Spirit
+- **Boss:** Sentinel of the Depths (2×2, powerful melee)
+- **Boss:** Summoner Lich (summons skeletons, 2×2)
 
-Mythic powers are the pinnacle of unit enhancements, displaying a visible **red glowing aura**. **Mythic perks can only be acquired by units that already have their respective legendary perk.** 
+### Old God Worshippers (Cultists)
+- Cultist Acolyte, Cultist Neophyte, Gibbering Horror, Flesh-Warped Stalker
+- **Boss:** Octoth Hroarath (2×2, eldritch powers)
+- **Boss:** **The Silence** (2×2, silences all spell casting during fight)
+- **Boss:** **Void Herald** (2×2, mass slow + 38 damage Voidball)
 
-| Unit | Mythic Power | Effect |
-|------|-----------------|--------|
-| 🛡️ Paladin | **Divine Retribution** ⚔️ | Unlimited melee retaliation against melee attackers (double normal damage) |
-| 🔮 Sorcerer | **Arcane Focus** 🔥 | Consecutive casts of the same spell increase its damage by 50% |
+## 🗺️ Battle Maps
 
-### Spell System
-- **Mana**: 100 max, +1 base regen per turn (+1 per Wizard alive)
-- **Spells Per Round**: Base 1 (can be increased with Twin Cast buff)
-- **12 Spells**: Fireball, Lightning Bolt, Heal, Haste, Shield, Ice Storm, Meteor, Bless, Cure Wounds, Teleport, Chain Lightning, Regenerate
+| Map | Size | Features |
+|-----|------|----------|
+| **Whispering Woods** | 10×8 | Forest terrain, open field |
+| **Ruins of a Castle** | 15×15 | Stone walls border 5×5 center area, 2-cell gaps for passage |
+| **Mountain Pass** | 19×19 | Rock formations create chokepoint, enemies spawn on right side |
 
-### Spell Buff Enhancements
+## ✨ Spells
 
-Magic buffs can be acquired from victory rewards:
+### Destructo (Damage)
+- **Fireball** - 3×3 explosion, 40 damage
+- **Lightning Bolt** - Single target, 50 damage
+- **Chain Lightning** - Chains to nearby enemies
+- **Meteor** - Large 5×5 explosion, 60 damage
 
-| Buff | Effect |
-|------|--------|
-| **Eternal Magic** ♾️ | Spell buffs (Haste, Shield, Bless, Regenerate) never expire |
-| **Mass Enchantment** 🌟 | Buff spells target your entire army at once |
-| **Mana Flow** 🌊 | +2 base mana regen |
-| **Arcane Power** 🔮 | +25% spell damage |
-| **Efficient Casting** ⚡ | -20% mana cost |
-| **Twin Cast** 🔄 | +1 spell per round (stackable) |
-| **Expanded Mana Pool** 💧 | +50 max mana |
-| **Mana Surge** ✨ | fully restore missing mana instantly |
-| **Healing Surge** 💚 | +35% healing spell power |
+### Restoratio (Healing)
+- **Healing Light** - Single target, 40 heal
+- **Mass Heal** - All allies, 25 heal each
 
-*Note: Having both Eternal Magic and Mass Enchantment means one buff spell permanently buffs your entire army!*
+### Benedictio (Buffs)
+- **Bless** - +50% damage for 3 turns
+- **Shield** - +10 defense for 3 turns
+- **Haste** - +2 movement for 3 turns
+- **Regenerate** - Heal 10 HP per turn for 5 turns
 
-### Enemy Units
+### Utilitas (Utility)
+- **Ice Storm** - Slow enemies in area
 
-At the start of a PVE run, one of three enemy factions is randomly chosen. Enemies scale each round: +250 points and +10% stats per battle.
+## 🎯 How to Play
 
-#### Greenskin Horde
-| Unit | HP | DMG | MOV | INIT | Special |
-|------|----|-----|-----|------|---------|
-| 👹 Orc Warrior | 50 | 25 | 4 | 10 | - |
-| 👿 Orc Brute | 200 | 50 | 2 | 6 | Tank |
-| 🥷 Orc Rogue | 60 | 35 | 6 | 16 | ⚡ Hit & Run |
-| 👺 Goblin Stone-Thrower | 35 | 25 | 3 | 8 | Ranged |
+1. **Choose your army** - Select units within the point limit
+2. **Pick a map** - Each offers different tactical challenges
+3. **Deploy units** - Place them in the player spawn area
+4. **Combat** - Take turns moving and attacking
+5. **Spells** - Use mana to cast powerful spells
+6. **Victory rewards** - Choose buffs to strengthen your army
+7. **Survive** - Face increasingly difficult waves
 
-#### Dungeon Dwellers
-| Unit | HP | DMG | MOV | INIT | Special |
-|------|----|-----|-----|------|---------|
-| 💀⚔️ Skeleton Soldier | 90 | 25 | 4 | 11 | 🛡️ -50% ranged dmg |
-| 💀🏹 Skeleton Archer | 50 | 30 | 2 | 14 | Ranged |
-| 🤖 Animated Armor | 220 | 45 | 2 | 5 | Tank |
-| 👻 Lost Spirit | 70 | 50 | 6 | 15 | ✨ Ethereal (-75% phys dmg, +50% spell dmg) |
+### Controls
+- **Click** unit to select
+- **Click** highlighted tile to move
+- **Click** enemy to attack (if in range)
+- **Click** spell, then target to cast
+- **End Turn** button when done
 
-#### Old God Worshippers
-| Unit | HP | DMG | MOV | INIT | Special |
-|------|----|-----|-----|------|---------|
-| 👤 Cultist Acolyte | 40 | 20 | 4 | 10 | - |
-| 🤫 Cultist Neophyte | 35 | 15 | 3 | 9 | Ranged |
-| 🐙 Gibbering Horror | 80 | 40 | 3 | 11 | Ranged |
-| 🦎 Flesh-warped Stalker | 70 | 40 | 7 | 16 | Fast melee |
+## 🏆 Victory Conditions
 
-#### Faction Bosses (Every 5th Wave)
-| Faction | Boss | HP | DMG | Special |
-|------|------|----|-----|---------|
-| Greenskin Horde | 👑 Ogre Chieftain | 500 | 80 | Regenerates, slows enemies |
-| Greenskin Horde | 🔮 Orc Shaman King | 350 | 40 | Casts AoE spells |
-| Dungeon Dwellers | 💀👑 Summoner Lich | 300 | 10 | Summons undead allies each turn |
-| Old God Worshippers | 🦑 Octo'th Hroa'rath | 250 | 75 | Pulls enemies into melee, AoE aura |
+- Defeat all enemies in the wave
+- Survive 5 waves to face the boss
+- Defeat the boss to win the battle
 
-### PVE Progression
+## 💀 Defeat
 
-- **New Units**: Available every 2 battles (rounds 2, 4, 6...)
-- **Unit Recruitment Pool**: Knight, Archer, Wizard, Paladin, Ranger, Berserker, Cleric, Rogue, Sorcerer
-- **Victory Rewards**: Pick 1 new unit (if available), 1 unit buff, 1 magic enhancement
-- **Bloodlust**: Berserker's damage increases by +15 permanently for each kill (persists across battles)
-
-### Unit Buffs (Victory Rewards)
-
-Buffs now have specific rarity tiers (Common to Mythic):
-
-- **Veteran Training** ⚔️ (Common): +10 Damage
-- **Enhanced Toughness** 💪 (Common): +30 Max HP
-- **Greater Agility** 💨 (Common): +1 Movement
-- **Precision Strikes** 🎯 (Common): +5 Initiative & +5 Damage
-- **Ranged Training** 🏹 (Common): Gain Ranged Attack (Range 3)
-- **Champion's Favor** ⭐ (Epic): +20 HP, +5 DMG, +1 MOV
-- **Obsidian Armor** ⬛ (Epic): Max HP x2, Movement -2
-- **Glass Cannon** 💥 (Epic): Double damage, half max HP
-- **Temporal Shift** ⏳ (Epic): 2 actions per turn, half damage
+If all your units die, the run ends. Learn from each attempt and try different strategies!
 
 ## 🎨 Visual Style
 
@@ -169,41 +138,15 @@ All unit sprites are pixel art (64×64). Units face left-to-right and are flippe
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Game Engine | Phaser 3 (v3.70.0 via CDN) |
-| Language | Vanilla JavaScript (ES6 Modules) |
-| Styling | Vanilla CSS |
-| Build Step | None - runs directly in browser |
+- **Phaser 3** - Game engine
+- **Vanilla JavaScript** (ES6 modules) - No build step
+- **CSS** - Styling
+- **Pollinations.ai** - Sprite generation (zimage model)
 
-**No build tools required.** Just open `index.html` in a modern browser.
+## 📄 License
 
-## 📁 Project Structure
+See LICENSE file
 
-```
-├── index.html              # Main HTML, UI structure
-├── style.css               # Styling - Grim Dark Fantasy theme
-├── units.js                # Global UNIT_TYPES database
-├── README.md               # This file
-├── AGENTS.md               # Developer guide
-├── LICENSE                 # Project license
-│
-├── src/                    # Source code (ES6 modules)
-│   ├── main.js             # Entry point - Phaser bootstrap
-│   ├── GameConfig.js       # Constants, CONFIG, SPELLS
-│   ├── BaseBattleScene.js  # Parent class for battle scenes
-│   ├── SceneManager.js     # BattleScene, PreGameScene
-│   ├── EntityManager.js    # Unit class, UnitManager, TurnSystem
-│   ├── InputHandler.js     # GridSystem - input handling
-│   ├── SpellSystem.js      # Spell casting, effects
-│   ├── UIHandler.js        # UIManager - DOM updates
-│   └── units.js            # Global UNIT_TYPES database
-│
-└── images/                 # Unit sprites
-    ├── player/             # 9 player unit PNGs
-    ├── enemy/              # Enemy factions
-    │   ├── greenskin/      # Greenskin Horde
-    │   ├── dungeon/        # Dungeon Dwellers
-    │   └── cultist/        # Old God Worshippers
-    └── obstacles/          # Wall/obstacle sprites
-```
+---
+
+*Steel and Sigils - Tactical combat in your browser*
