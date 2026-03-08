@@ -804,15 +804,9 @@
                     const y = obs.y * tileSize + tileSize / 2;
                     
                     if (obs.type === 'wall') {
-                        // Castle wall - gray block with random vertical flip
+                        // Castle wall - gray block
                         const wall = this.add.rectangle(x, y, tileSize - 2, tileSize - 2, 0x5a5a5a);
                         const wallDetail = this.add.rectangle(x, y, tileSize - 6, tileSize - 6, 0x6a6a6a);
-                        
-                        // Random vertical flip for visual variety (mirror, not rotation)
-                        if (Math.random() > 0.5) {
-                            wall.setFlipY(true);
-                            wallDetail.setFlipY(true);
-                        }
                         
                         this.obstacleContainer.add([wall, wallDetail]);
                     } else if (obs.type && obs.type.startsWith('rock')) {
@@ -850,12 +844,6 @@
                         // Apply scaling for tall/wide variations (on top of the 1.35 base)
                         rock.setScale(scaleX, scaleY);
                         rockDetail.setScale(scaleX, scaleY);
-                        
-                        // Random vertical flip for visual variety (mirror, not rotation)
-                        if (Math.random() > 0.5) {
-                            rock.setFlipY(true);
-                            rockDetail.setFlipY(true);
-                        }
                         
                         this.obstacleContainer.add([rock, rockDetail]);
                     }

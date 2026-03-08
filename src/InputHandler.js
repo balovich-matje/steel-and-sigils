@@ -472,10 +472,7 @@ export class GridSystem {
             obstacleImage.setDisplaySize(displaySize, displaySize);
             obstacleImage.setDepth(5); // Above tiles (0), below units (10)
             
-            // Random flip for visual variety (50% chance of vertical flip)
-            if (Math.random() > 0.5) {
-                obstacleImage.setFlipY(true); // Vertical mirror, not rotation
-            }
+            // Obstacles no longer flipped - use sprites as-is
             
             if (!this.wallImages) this.wallImages = [];
             this.wallImages.push({ x, y, image: obstacleImage });
