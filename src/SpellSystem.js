@@ -152,14 +152,16 @@ export class SpellSystem {
         this.scene.spellsCastThisRound++;
         this.updateArcaneFocus();
 
-        // Face towards the target tile
-        // Base images face LEFT by default
-        // flipX = true means face RIGHT, flipX = false means face LEFT
-        const caster = this.scene.turnSystem?.currentUnit;
-        if (caster && caster.sprite) {
-            const casterX = caster.gridX;
+        // Face towards the target tile (only for unit abilities, not hero spells)
+        // Hero spells should not rotate the active unit
+        const currentUnit = this.scene.turnSystem?.currentUnit;
+        const isUnitAbility = currentUnit && this.activeSpell && 
+            (this.activeSpell.name === 'Fireball' || this.activeSpell.name === 'Fire Ball');
+        
+        if (isUnitAbility && currentUnit.sprite) {
+            const casterX = currentUnit.gridX;
             const shouldFaceRight = centerX > casterX;
-            caster.sprite.setFlipX(shouldFaceRight);
+            currentUnit.sprite.setFlipX(shouldFaceRight);
         }
 
         switch (spell.effect) {
