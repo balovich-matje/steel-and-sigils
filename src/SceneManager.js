@@ -620,6 +620,13 @@ export class BattleScene extends Phaser.Scene {
         const height = this.gridSystem.height;
         const playerArea = this.currentStage.playerArea;
 
+        // Define enemy spawn zone (must match getEnemySpawnPositions!)
+        const spawnZoneHeight = 6;
+        const spawnStartY = Math.floor((height - spawnZoneHeight) / 2);
+        const spawnEndY = spawnStartY + spawnZoneHeight;
+        const spawnStartX = width - 3;
+        const spawnEndX = width;
+
         const obstacles = [];
         const rockSet = new Set();
 
@@ -661,6 +668,12 @@ export class BattleScene extends Phaser.Scene {
                    y >= playerArea.y1 && y < playerArea.y2;
         };
 
+        // Helper to check if position is in enemy spawn zone (keep clear)
+        const isEnemySpawnZone = (x, y) => {
+            return x >= spawnStartX && x < spawnEndX &&
+                   y >= spawnStartY && y < spawnEndY;
+        };
+
         // Density gradient based on Y position for chokepoint effect
         // For Mountain Pass (19x19 grid, height=19):
         // Row 0-1: 80-90% rocks (dense edge)
@@ -678,8 +691,11 @@ export class BattleScene extends Phaser.Scene {
         // Generate rocks with constraints
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                // Skip spawn area
+                // Skip player spawn area
                 if (isSpawnArea(x, y)) continue;
+                
+                // Skip enemy spawn zone - NO ROCKS HERE
+                if (isEnemySpawnZone(x, y)) continue;
 
                 // Random placement with density based on Y position (chokepoint gradient)
                 if (Math.random() < rockChance(y)) {
@@ -780,30 +796,21 @@ export class BattleScene extends Phaser.Scene {
                 }
             }
         } else if (this.currentStage.spawnLogic === 'right_flank') {
-            // Mountain Pass: Enemies spawn on right side and top/bottom corners
-            // IMPORTANT: Avoid rows 0-2 and rows height-3 to height-1 (dense rocks)
+            // Mountain Pass: Fixed 3x6 spawn zone on RIGHT side
+            // Position: x = width-3 to width-1, y = middle rows
             const width = this.gridSystem.width;
             const height = this.gridSystem.height;
             
-            // Right side (main spawn area) - start from row 3 to avoid top rocks
-            for (let y = 3; y < height - 3; y++) {
-                for (let x = width - 4; x < width; x++) {
-                    positions.push({ x, y });
-                }
-            }
+            // Calculate the 6-row spawn zone in the middle of the map
+            const spawnZoneHeight = 6;
+            const spawnStartY = Math.floor((height - spawnZoneHeight) / 2); // Center vertically
+            const spawnEndY = spawnStartY + spawnZoneHeight;
+            const spawnStartX = width - 3; // Right side, 3 columns wide
+            const spawnEndX = width;
             
-            // Top-left area (flanking position) - avoid dense rock rows 0-2
-            // Use row 3 as the safe starting point
-            for (let y = 3; y < 6; y++) {
-                for (let x = 4; x < 7; x++) {
-                    positions.push({ x, y });
-                }
-            }
-            
-            // Bottom-left area (flanking position) - avoid dense rock rows height-3 to height-1
-            // Use row height-4 as the safe ending point
-            for (let y = height - 6; y < height - 3; y++) {
-                for (let x = 4; x < 7; x++) {
+            // Fixed spawn zone: 3 wide x 6 tall on the right side
+            for (let y = spawnStartY; y < spawnEndY; y++) {
+                for (let x = spawnStartX; x < spawnEndX; x++) {
                     positions.push({ x, y });
                 }
             }
@@ -2484,6 +2491,39 @@ export class BattleScene extends Phaser.Scene {
         }
     }
 
+    // Helper: Find an empty cell near a target position
+    findEmptyCellNear(targetX, targetY, maxRadius = 5) {
+        const width = this.gridSystem.width;
+        const height = this.gridSystem.height;
+        
+        // Check the target position first
+        if (!this.unitManager.getUnitAt(targetX, targetY) && !this.gridSystem.isObstacle(targetX, targetY)) {
+            return { x: targetX, y: targetY };
+        }
+        
+        // Spiral search outward
+        for (let radius = 1; radius <= maxRadius; radius++) {
+            // Check all positions at this radius
+            for (let dx = -radius; dx <= radius; dx++) {
+                for (let dy = -radius; dy <= radius; dy++) {
+                    // Only check the perimeter of the square at this radius
+                    if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+                    
+                    const x = targetX + dx;
+                    const y = targetY + dy;
+                    
+                    if (x >= 0 && x < width && y >= 0 && y < height) {
+                        if (!this.unitManager.getUnitAt(x, y) && !this.gridSystem.isObstacle(x, y)) {
+                            return { x, y };
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null; // No empty cell found
+    }
+
     confirmRewards() {
         const canGetNewUnit = this.battleNumber >= 2 && this.battleNumber % 2 === 0;
 
@@ -2494,14 +2534,46 @@ export class BattleScene extends Phaser.Scene {
 
         if (canGetNewUnit && this.selectedRewards.unit) {
             const unitType = this.selectedRewards.unit.id;
-            let spawnX = 0, spawnY = 3;
-            for (let y = 0; y < CONFIG.GRID_HEIGHT; y++) {
-                if (!this.unitManager.getUnitAt(0, y)) {
-                    spawnY = y;
-                    break;
+            let spawnX, spawnY;
+            
+            // Map-specific spawn areas
+            const stage = this.currentStage;
+            if (stage.id === 'forest') {
+                // Whispering Woods: spawn in player area (left side)
+                const playerArea = stage.playerArea;
+                spawnX = playerArea.x1;
+                spawnY = Math.floor((playerArea.y1 + playerArea.y2) / 2);
+            } else if (stage.id === 'ruins') {
+                // Ruins: spawn in center 5x5 area
+                const centerX = Math.floor(stage.width / 2);
+                const centerY = Math.floor(stage.height / 2);
+                spawnX = centerX - 2 + Math.floor(Math.random() * 5);
+                spawnY = centerY - 2 + Math.floor(Math.random() * 5);
+            } else if (stage.id === 'mountain') {
+                // Mountain: spawn in left area (rows 3-8)
+                spawnX = 0;
+                spawnY = 3 + Math.floor(Math.random() * 6); // rows 3-8
+            } else {
+                // Default: left side
+                spawnX = 0;
+                spawnY = Math.floor(stage.height / 2);
+            }
+            
+            // Find an empty cell near the target position
+            const emptyCell = this.findEmptyCellNear(spawnX, spawnY, 5);
+            if (emptyCell) {
+                this.unitManager.addUnit(unitType, emptyCell.x, emptyCell.y);
+            } else {
+                // Fallback: find any empty cell on the map
+                for (let y = 0; y < stage.height; y++) {
+                    for (let x = 0; x < stage.width; x++) {
+                        if (!this.unitManager.getUnitAt(x, y) && !this.gridSystem.isObstacle(x, y)) {
+                            this.unitManager.addUnit(unitType, x, y);
+                            break;
+                        }
+                    }
                 }
             }
-            this.unitManager.addUnit(unitType, spawnX, spawnY);
         }
 
         // Apply regular buff (if selected)
