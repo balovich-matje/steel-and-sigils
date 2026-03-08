@@ -154,14 +154,14 @@ export class SpellSystem {
 
         // Face towards the target tile (only for unit abilities, not hero spells)
         // Hero spells should not rotate the active unit
-        const currentUnit = this.scene.turnSystem?.currentUnit;
-        const isUnitAbility = currentUnit && this.activeSpell && 
+        const castingUnit = this.scene.turnSystem?.currentUnit;
+        const isUnitAbility = castingUnit && this.activeSpell && 
             (this.activeSpell.name === 'Fireball' || this.activeSpell.name === 'Fire Ball');
         
-        if (isUnitAbility && currentUnit.sprite) {
-            const casterX = currentUnit.gridX;
+        if (isUnitAbility && castingUnit.sprite) {
+            const casterX = castingUnit.gridX;
             const shouldFaceRight = centerX > casterX;
-            currentUnit.sprite.setFlipX(shouldFaceRight);
+            castingUnit.sprite.setFlipX(shouldFaceRight);
         }
 
         switch (spell.effect) {

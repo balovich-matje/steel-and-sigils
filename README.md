@@ -1,4 +1,4 @@
-# ⚔️ Steel and Sigils v0.95
+# ⚔️ Steel and Sigils v0.96
 
 A browser-based tactical combat game inspired by Heroes of Might and Magic 5. Built with Phaser 3, vanilla JavaScript, and CSS. No build tools required - runs directly in your browser.
 
