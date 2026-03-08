@@ -452,6 +452,7 @@ export class SpellSystem {
         const scale = radius === 2 ? 5 : 3;
 
         const explosion = this.scene.add.circle(x, y, 20, 0xff6600);
+        explosion.setDepth(15);
 
         this.scene.tweens.add({
             targets: explosion,
@@ -463,6 +464,7 @@ export class SpellSystem {
 
         for (let i = 0; i < 8; i++) {
             const particle = this.scene.add.circle(x, y, 5, 0xffaa00);
+            particle.setDepth(15);
             const angle = (i / 8) * Math.PI * 2;
             this.scene.tweens.add({
                 targets: particle,
@@ -480,6 +482,7 @@ export class SpellSystem {
         const y = gridY * this.tileSize + this.tileSize / 2;
 
         const meteor = this.scene.add.circle(x, y - 200, 30, 0xff3300);
+        meteor.setDepth(15);
         this.scene.tweens.add({
             targets: meteor,
             y: y,
@@ -499,6 +502,7 @@ export class SpellSystem {
         for (let i = 0; i < 6; i++) {
             const crystal = this.scene.add.polygon(x, y, [0, -15, 10, 0, 0, 15, -10, 0], 0x87ceeb);
             crystal.setAlpha(0.7);
+            crystal.setDepth(15);
             const angle = (i / 6) * Math.PI * 2;
 
             this.scene.tweens.add({
@@ -518,6 +522,7 @@ export class SpellSystem {
             fontSize: '60px',
             color: '#ffff00'
         }).setOrigin(0.5);
+        bolt.setDepth(15);
 
         this.scene.tweens.add({
             targets: bolt,
@@ -532,6 +537,7 @@ export class SpellSystem {
         const heart = this.scene.add.text(unit.sprite.x, unit.sprite.y, '💚', {
             fontSize: '40px'
         }).setOrigin(0.5);
+        heart.setDepth(15);
 
         this.scene.tweens.add({
             targets: heart,
@@ -546,6 +552,7 @@ export class SpellSystem {
     createTeleportEffect(unit) {
         const portal = this.scene.add.circle(unit.sprite.x, unit.sprite.y, 30, 0x9932cc);
         portal.setAlpha(0.5);
+        portal.setDepth(15);
 
         this.scene.tweens.add({
             targets: portal,

@@ -73,13 +73,29 @@ export class GridSystem {
             this.handleTileClick(gameObject);
         });
 
-        this.scene.input.on('gameobjectover', (pointer, gameObject) => {
+        // Use pointer move for hover to catch all positions, including under units
+        this.scene.input.on('pointermove', (pointer) => {
             if (this.scene.victoryShown) return;
-            this.handleTileHover(gameObject);
+            
+            // Get tile coordinates from pointer position
+            const tileSize = this.tileSize;
+            const gridX = Math.floor(pointer.x / tileSize);
+            const gridY = Math.floor(pointer.y / tileSize);
+            
+            // Check if within grid bounds
+            if (gridX >= 0 && gridX < this.width && gridY >= 0 && gridY < this.height) {
+                const tile = this.tiles[gridY][gridX];
+                if (tile) {
+                    this.handleTileHover(tile);
+                }
+            } else {
+                this.clearAoePreview();
+            }
         });
 
         this.scene.input.on('gameobjectout', (pointer, gameObject) => {
-            this.clearAoePreview();
+            // Don't clear on gameobjectout since we use pointermove now
+            // this.clearAoePreview();
         });
     }
 
@@ -454,7 +470,7 @@ export class GridSystem {
                 finalImageKey
             );
             obstacleImage.setDisplaySize(displaySize, displaySize);
-            obstacleImage.setDepth(1); // Ensure obstacle is visible above grid
+            obstacleImage.setDepth(5); // Above tiles (0), below units (10)
             
             // Random flip for visual variety (50% chance of vertical flip)
             if (Math.random() > 0.5) {

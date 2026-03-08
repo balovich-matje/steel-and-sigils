@@ -495,6 +495,7 @@ export class UnitManager {
             
             // Flip enemy units to face right-to-left, players face left-to-right
             unit.sprite.setFlipX(unit.isPlayer);
+            unit.sprite.setDepth(10); // Above obstacles (5)
         } else {
             // For 2x2 bosses, use larger emoji
             const fontSize = bossSize > 1 ? '48px' : '36px';
@@ -506,6 +507,7 @@ export class UnitManager {
             
             // Flip enemy units to face right-to-left, players face left-to-right
             unit.sprite.setFlipX(unit.isPlayer);
+            unit.sprite.setDepth(10); // Above obstacles (5)
         }
 
         unit.healthBar = this.scene.add.graphics();
