@@ -1303,12 +1303,7 @@ export class BattleScene extends Phaser.Scene {
      * @param {Function} onComplete - Callback when animation completes
      */
     createFireballProjectile(caster, targetGridX, targetGridY, onComplete) {
-        // If caster has piercing, use purple ray animation instead
-        if (caster.hasPiercing) {
-            this.createPiercingRay(caster, targetGridX, targetGridY, onComplete);
-            return;
-        }
-        
+        // Fireball is always a fireball projectile - separate from piercing ranged attacks
         const targetX = targetGridX * this.tileSize + this.tileSize / 2;
         const targetY = targetGridY * this.tileSize + this.tileSize / 2;
         

@@ -320,11 +320,10 @@ export class SpellSystem {
             }
         }
 
-        this.createIceEffect(centerX, centerY);
-
-        const damage = this.getSpellDamage(spell.power);
-        for (const unit of targets) {
-            this.scene.time.delayedCall(200, () => {
+        // Use enhanced hero ice storm animation
+        this.createHeroIceStorm(centerX, centerY, () => {
+            const damage = this.getSpellDamage(spell.power);
+            for (const unit of targets) {
                 const actualIceDmg = unit.takeSpellDamage(damage);
                 unit.iceSlowRounds = 2;
                 unit.moveRange = Math.max(1, unit.moveRange - 1);
@@ -332,15 +331,14 @@ export class SpellSystem {
                 this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualIceDmg} damage.`, 'damage');
                 this.scene.uiManager.showBuffText(unit, 'SLOWED!', '#5B6B8B');
                 this.scene.checkVictoryCondition();
-            });
-        }
+            }
+        });
     }
 
     executeSingleDamage(spell, unit) {
-        this.createLightningEffect(unit);
-
-        const damage = this.getSpellDamage(spell.power);
-        this.scene.time.delayedCall(200, () => {
+        // Use enhanced hero lightning animation
+        this.createHeroLightningBolt(unit, () => {
+            const damage = this.getSpellDamage(spell.power);
             const actualSingleDmg = unit.takeSpellDamage(damage);
             this.scene.uiManager.showDamageText(unit, actualSingleDmg);
             this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualSingleDmg} damage.`, 'damage');
@@ -428,16 +426,8 @@ export class SpellSystem {
             }
         }
 
-        const damage = this.getSpellDamage(spell.power);
-        targets.forEach((unit, index) => {
-            this.scene.time.delayedCall(index * 300, () => {
-                this.createLightningEffect(unit);
-                const actualChainDmg = unit.takeSpellDamage(damage);
-                this.scene.uiManager.showDamageText(unit, actualChainDmg);
-                this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualChainDmg} damage.`, 'damage');
-                this.scene.checkVictoryCondition();
-            });
-        });
+        // Use enhanced hero chain lightning animation
+        this.createHeroChainLightning(targets, spell);
     }
 
     clearSpell() {
@@ -705,6 +695,345 @@ export class SpellSystem {
                 
                 // Clean up any remaining trail particles
                 trail.forEach(p => p.destroy());
+                
+                if (onComplete) onComplete();
+            }
+        });
+    }
+
+    /**
+     * Create an enhanced lightning bolt from the sky for hero spells
+     * @param {Unit} unit - Target unit to strike
+     * @param {Function} onComplete - Callback when animation completes
+     */
+    createHeroLightningBolt(unit, onComplete) {
+        const tileSize = this.scene.tileSize;
+        const targetX = unit.sprite.x;
+        const targetY = unit.sprite.y;
+        const startY = -100;
+        
+        // Build up charge at target location
+        const charge = this.scene.add.circle(targetX, targetY, 20, 0xffff00);
+        charge.setDepth(20);
+        charge.setAlpha(0);
+        
+        this.scene.tweens.add({
+            targets: charge,
+            alpha: { from: 0, to: 0.8 },
+            scale: { from: 0.5, to: 1.5 },
+            duration: 300,
+            yoyo: true,
+            onComplete: () => charge.destroy()
+        });
+        
+        // Delay then strike
+        this.scene.time.delayedCall(300, () => {
+            // Main lightning bolt - thick white core
+            const bolt = this.scene.add.rectangle(targetX, (startY + targetY) / 2, 8, targetY - startY, 0xffffff);
+            bolt.setDepth(25);
+            
+            // Outer glow - blue/purple
+            const glow = this.scene.add.rectangle(targetX, (startY + targetY) / 2, 16, targetY - startY, 0x6666ff);
+            glow.setDepth(24);
+            glow.setAlpha(0.7);
+            
+            // Electric branches
+            const branches = [];
+            for (let i = 0; i < 4; i++) {
+                const side = i % 2 === 0 ? -1 : 1;
+                const branchY = targetY - 50 - Math.random() * 100;
+                const branch = this.scene.add.rectangle(
+                    targetX + side * (10 + Math.random() * 20),
+                    branchY,
+                    3,
+                    40 + Math.random() * 30,
+                    0x8888ff
+                );
+                branch.setDepth(23);
+                branch.setRotation(side * (0.3 + Math.random() * 0.3));
+                branch.setAlpha(0);
+                branches.push(branch);
+                
+                this.scene.tweens.add({
+                    targets: branch,
+                    alpha: { from: 0, to: 0.9 },
+                    duration: 50,
+                    yoyo: true,
+                    delay: Math.random() * 100
+                });
+            }
+            
+            // Flash effect
+            const flash = this.scene.add.rectangle(targetX, targetY, 100, 100, 0xffffff);
+            flash.setDepth(30);
+            flash.setAlpha(0.8);
+            
+            this.scene.tweens.add({
+                targets: flash,
+                alpha: 0,
+                duration: 150,
+                onComplete: () => flash.destroy()
+            });
+            
+            // Fade out bolt
+            this.scene.tweens.add({
+                targets: [bolt, glow],
+                alpha: 0,
+                duration: 200,
+                delay: 100,
+                onComplete: () => {
+                    bolt.destroy();
+                    glow.destroy();
+                    branches.forEach(b => b.destroy());
+                    
+                    // Impact sparks
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (i / 8) * Math.PI * 2;
+                        const spark = this.scene.add.circle(targetX, targetY, 3, 0xffff00);
+                        spark.setDepth(22);
+                        
+                        this.scene.tweens.add({
+                            targets: spark,
+                            x: targetX + Math.cos(angle) * 30,
+                            y: targetY + Math.sin(angle) * 30,
+                            alpha: 0,
+                            duration: 200,
+                            onComplete: () => spark.destroy()
+                        });
+                    }
+                    
+                    if (onComplete) onComplete();
+                }
+            });
+            
+            // Screen shake
+            this.scene.cameras.main.shake(150, 0.008);
+        });
+    }
+
+    /**
+     * Create an enhanced ice storm effect for hero spells
+     * @param {number} centerX - Center grid X
+     * @param {number} centerY - Center grid Y
+     * @param {Function} onComplete - Callback when damage should be applied
+     */
+    createHeroIceStorm(centerX, centerY, onComplete) {
+        const tileSize = this.scene.tileSize;
+        const x = centerX * tileSize + tileSize / 2;
+        const y = centerY * tileSize + tileSize / 2;
+        
+        // Frost cloud forming above
+        const cloud = this.scene.add.circle(x, y - 80, 40, 0xaaddff);
+        cloud.setDepth(15);
+        cloud.setAlpha(0.3);
+        
+        this.scene.tweens.add({
+            targets: cloud,
+            y: y - 40,
+            alpha: { from: 0.3, to: 0.6 },
+            scale: { from: 1, to: 1.5 },
+            duration: 400,
+            onComplete: () => {
+                // Ice shards falling
+                const shards = [];
+                for (let i = 0; i < 12; i++) {
+                    const offsetX = (Math.random() - 0.5) * tileSize * 2;
+                    const offsetY = (Math.random() - 0.5) * tileSize * 2;
+                    const shardX = x + offsetX;
+                    const shardY = y - 60 + offsetY * 0.3;
+                    
+                    const shard = this.scene.add.polygon(
+                        shardX, shardY,
+                        [0, -12, 6, 0, 0, 12, -6, 0],
+                        0x87ceeb
+                    );
+                    shard.setDepth(18);
+                    shards.push(shard);
+                    
+                    this.scene.tweens.add({
+                        targets: shard,
+                        y: y + offsetY,
+                        rotation: Math.random() * Math.PI * 2,
+                        duration: 300 + Math.random() * 200,
+                        ease: 'Power2',
+                        onComplete: () => {
+                            // Shard impact
+                            const impact = this.scene.add.circle(shard.x, shard.y, 8, 0xaaddff);
+                            impact.setDepth(16);
+                            impact.setAlpha(0.8);
+                            
+                            this.scene.tweens.add({
+                                targets: impact,
+                                scale: 2,
+                                alpha: 0,
+                                duration: 200,
+                                onComplete: () => impact.destroy()
+                            });
+                            
+                            shard.destroy();
+                        }
+                    });
+                }
+                
+                // Frost ring expanding
+                const frostRing = this.scene.add.circle(x, y, 20, 0xaaddff);
+                frostRing.setDepth(14);
+                frostRing.setStrokeStyle(3, 0x87ceeb);
+                frostRing.setFillStyle(0xaaddff, 0.3);
+                
+                this.scene.tweens.add({
+                    targets: frostRing,
+                    scale: { from: 0.5, to: 2.5 },
+                    alpha: { from: 1, to: 0 },
+                    duration: 600,
+                    onComplete: () => frostRing.destroy()
+                });
+                
+                // Snow particles
+                for (let i = 0; i < 20; i++) {
+                    const snowX = x + (Math.random() - 0.5) * tileSize * 3;
+                    const snowY = y - 40 + (Math.random() - 0.5) * tileSize;
+                    const snow = this.scene.add.circle(snowX, snowY, 2 + Math.random() * 3, 0xffffff);
+                    snow.setDepth(17);
+                    snow.setAlpha(0.8);
+                    
+                    this.scene.tweens.add({
+                        targets: snow,
+                        y: y + 40,
+                        x: snowX + (Math.random() - 0.5) * 20,
+                        alpha: 0,
+                        duration: 500 + Math.random() * 300,
+                        onComplete: () => snow.destroy()
+                    });
+                }
+                
+                cloud.destroy();
+                if (onComplete) onComplete();
+            }
+        });
+    }
+
+    /**
+     * Create an enhanced chain lightning effect for hero spells
+     * @param {Array} targets - Array of target units
+     * @param {Object} spell - Spell data
+     */
+    createHeroChainLightning(targets, spell) {
+        const damage = this.getSpellDamage(spell.power);
+        
+        // Strike first target from sky
+        this.createHeroLightningBolt(targets[0], () => {
+            const actualChainDmg = targets[0].takeSpellDamage(damage);
+            this.scene.uiManager.showDamageText(targets[0], actualChainDmg);
+            this.scene.addCombatLog(`Chain Lightning hit ${targets[0].name} dealing ${actualChainDmg} damage.`, 'damage');
+            this.scene.checkVictoryCondition();
+            
+            // Chain to subsequent targets with arc animation
+            for (let i = 1; i < targets.length; i++) {
+                const prevTarget = targets[i - 1];
+                const currentTarget = targets[i];
+                
+                this.scene.time.delayedCall(i * 300, () => {
+                    // Create lightning arc between targets
+                    this.createLightningArc(prevTarget, currentTarget, () => {
+                        const actualChainDmg = currentTarget.takeSpellDamage(damage);
+                        this.scene.uiManager.showDamageText(currentTarget, actualChainDmg);
+                        this.scene.addCombatLog(`Chain Lightning hit ${currentTarget.name} dealing ${actualChainDmg} damage.`, 'damage');
+                        this.scene.checkVictoryCondition();
+                    });
+                });
+            }
+        });
+    }
+
+    /**
+     * Create a lightning arc between two units
+     * @param {Unit} fromUnit - Source unit
+     * @param {Unit} toUnit - Target unit
+     * @param {Function} onComplete - Callback when arc completes
+     */
+    createLightningArc(fromUnit, toUnit, onComplete) {
+        const startX = fromUnit.sprite.x;
+        const startY = fromUnit.sprite.y;
+        const endX = toUnit.sprite.x;
+        const endY = toUnit.sprite.y;
+        
+        const distance = Phaser.Math.Distance.Between(startX, startY, endX, endY);
+        const angle = Phaser.Math.Angle.Between(startX, startY, endX, endY);
+        const midX = (startX + endX) / 2;
+        const midY = (startY + endY) / 2;
+        
+        // Main arc - jagged lightning
+        const arcSegments = [];
+        const segments = 5;
+        
+        for (let i = 0; i < segments; i++) {
+            const t1 = i / segments;
+            const t2 = (i + 1) / segments;
+            
+            const segStartX = startX + (endX - startX) * t1;
+            const segStartY = startY + (endY - startY) * t1;
+            const segEndX = startX + (endX - startX) * t2;
+            const segEndY = startY + (endY - startY) * t2;
+            
+            // Add some jitter to middle points
+            const jitterX = i < segments - 1 ? (Math.random() - 0.5) * 20 : 0;
+            const jitterY = i < segments - 1 ? (Math.random() - 0.5) * 20 : 0;
+            
+            const seg = this.scene.add.line(
+                0, 0,
+                segStartX, segStartY,
+                segEndX + jitterX, segEndY + jitterY,
+                0xffff00
+            );
+            seg.setDepth(25);
+            seg.setLineWidth(4);
+            arcSegments.push(seg);
+        }
+        
+        // Glow effect underneath
+        const glow = this.scene.add.line(0, 0, startX, startY, endX, endY, 0x6666ff);
+        glow.setDepth(24);
+        glow.setLineWidth(10);
+        glow.setAlpha(0.5);
+        
+        // Flash at target
+        const flash = this.scene.add.circle(endX, endY, 30, 0xffffff);
+        flash.setDepth(26);
+        flash.setAlpha(0.6);
+        
+        this.scene.tweens.add({
+            targets: flash,
+            alpha: 0,
+            duration: 150,
+            onComplete: () => flash.destroy()
+        });
+        
+        // Fade out arc
+        this.scene.tweens.add({
+            targets: [...arcSegments, glow],
+            alpha: 0,
+            duration: 200,
+            delay: 100,
+            onComplete: () => {
+                arcSegments.forEach(s => s.destroy());
+                glow.destroy();
+                
+                // Sparks at target
+                for (let i = 0; i < 6; i++) {
+                    const sparkAngle = (i / 6) * Math.PI * 2;
+                    const spark = this.scene.add.circle(endX, endY, 2, 0xffff00);
+                    spark.setDepth(22);
+                    
+                    this.scene.tweens.add({
+                        targets: spark,
+                        x: endX + Math.cos(sparkAngle) * 20,
+                        y: endY + Math.sin(sparkAngle) * 20,
+                        alpha: 0,
+                        duration: 150,
+                        onComplete: () => spark.destroy()
+                    });
+                }
                 
                 if (onComplete) onComplete();
             }

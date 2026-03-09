@@ -161,13 +161,9 @@ export class GridSystem {
         const { gridX, gridY } = tile;
 
         if (activeAbility === 'SORCERER_FIREBALL') {
-            const currentUnit = this.scene.turnSystem.currentUnit;
-            // Check if Sorcerer has piercing - show piercing preview instead of AoE
-            if (currentUnit && currentUnit.hasPiercing) {
-                this.drawPiercingPreview(currentUnit, gridX, gridY);
-            } else {
-                this.drawAoePreview(gridX, gridY, 1);
-            }
+            // Fireball ability always shows AoE preview (3x3 area)
+            // This is separate from ranged piercing attacks
+            this.drawAoePreview(gridX, gridY, 1);
             return;
         }
 

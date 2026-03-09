@@ -48,7 +48,7 @@ export class UIManager {
         for (const buff of this.scene.magicBuffs) {
             let valueText = '';
             if (buff.type === 'manaRegen') valueText = `+${buff.value} regen`;
-            else if (buff.type === 'manaCost') valueText = `${Math.round((1 - buff.value) * 100)}% cost reduction`;
+            else if (buff.type === 'manaCost') valueText = `-${Math.round(buff.value * 100)}% mana cost`;
             else if (buff.type === 'spellPower') valueText = `+${Math.round(buff.value * 100)}% damage`;
             else if (buff.type === 'spellsPerRound') valueText = `+${buff.value} spell/round`;
             else if (buff.type === 'maxMana') valueText = `+${buff.value} max mana`;
@@ -135,8 +135,16 @@ export class UIManager {
         const floatingText = this.scene.add.text(
             x, y,
             text,
-            { fontSize: '20px', color: color, fontStyle: 'bold' }
+            { 
+                fontSize: '20px', 
+                color: color, 
+                fontStyle: 'bold',
+                stroke: '#000000',
+                strokeThickness: 2,
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true }
+            }
         ).setOrigin(0.5);
+        floatingText.setDepth(100); // On top of everything
 
         this.scene.tweens.add({
             targets: floatingText,
@@ -190,6 +198,7 @@ export class UIManager {
                 shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 4, fill: true }
             }
         ).setOrigin(0.5);
+        text.setDepth(100); // On top of everything
 
         this.scene.tweens.add({
             targets: text,
@@ -206,8 +215,16 @@ export class UIManager {
         const text = this.scene.add.text(
             unit.sprite.x, unit.sprite.y - 40,
             `+${amount}`,
-            { fontSize: '24px', color: '#00ff00', fontStyle: 'bold' }
+            { 
+                fontSize: '24px', 
+                color: '#00ff00', 
+                fontStyle: 'bold',
+                stroke: '#000000',
+                strokeThickness: 3,
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 4, fill: true }
+            }
         ).setOrigin(0.5);
+        text.setDepth(100); // On top of everything
 
         this.scene.tweens.add({
             targets: text,
@@ -223,8 +240,16 @@ export class UIManager {
         const text = this.scene.add.text(
             unit.sprite.x, unit.sprite.y - 60,
             message,
-            { fontSize: '18px', color: color, fontStyle: 'bold' }
+            { 
+                fontSize: '20px', 
+                color: color, 
+                fontStyle: 'bold',
+                stroke: '#000000',
+                strokeThickness: 3,
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 4, fill: true }
+            }
         ).setOrigin(0.5);
+        text.setDepth(100); // On top of everything
 
         this.scene.tweens.add({
             targets: text,
