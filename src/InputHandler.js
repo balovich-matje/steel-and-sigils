@@ -2,7 +2,7 @@
 // INPUT HANDLER - Grid System & Input Management
 // ============================================
 
-import { CONFIG } from './GameConfig.js';
+import { CONFIG, SPELLS } from './GameConfig.js';
 
 // ============================================
 // GRID SYSTEM
@@ -161,7 +161,13 @@ export class GridSystem {
         const { gridX, gridY } = tile;
 
         if (activeAbility === 'SORCERER_FIREBALL') {
-            this.drawAoePreview(gridX, gridY, 1);
+            const currentUnit = this.scene.turnSystem.currentUnit;
+            // Check if Sorcerer has piercing - show piercing preview instead of AoE
+            if (currentUnit && currentUnit.hasPiercing) {
+                this.drawPiercingPreview(currentUnit, gridX, gridY);
+            } else {
+                this.drawAoePreview(gridX, gridY, 1);
+            }
             return;
         }
 

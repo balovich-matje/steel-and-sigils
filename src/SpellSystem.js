@@ -80,6 +80,10 @@ export class SpellSystem {
 
     executeSpellAt(gridX, gridY) {
         if (!this.activeSpell) return;
+        
+        // Prevent double execution from multiple event handlers
+        if (this._executingSpell) return;
+        this._executingSpell = true;
 
         const spell = SPELLS[this.activeSpell];
         const unit = this.scene.unitManager.getUnitAt(gridX, gridY);
@@ -106,12 +110,18 @@ export class SpellSystem {
                 if (unit && unit.isPlayer && !this.teleportUnit) {
                     this.teleportUnit = unit;
                     this.scene.uiManager.showFloatingText('Now select destination', 400, 300, '#A68966');
+                    this._executingSpell = false;
                     return;
                 } else if (this.teleportUnit && !unit) {
                     this.executeTeleport(this.teleportUnit, gridX, gridY);
                 }
                 break;
         }
+        
+        // Reset execution flag after a short delay
+        this.scene.time.delayedCall(100, () => {
+            this._executingSpell = false;
+        });
     }
 
     getSpellDamage(basePower) {
@@ -166,7 +176,10 @@ export class SpellSystem {
 
         switch (spell.effect) {
             case 'aoeDamage':
-                this.executeAoEDamage(spell, centerX, centerY, 1);
+                // Hero spells (from spellbook) come from top of screen
+                this.createHeroFireball(centerX, centerY, () => {
+                    this.executeAoEDamage(spell, centerX, centerY, 1);
+                });
                 break;
             case 'meteor':
                 this.executeAoEDamage(spell, centerX, centerY, 2);
@@ -179,9 +192,9 @@ export class SpellSystem {
         this.clearSpell();
 
         // Restore highlights if the current unit can still act
-        const currentUnit = this.scene.turnSystem?.currentUnit;
-        if (currentUnit && currentUnit.isPlayer && (currentUnit.canMove() || currentUnit.canAttack())) {
-            this.scene.gridSystem.highlightValidMoves(currentUnit);
+        const restoredUnit = this.scene.turnSystem?.currentUnit;
+        if (restoredUnit && restoredUnit.isPlayer && (restoredUnit.canMove() || restoredUnit.canAttack())) {
+            this.scene.gridSystem.highlightValidMoves(restoredUnit);
         } else {
             this.scene.gridSystem.clearHighlights();
         }
@@ -449,13 +462,25 @@ export class SpellSystem {
 
     // Visual Effects
     createExplosionEffect(gridX, gridY, radius) {
-        const x = gridX * this.tileSize + this.tileSize / 2;
-        const y = gridY * this.tileSize + this.tileSize / 2;
+        const tileSize = this.scene.tileSize;
+        const x = gridX * tileSize + tileSize / 2;
+        const y = gridY * tileSize + tileSize / 2;
         const scale = radius === 2 ? 5 : 3;
 
-        const explosion = this.scene.add.circle(x, y, 20, 0xff6600);
-        explosion.setDepth(15);
+        // Core explosion - bright white/yellow center
+        const core = this.scene.add.circle(x, y, 15, 0xffffaa);
+        core.setDepth(16);
+        this.scene.tweens.add({
+            targets: core,
+            scale: scale * 0.8,
+            alpha: 0,
+            duration: 300,
+            onComplete: () => core.destroy()
+        });
 
+        // Main explosion - orange
+        const explosion = this.scene.add.circle(x, y, 25, 0xff6600);
+        explosion.setDepth(15);
         this.scene.tweens.add({
             targets: explosion,
             scale: scale,
@@ -464,24 +489,74 @@ export class SpellSystem {
             onComplete: () => explosion.destroy()
         });
 
-        for (let i = 0; i < 8; i++) {
-            const particle = this.scene.add.circle(x, y, 5, 0xffaa00);
+        // Outer fire ring - red
+        const fireRing = this.scene.add.circle(x, y, 30, 0xff2200);
+        fireRing.setDepth(14);
+        fireRing.setAlpha(0.7);
+        this.scene.tweens.add({
+            targets: fireRing,
+            scale: scale * 1.2,
+            alpha: 0,
+            duration: 600,
+            onComplete: () => fireRing.destroy()
+        });
+
+        // Fire particles shooting outward
+        const particleCount = radius === 2 ? 16 : 12;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2;
+            const distance = 40 * (radius === 2 ? 1.5 : 1);
+            
+            // Randomize colors between yellow, orange, and red
+            const colors = [0xffaa00, 0xff6600, 0xff3300, 0xff4400];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            const particle = this.scene.add.circle(x, y, 6 + Math.random() * 4, color);
             particle.setDepth(15);
-            const angle = (i / 8) * Math.PI * 2;
+            
             this.scene.tweens.add({
                 targets: particle,
-                x: x + Math.cos(angle) * 50 * (radius === 2 ? 1.5 : 1),
-                y: y + Math.sin(angle) * 50 * (radius === 2 ? 1.5 : 1),
-                alpha: 0,
-                duration: 400,
+                x: x + Math.cos(angle) * distance,
+                y: y + Math.sin(angle) * distance,
+                scale: { from: 1, to: 0.3 },
+                alpha: { from: 1, to: 0 },
+                duration: 400 + Math.random() * 200,
+                ease: 'Power2',
                 onComplete: () => particle.destroy()
             });
         }
+
+        // Smoke puffs rising up
+        for (let i = 0; i < 5; i++) {
+            const smoke = this.scene.add.circle(
+                x + (Math.random() - 0.5) * 30, 
+                y + (Math.random() - 0.5) * 10, 
+                8 + Math.random() * 6, 
+                0x444444
+            );
+            smoke.setDepth(14);
+            smoke.setAlpha(0.5);
+            
+            this.scene.tweens.add({
+                targets: smoke,
+                y: y - 60 - Math.random() * 40,
+                x: x + (Math.random() - 0.5) * 40,
+                scale: { from: 0.5, to: 1.5 },
+                alpha: { from: 0.5, to: 0 },
+                duration: 800 + Math.random() * 400,
+                delay: i * 100,
+                onComplete: () => smoke.destroy()
+            });
+        }
+
+        // Screen shake for impact
+        this.scene.cameras.main.shake(100, 0.005 * (radius === 2 ? 2 : 1));
     }
 
     createMeteorEffect(gridX, gridY) {
-        const x = gridX * this.tileSize + this.tileSize / 2;
-        const y = gridY * this.tileSize + this.tileSize / 2;
+        const tileSize = this.scene.tileSize;
+        const x = gridX * tileSize + tileSize / 2;
+        const y = gridY * tileSize + tileSize / 2;
 
         const meteor = this.scene.add.circle(x, y - 200, 30, 0xff3300);
         meteor.setDepth(15);
@@ -498,8 +573,9 @@ export class SpellSystem {
     }
 
     createIceEffect(gridX, gridY) {
-        const x = gridX * this.tileSize + this.tileSize / 2;
-        const y = gridY * this.tileSize + this.tileSize / 2;
+        const tileSize = this.scene.tileSize;
+        const x = gridX * tileSize + tileSize / 2;
+        const y = gridY * tileSize + tileSize / 2;
 
         for (let i = 0; i < 6; i++) {
             const crystal = this.scene.add.polygon(x, y, [0, -15, 10, 0, 0, 15, -10, 0], 0x87ceeb);
@@ -562,6 +638,76 @@ export class SpellSystem {
             alpha: 0,
             duration: 500,
             onComplete: () => portal.destroy()
+        });
+    }
+
+    /**
+     * Create a hero fireball that drops from the top of the screen
+     * @param {number} targetGridX - Target grid X coordinate
+     * @param {number} targetGridY - Target grid Y coordinate
+     * @param {Function} onComplete - Callback when animation completes
+     */
+    createHeroFireball(targetGridX, targetGridY, onComplete) {
+        const tileSize = this.scene.tileSize;
+        const targetX = targetGridX * tileSize + tileSize / 2;
+        const targetY = targetGridY * tileSize + tileSize / 2;
+        
+        // Start from top of screen, slightly offset for dramatic effect
+        const startX = targetX + (Math.random() - 0.5) * 40;
+        const startY = -50;
+        
+        // Create the falling fireball with trail effect
+        const fireball = this.scene.add.circle(startX, startY, 15, 0xff4500);
+        fireball.setDepth(20);
+        
+        // Inner bright core
+        const core = this.scene.add.circle(startX, startY, 10, 0xffaa00);
+        core.setDepth(21);
+        
+        // Trail particles
+        const trail = [];
+        
+        // Animate falling
+        this.scene.tweens.add({
+            targets: fireball,
+            x: targetX,
+            y: targetY,
+            duration: 500,
+            ease: 'Power2',
+            onUpdate: (tween, target) => {
+                // Sync core position
+                core.x = fireball.x;
+                core.y = fireball.y;
+                
+                // Add trail particles
+                if (Math.random() < 0.3) {
+                    const trailParticle = this.scene.add.circle(fireball.x, fireball.y + 10, 6, 0xff6600);
+                    trailParticle.setDepth(19);
+                    trailParticle.setAlpha(0.7);
+                    trail.push(trailParticle);
+                    
+                    this.scene.tweens.add({
+                        targets: trailParticle,
+                        alpha: 0,
+                        scale: 0.5,
+                        duration: 300,
+                        onComplete: () => {
+                            trailParticle.destroy();
+                            const idx = trail.indexOf(trailParticle);
+                            if (idx > -1) trail.splice(idx, 1);
+                        }
+                    });
+                }
+            },
+            onComplete: () => {
+                fireball.destroy();
+                core.destroy();
+                
+                // Clean up any remaining trail particles
+                trail.forEach(p => p.destroy());
+                
+                if (onComplete) onComplete();
+            }
         });
     }
 }

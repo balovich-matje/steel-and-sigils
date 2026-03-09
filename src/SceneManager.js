@@ -362,6 +362,10 @@ export class BattleScene extends Phaser.Scene {
     // Process unit abilities
     executeUnitAbilityAt(gridX, gridY) {
         if (!this.activeUnitAbility || !this.turnSystem.currentUnit) return;
+        
+        // Prevent double execution from multiple event handlers
+        if (this._executingAbility) return;
+        this._executingAbility = true;
 
         const unit = this.turnSystem.currentUnit;
         const target = this.unitManager.getUnitAt(gridX, gridY);
@@ -389,25 +393,47 @@ export class BattleScene extends Phaser.Scene {
             } else {
                 this.uiManager.showFloatingText('Invalid target', 400, 300, '#ff0000');
             }
+            
+            // Reset execution flag
+            this._executingAbility = false;
         }
         else if (this.activeUnitAbility === 'PULL') {
             // (Implementation for Octo pull can be added here or kept as is in Octo's AI)
             this.activeUnitAbility = null;
             document.body.style.cursor = 'default';
+            
+            // Reset execution flag
+            this._executingAbility = false;
         }
         else if (this.activeUnitAbility === 'SORCERER_FIREBALL') {
             // Sorcerer Fireball: cast fireball with army-wide passive boost
             const spell = SPELLS.fireball;
-            this.spellSystem.executeAoEDamage(spell, gridX, gridY, 1);
-            this.addCombatLog(`${unit.name} cast Fireball!`, 'ability');
-
-            // End ability mode
-            unit.hasCastFireball = true;
+            
+            // Clear ability flag immediately to prevent double execution
             this.activeUnitAbility = null;
-            document.body.style.cursor = 'default';
-            this.gridSystem.highlightValidMoves(unit);
-            this.uiManager.updateUnitInfo(unit);
+            
+            // Create fireball projectile animation
+            this.createFireballProjectile(unit, gridX, gridY, () => {
+                // Callback after animation completes
+                this.spellSystem.executeAoEDamage(spell, gridX, gridY, 1);
+                this.addCombatLog(`${unit.name} cast Fireball!`, 'ability');
+                
+                // End ability mode
+                unit.hasCastFireball = true;
+                document.body.style.cursor = 'default';
+                this.gridSystem.highlightValidMoves(unit);
+                this.uiManager.updateUnitInfo(unit);
+                
+                // Reset execution flag
+                this._executingAbility = false;
+            });
+            return;
         }
+        
+        // Reset execution flag after a short delay for other abilities
+        this.time.delayedCall(100, () => {
+            this._executingAbility = false;
+        });
     }
 
     createEnemyUnits() {
@@ -1270,6 +1296,169 @@ export class BattleScene extends Phaser.Scene {
     }
 
     /**
+     * Create a fireball projectile that flies from caster to target
+     * @param {Unit} caster - The unit casting the fireball
+     * @param {number} targetGridX - Target grid X coordinate
+     * @param {number} targetGridY - Target grid Y coordinate
+     * @param {Function} onComplete - Callback when animation completes
+     */
+    createFireballProjectile(caster, targetGridX, targetGridY, onComplete) {
+        // If caster has piercing, use purple ray animation instead
+        if (caster.hasPiercing) {
+            this.createPiercingRay(caster, targetGridX, targetGridY, onComplete);
+            return;
+        }
+        
+        const targetX = targetGridX * this.tileSize + this.tileSize / 2;
+        const targetY = targetGridY * this.tileSize + this.tileSize / 2;
+        
+        // Face the target
+        this.faceTarget(caster, { gridX: targetGridX, gridY: targetGridY });
+        
+        // Create fireball projectile (glowing orange/red ball)
+        const fireball = this.add.circle(caster.sprite.x, caster.sprite.y - 20, 12, 0xff4500);
+        fireball.setDepth(15);
+        
+        // Add an inner glow
+        const fireballGlow = this.add.circle(caster.sprite.x, caster.sprite.y - 20, 8, 0xffaa00);
+        fireballGlow.setDepth(16);
+        
+        // Animate both together
+        const duration = 400;
+        
+        this.tweens.add({
+            targets: fireball,
+            x: targetX,
+            y: targetY,
+            duration: duration,
+            ease: 'Power2',
+            onUpdate: (tween) => {
+                // Sync glow position with fireball
+                fireballGlow.x = fireball.x;
+                fireballGlow.y = fireball.y;
+            },
+            onComplete: () => {
+                fireball.destroy();
+                fireballGlow.destroy();
+                if (onComplete) onComplete();
+                
+                // Restore original facing after animation
+                this.time.delayedCall(200, () => {
+                    this.restoreFacing(caster);
+                });
+            }
+        });
+    }
+
+    /**
+     * Create a piercing purple ray animation for sorcerer with piercing perk
+     * @param {Unit} caster - The unit casting
+     * @param {number} targetGridX - Target grid X coordinate
+     * @param {number} targetGridY - Target grid Y coordinate
+     * @param {Function} onComplete - Callback when animation completes
+     */
+    createPiercingRay(caster, targetGridX, targetGridY, onComplete) {
+        const startX = caster.sprite.x;
+        const startY = caster.sprite.y - 20;
+        const targetX = targetGridX * this.tileSize + this.tileSize / 2;
+        const targetY = targetGridY * this.tileSize + this.tileSize / 2;
+        
+        // Face the target
+        this.faceTarget(caster, { gridX: targetGridX, gridY: targetGridY });
+        
+        // Calculate angle and distance
+        const angle = Phaser.Math.Angle.Between(startX, startY, targetX, targetY);
+        const distance = Phaser.Math.Distance.Between(startX, startY, targetX, targetY);
+        
+        // Create the main purple ray (a long thin rectangle rotated toward target)
+        const rayWidth = distance;
+        const rayHeight = 12;
+        const ray = this.add.rectangle(
+            startX + Math.cos(angle) * distance / 2,
+            startY + Math.sin(angle) * distance / 2,
+            rayWidth,
+            rayHeight,
+            0x9b59b6 // Purple
+        );
+        ray.setRotation(angle);
+        ray.setDepth(15);
+        ray.setAlpha(0);
+        
+        // Inner bright core
+        const coreRay = this.add.rectangle(
+            startX + Math.cos(angle) * distance / 2,
+            startY + Math.sin(angle) * distance / 2,
+            rayWidth,
+            rayHeight * 0.5,
+            0xe74c3c // Bright pink/red
+        );
+        coreRay.setRotation(angle);
+        coreRay.setDepth(16);
+        coreRay.setAlpha(0);
+        
+        // Energy pulse at the start
+        const startPulse = this.add.circle(startX, startY, 20, 0x9b59b6);
+        startPulse.setDepth(17);
+        
+        // Animate the ray shooting out
+        this.tweens.add({
+            targets: [ray, coreRay],
+            alpha: { from: 0, to: 1 },
+            duration: 100,
+            onComplete: () => {
+                // Fade out
+                this.tweens.add({
+                    targets: [ray, coreRay],
+                    alpha: 0,
+                    duration: 300,
+                    delay: 100,
+                    onComplete: () => {
+                        ray.destroy();
+                        coreRay.destroy();
+                        if (onComplete) onComplete();
+                        
+                        // Restore original facing after animation
+                        this.time.delayedCall(200, () => {
+                            this.restoreFacing(caster);
+                        });
+                    }
+                });
+            }
+        });
+        
+        // Pulse animation at start point
+        this.tweens.add({
+            targets: startPulse,
+            scale: { from: 0.5, to: 1.5 },
+            alpha: { from: 1, to: 0 },
+            duration: 300,
+            onComplete: () => startPulse.destroy()
+        });
+        
+        // Add purple sparkles along the ray
+        const sparkles = 10;
+        for (let i = 0; i < sparkles; i++) {
+            const t = (i + 1) / (sparkles + 1);
+            const sparkleX = startX + Math.cos(angle) * distance * t;
+            const sparkleY = startY + Math.sin(angle) * distance * t;
+            
+            const sparkle = this.add.circle(sparkleX, sparkleY, 4, 0xffffff);
+            sparkle.setDepth(16);
+            sparkle.setAlpha(0);
+            
+            this.tweens.add({
+                targets: sparkle,
+                alpha: { from: 0, to: 1 },
+                scale: { from: 0, to: 1.5 },
+                duration: 150,
+                delay: i * 30,
+                yoyo: true,
+                onComplete: () => sparkle.destroy()
+            });
+        }
+    }
+
+    /**
      * Make a unit face towards a target temporarily
      * @param {Unit} unit - The unit to rotate
      * @param {Unit} target - The target to face towards
@@ -1381,11 +1570,13 @@ export class BattleScene extends Phaser.Scene {
         let currY = attacker.gridY + stepY;
 
         const path = [];
-        while (currX >= -0.5 && currX < CONFIG.GRID_WIDTH + 0.5 && currY >= -0.5 && currY < CONFIG.GRID_HEIGHT + 0.5) {
+        const gridWidth = this.gridSystem.width;
+        const gridHeight = this.gridSystem.height;
+        while (currX >= -0.5 && currX < gridWidth + 0.5 && currY >= -0.5 && currY < gridHeight + 0.5) {
             const gx = Math.round(currX);
             const gy = Math.round(currY);
 
-            if (gx >= 0 && gx < CONFIG.GRID_WIDTH && gy >= 0 && gy < CONFIG.GRID_HEIGHT) {
+            if (gx >= 0 && gx < gridWidth && gy >= 0 && gy < gridHeight) {
                 if (path.length === 0 || path[path.length - 1].x !== gx || path[path.length - 1].y !== gy) {
                     path.push({ x: gx, y: gy });
                 }
