@@ -76,10 +76,13 @@ export class GridSystem {
         this.scene.input.on('pointermove', (pointer) => {
             if (this.scene.victoryShown) return;
             
-            // Get tile coordinates from pointer position
+            // Convert screen coordinates to world coordinates (accounts for camera zoom/position)
+            const worldPoint = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+            
+            // Get tile coordinates from world position
             const tileSize = this.tileSize;
-            const gridX = Math.floor(pointer.x / tileSize);
-            const gridY = Math.floor(pointer.y / tileSize);
+            const gridX = Math.floor(worldPoint.x / tileSize);
+            const gridY = Math.floor(worldPoint.y / tileSize);
             
             // Check if within grid bounds
             if (gridX >= 0 && gridX < this.width && gridY >= 0 && gridY < this.height) {

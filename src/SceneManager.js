@@ -241,16 +241,20 @@ export class BattleScene extends Phaser.Scene {
             if (spellbookModal && !spellbookModal.classList.contains('hidden')) {
                 return;
             }
+            
+            // Convert screen coordinates to world coordinates
+            const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+            
             if (this.spellSystem.activeSpell) {
-                const gridX = Math.floor(pointer.x / this.tileSize);
-                const gridY = Math.floor(pointer.y / this.tileSize);
-                if (gridX >= 0 && gridX < CONFIG.GRID_WIDTH && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
+                const gridX = Math.floor(worldPoint.x / this.tileSize);
+                const gridY = Math.floor(worldPoint.y / this.tileSize);
+                if (gridX >= 0 && gridX < this.gridSystem.width && gridY >= 0 && gridY < this.gridSystem.height) {
                     this.spellSystem.executeSpellAt(gridX, gridY);
                 }
             } else if (this.activeUnitAbility) {
-                const gridX = Math.floor(pointer.x / this.tileSize);
-                const gridY = Math.floor(pointer.y / this.tileSize);
-                if (gridX >= 0 && gridX < CONFIG.GRID_WIDTH && gridY >= 0 && gridY < CONFIG.GRID_HEIGHT) {
+                const gridX = Math.floor(worldPoint.x / this.tileSize);
+                const gridY = Math.floor(worldPoint.y / this.tileSize);
+                if (gridX >= 0 && gridX < this.gridSystem.width && gridY >= 0 && gridY < this.gridSystem.height) {
                     this.executeUnitAbilityAt(gridX, gridY);
                 }
             }
