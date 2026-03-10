@@ -184,8 +184,77 @@
             </div>
         </div>
 
-        <!-- Step 2: Army Selection (Hidden initially) -->
-        <div id="step-2-army" class="pregame-step hidden">
+        <!-- Step 2: Faction Selection (Hidden initially) -->
+        <div id="step-2-faction" class="pregame-step hidden">
+            <h2 style="color: #A68966; margin-bottom: 10px;">👹 Choose Your Enemy</h2>
+            <p style="color: #E3D5B8; margin-bottom: 30px; font-size: 16px;">Select which faction you will face in battle</p>
+
+            <div style="display: flex; gap: 30px; justify-content: center; align-items: stretch; margin-bottom: 40px; flex-wrap: wrap;">
+                <!-- Random Faction Option (Default) -->
+                <button class="faction-select-btn selected" onclick="selectFaction('random')" data-faction="random">
+                    <div class="faction-preview random-preview">🎲</div>
+                    <div class="faction-name">Random Faction</div>
+                    <div class="faction-description">
+                        Face a random enemy faction.<br>
+                        <em>Recommended for new players</em>
+                    </div>
+                </button>
+
+                <!-- Greenskin Horde Option -->
+                <button class="faction-select-btn" onclick="selectFaction('greenskin')" data-faction="greenskin">
+                    <div class="faction-preview greenskin-preview">
+                        <img src="images/enemy/greenskin/orc_warrior.png" alt="Orc Warrior" class="faction-unit-img main">
+                        <img src="images/enemy/greenskin/goblin_stone_thrower.png" alt="Goblin" class="faction-unit-img sub1">
+                        <img src="images/enemy/greenskin/orc_brute.png" alt="Orc Brute" class="faction-unit-img sub2">
+                    </div>
+                    <div class="faction-name">Greenskin Horde</div>
+                    <div class="faction-description">
+                        Brutal orcs and cunning goblins.<br>
+                        <span style="color: #8B9A6B;">Balanced • Aggressive</span>
+                    </div>
+                </button>
+
+                <!-- Dungeon Dwellers Option -->
+                <button class="faction-select-btn" onclick="selectFaction('dungeon')" data-faction="dungeon">
+                    <div class="faction-preview dungeon-preview">
+                        <img src="images/enemy/dungeon/skeleton_soldier.png" alt="Skeleton" class="faction-unit-img main">
+                        <img src="images/enemy/dungeon/skeleton_archer.png" alt="Skeleton Archer" class="faction-unit-img sub1">
+                        <img src="images/enemy/dungeon/animated_armor.png" alt="Animated Armor" class="faction-unit-img sub2">
+                    </div>
+                    <div class="faction-name">Dungeon Dwellers</div>
+                    <div class="faction-description">
+                        Undead skeletons and animated armor.<br>
+                        <span style="color: #9B6BAB;">Defensive • Resilient</span>
+                    </div>
+                </button>
+
+                <!-- Old God Worshippers Option -->
+                <button class="faction-select-btn" onclick="selectFaction('cultist')" data-faction="cultist">
+                    <div class="faction-preview cultist-preview">
+                        <img src="images/enemy/cultist/acolyte.png" alt="Cultist" class="faction-unit-img main">
+                        <img src="images/enemy/cultist/gibbering_horror.png" alt="Horror" class="faction-unit-img sub1">
+                        <img src="images/enemy/cultist/flesh_warped_stalker.png" alt="Stalker" class="faction-unit-img sub2">
+                    </div>
+                    <div class="faction-name">Old God Worshippers</div>
+                    <div class="faction-description">
+                        Twisted cultists and eldritch horrors.<br>
+                        <span style="color: #d94a4a;">Fast • Unpredictable</span>
+                    </div>
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="spell-button" onclick="goBackToMapSelectionFromFaction()" style="background: #5D4E3E;">
+                    ← Back to Map
+                </button>
+                <button id="confirm-faction" class="spellbook-close" onclick="confirmFactionSelection()">
+                    Confirm Selection
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Army Selection (Hidden initially) -->
+        <div id="step-3-army" class="pregame-step hidden">
             <h2 style="color: #A68966; margin-bottom: 10px;">⚔️ Build Your Army ⚔️</h2>
             <p style="color: #E3D5B8; margin-bottom: 10px; font-size: 16px;">Spend your points wisely!</p>
             <div class="mana-display" style="margin-bottom: 15px;">
@@ -357,8 +426,8 @@
             </div>
 
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
-                <button class="spell-button" onclick="goBackToMapSelection()" style="background: #5D4E3E;">
-                    ← Back to Map
+                <button class="spell-button" onclick="goBackToFactionSelection()" style="background: #5D4E3E;">
+                    ← Back to Faction
                 </button>
                 <button id="confirm-army" class="spellbook-close" onclick="gameScene.confirmArmySelection()" disabled>
                     Confirm Army (0 units)
@@ -474,8 +543,9 @@
             }
         }
 
-        // Pregame two-step navigation
+        // Pregame navigation
         let selectedMapId = 'forest';
+        let selectedFactionId = 'random';
 
         function selectMap(mapId) {
             selectedMapId = mapId;
@@ -498,16 +568,49 @@
                 window.gameScene.selectStage(mapId);
             }
 
-            // Go to step 2 after a brief delay
+            // Go to faction selection after a brief delay
             setTimeout(() => {
                 document.getElementById('step-1-map').classList.add('hidden');
-                document.getElementById('step-2-army').classList.remove('hidden');
+                document.getElementById('step-2-faction').classList.remove('hidden');
             }, 300);
         }
 
         function goBackToMapSelection() {
             document.getElementById('step-2-army').classList.add('hidden');
             document.getElementById('step-1-map').classList.remove('hidden');
+        }
+
+        function goBackToMapSelectionFromFaction() {
+            document.getElementById('step-2-faction').classList.add('hidden');
+            document.getElementById('step-1-map').classList.remove('hidden');
+        }
+
+        function selectFaction(factionId) {
+            selectedFactionId = factionId;
+            
+            // Update UI to show selected faction
+            document.querySelectorAll('.faction-select-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.dataset.faction === factionId) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+
+        function confirmFactionSelection() {
+            // Pass faction selection to gameScene
+            if (window.gameScene && window.gameScene.selectEnemyFaction) {
+                window.gameScene.selectEnemyFaction(selectedFactionId);
+            }
+
+            // Go to army selection
+            document.getElementById('step-2-faction').classList.add('hidden');
+            document.getElementById('step-3-army').classList.remove('hidden');
+        }
+
+        function goBackToFactionSelection() {
+            document.getElementById('step-3-army').classList.add('hidden');
+            document.getElementById('step-2-faction').classList.remove('hidden');
         }
     </script>
 

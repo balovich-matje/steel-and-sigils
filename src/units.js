@@ -206,11 +206,12 @@ const UNIT_TYPES = {
         health: 40,
         maxHealth: 40,
         damage: 15,
-        moveRange: 3,
+        moveRange: 6,
         rangedRange: 4,
         initiative: 12,
         isPlayer: false,
-        cost: 200
+        cost: 200,
+        spriteScale: 0.7
     },
     // Boss Units
     OGRE_CHIEFTAIN: {

@@ -134,25 +134,7 @@ export class SpellSystem {
             multiplier += sorcererCount * 0.5;
         }
 
-        // Check for Sorcerer Arcane Focus mythic perk
-        const hasArcaneFocus = playerUnits.some(u => u.type === 'SORCERER' && u.hasArcaneFocus);
-        if (hasArcaneFocus && this.scene.arcaneFocusSpell === this.activeSpell) {
-            multiplier += (this.scene.arcaneFocusStacks || 0) * 0.5;
-            // The max stacks can be whatever we want, or infinite, but here we add the 50% for every consecutive cast.
-        }
-
         return Math.floor(basePower * multiplier);
-    }
-
-    updateArcaneFocus() {
-        // If they cast the same spell, increment stack
-        if (this.scene.arcaneFocusSpell === this.activeSpell) {
-            this.scene.arcaneFocusStacks = (this.scene.arcaneFocusStacks || 0) + 1;
-        } else {
-            // Otherwise reset combo
-            this.scene.arcaneFocusSpell = this.activeSpell;
-            this.scene.arcaneFocusStacks = 1; // 1 means they cast it once successfully gaining 1 stack for next time
-        }
     }
 
     executeTileSpell(spell, centerX, centerY) {
@@ -160,7 +142,6 @@ export class SpellSystem {
         this.scene.spendMana(actualCost);
         this.scene.addCombatLog(`Hero cast ${spell.name}!`, 'spell');
         this.scene.spellsCastThisRound++;
-        this.updateArcaneFocus();
 
         // Face towards the target tile (only for unit abilities, not hero spells)
         // Hero spells should not rotate the active unit
@@ -187,6 +168,13 @@ export class SpellSystem {
             case 'iceStorm':
                 this.executeIceStorm(spell, centerX, centerY);
                 break;
+            default:
+                // Refund mana if spell effect not handled
+                console.warn(`Unhandled spell effect in executeTileSpell: ${spell.effect}`);
+                this.scene.mana += actualCost;
+                this.scene.uiManager.updateManaDisplay();
+                this.scene.uiManager.showFloatingText('Spell failed!', 400, 300, '#ff4444');
+                break;
         }
 
         this.clearSpell();
@@ -205,13 +193,9 @@ export class SpellSystem {
         this.scene.spendMana(actualCost);
         this.scene.spellsCastThisRound++;
         this.scene.addCombatLog(`Hero cast ${spell.name}!`, 'spell');
-        this.updateArcaneFocus();
 
-        // Face the target
-        const caster = this.scene.turnSystem.currentUnit;
-        if (caster && this.scene.faceTarget) {
-            this.scene.faceTarget(caster, unit);
-        }
+        // Note: Hero spells from spellbook should not cause unit rotation
+        // Only unit abilities (like Sorcerer Fireball) should have rotation animations
 
         // If armyBuffs is enabled and this is a buff spell, apply to whole army
         const isBuffSpell = ['haste', 'shield', 'bless', 'regenerate', 'heal'].includes(spell.effect);
@@ -238,6 +222,7 @@ export class SpellSystem {
             }
         } else {
             // Single target
+            let spellHandled = true;
             switch (spell.effect) {
                 case 'singleDamage':
                     this.executeSingleDamage(spell, unit);
@@ -259,6 +244,13 @@ export class SpellSystem {
                     break;
                 case 'chainLightning':
                     this.executeChainLightning(spell, unit);
+                    break;
+                default:
+                    spellHandled = false;
+                    console.warn(`Unhandled spell effect in executeUnitSpell: ${spell.effect}`);
+                    this.scene.mana += actualCost;
+                    this.scene.uiManager.updateManaDisplay();
+                    this.scene.uiManager.showFloatingText('Spell failed!', 400, 300, '#ff4444');
                     break;
             }
         }

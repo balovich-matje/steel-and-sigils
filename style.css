@@ -300,6 +300,41 @@ body {
     line-height: 1;
 }
 
+/* Temporal Shift - Animated border for extra turns */
+.initiative-unit.temporal-shift {
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, #2D241E 0%, #3D2A1E 100%);
+    animation: temporal-shift-glow 2s ease-in-out infinite;
+}
+
+@keyframes temporal-shift-glow {
+    0%, 100% {
+        border-color: #8B5B9B;
+        box-shadow: 0 0 8px rgba(139, 91, 155, 0.4), inset 0 0 6px rgba(139, 91, 155, 0.2);
+    }
+    50% {
+        border-color: #D4A574;
+        box-shadow: 0 0 16px rgba(212, 165, 116, 0.6), inset 0 0 10px rgba(212, 165, 116, 0.3);
+    }
+}
+
+/* Combined active + temporal shift state */
+.initiative-unit.active.temporal-shift {
+    background: linear-gradient(135deg, #3D342E 0%, #4D3A2E 100%);
+    animation: temporal-shift-active-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes temporal-shift-active-glow {
+    0%, 100% {
+        border-color: #A68966;
+        box-shadow: 0 0 12px rgba(166, 137, 102, 0.5), 0 0 20px rgba(139, 91, 155, 0.3);
+    }
+    50% {
+        border-color: #D4A574;
+        box-shadow: 0 0 20px rgba(212, 165, 116, 0.7), 0 0 30px rgba(139, 91, 155, 0.5);
+    }
+}
+
 /* ============================================
    UI PANELS & BUTTONS
    ============================================ */
@@ -955,6 +990,129 @@ body {
 .stage-btn.active {
     border-color: #4a7c59;
     box-shadow: 0 0 10px rgba(74, 124, 89, 0.5);
+}
+
+/* ============================================
+   FACTION SELECTION STYLES
+   ============================================ */
+
+.faction-select-btn {
+    width: 280px;
+    padding: 25px;
+    background: #2D241E;
+    border: 3px solid #5D4E3E;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.faction-select-btn:hover {
+    border-color: #A68966;
+    background: #3D342E;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.faction-select-btn.selected {
+    border-color: #d94a4a;
+    box-shadow: 0 0 20px rgba(217, 74, 74, 0.4);
+}
+
+.faction-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background: #1A1C1E;
+    border: 2px solid #5D4E3E;
+}
+
+.faction-preview.random-preview {
+    font-size: 64px;
+    background: linear-gradient(135deg, #3D342E 0%, #2D3838 100%);
+}
+
+.faction-preview.greenskin-preview {
+    background: linear-gradient(135deg, #2D3D2E 0%, #3D4D3E 100%);
+}
+
+.faction-preview.dungeon-preview {
+    background: linear-gradient(135deg, #2D2D3E 0%, #3D3D4E 100%);
+}
+
+.faction-preview.cultist-preview {
+    background: linear-gradient(135deg, #3D1E1E 0%, #4D2E2E 100%);
+}
+
+.faction-unit-img {
+    position: absolute;
+    image-rendering: pixelated;
+}
+
+.faction-unit-img.main {
+    width: 80px;
+    height: 80px;
+    z-index: 2;
+}
+
+.faction-unit-img.sub1 {
+    width: 50px;
+    height: 50px;
+    top: 5px;
+    right: 5px;
+    z-index: 1;
+    opacity: 0.9;
+}
+
+.faction-unit-img.sub2 {
+    width: 50px;
+    height: 50px;
+    bottom: 5px;
+    left: 5px;
+    z-index: 1;
+    opacity: 0.9;
+}
+
+.faction-name {
+    color: #A68966;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.faction-description {
+    color: #B8A896;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Faction specific accent colors for selected state */
+.faction-select-btn[data-faction="random"].selected {
+    border-color: #A68966;
+    box-shadow: 0 0 20px rgba(166, 137, 102, 0.4);
+}
+
+.faction-select-btn[data-faction="greenskin"].selected {
+    border-color: #4a7c59;
+    box-shadow: 0 0 20px rgba(74, 124, 89, 0.4);
+}
+
+.faction-select-btn[data-faction="dungeon"].selected {
+    border-color: #8B5B9B;
+    box-shadow: 0 0 20px rgba(139, 91, 155, 0.4);
+}
+
+.faction-select-btn[data-faction="cultist"].selected {
+    border-color: #d94a4a;
+    box-shadow: 0 0 20px rgba(217, 74, 74, 0.4);
 }
 
 /* ============================================

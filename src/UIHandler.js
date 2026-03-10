@@ -4,12 +4,26 @@
 
 // Note: UNIT_TYPES is available globally from units.js (loaded as script tag)
 
+// Global display mode for unit stats (1 = base + modifiers, 2 = current values)
+window.unitStatDisplayMode = window.unitStatDisplayMode || 1;
+
 // ============================================
 // UI MANAGER
 // ============================================
 export class UIManager {
     constructor(scene) {
         this.scene = scene;
+    }
+
+    // Toggle display mode for unit stats
+    toggleUnitStatDisplayMode() {
+        window.unitStatDisplayMode = window.unitStatDisplayMode === 1 ? 2 : 1;
+        // Refresh current unit info if a unit is selected
+        if (this.scene.selectedUnit) {
+            this.updateUnitInfo(this.scene.selectedUnit);
+        } else if (this.scene.turnSystem && this.scene.turnSystem.currentUnit) {
+            this.updateUnitInfo(this.scene.turnSystem.currentUnit);
+        }
     }
 
     // Update mana display in all locations
@@ -69,7 +83,10 @@ export class UIManager {
     updateUnitInfo(unit) {
         const infoPanel = document.getElementById('unit-info');
         if (infoPanel) {
-            infoPanel.innerHTML = unit.getDisplayStats();
+            const mode = window.unitStatDisplayMode || 1;
+            const modeText = mode === 1 ? 'Base + Mods' : 'Current';
+            const toggleButton = `<button onclick="gameScene.uiManager.toggleUnitStatDisplayMode()" style="float: right; font-size: 10px; padding: 2px 6px; background: #3D342E; border: 1px solid #5D4E3E; color: #A68966; cursor: pointer; border-radius: 3px;">${modeText}</button>`;
+            infoPanel.innerHTML = toggleButton + '<div style="clear: both;"></div>' + unit.getDisplayStats(mode);
         }
     }
 

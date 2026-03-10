@@ -127,11 +127,16 @@ export class BattleScene extends Phaser.Scene {
         }
 
         // Determine enemy faction for this run
-        if (this.battleNumber === 1) {
+        if (data && data.selectedEnemyFaction) {
+            // Use faction selected in pre-game
+            this.currentEnemyFaction = data.selectedEnemyFaction;
+        } else if (data && data.currentEnemyFaction) {
+            // Continue with same faction from previous battle
+            this.currentEnemyFaction = data.currentEnemyFaction;
+        } else if (this.battleNumber === 1) {
+            // Random faction for battle 1 (fallback if no selection made)
             const factions = Object.keys(ENEMY_FACTIONS);
             this.currentEnemyFaction = factions[Math.floor(Math.random() * factions.length)];
-        } else if (data && data.currentEnemyFaction) {
-            this.currentEnemyFaction = data.currentEnemyFaction;
         } else {
             // Fallback for safety
             this.currentEnemyFaction = 'GREENSKIN_HORDE';
@@ -146,7 +151,7 @@ export class BattleScene extends Phaser.Scene {
                 if (buff.type === 'spellPower') this.spellPowerMultiplier += buff.value;
                 if (buff.type === 'healingPower') this.healingPowerMultiplier = (this.healingPowerMultiplier || 1) + buff.value;
                 if (buff.type === 'spellsPerRound') this.spellsPerRound += buff.value;
-                if (buff.type === 'maxMana') { this.maxMana += buff.value; this.mana += buff.value; }
+                if (buff.type === 'maxMana') { this.maxMana += buff.value; }
                 if (buff.type === 'permanentBuffs') this.permanentBuffs = true;
                 if (buff.type === 'armyBuffs') this.armyBuffs = true;
                 // manaRestore is a one-time effect, don't restore it
@@ -192,7 +197,8 @@ export class BattleScene extends Phaser.Scene {
 
                     // Restore mythic buffs
                     if (unitData.statModifiers.hasDivineRetribution) unit.hasDivineRetribution = true;
-                    if (unitData.statModifiers.hasArcaneFocus) unit.hasArcaneFocus = true;
+                    if (unitData.statModifiers.hasUnstableArcana) unit.hasUnstableArcana = true;
+                    if (unitData.statModifiers.hasTemporalShift) unit.hasTemporalShift = true;
 
                     unit.updateHealthBar();
                 }
@@ -226,6 +232,10 @@ export class BattleScene extends Phaser.Scene {
                     if (unitData.buffs.regenerateRounds) {
                         unit.regenerateRounds = unitData.buffs.regenerateRounds;
                         unit.regenerateAmount = unitData.buffs.regenerateAmount || 0;
+                    }
+                    if (unitData.buffs.unstableArcanaDotRounds) {
+                        unit.unstableArcanaDotRounds = unitData.buffs.unstableArcanaDotRounds;
+                        unit.unstableArcanaDotAmount = unitData.buffs.unstableArcanaDotAmount || 0;
                     }
                 }
             }
@@ -416,11 +426,53 @@ export class BattleScene extends Phaser.Scene {
             // Clear ability flag immediately to prevent double execution
             this.activeUnitAbility = null;
             
+            // Check for Unstable Arcana mythic perk on this specific unit
+            const hasUnstableArcana = unit.hasUnstableArcana;
+            let unstableArcanaRoll = null;
+            let damageMultiplier = 1;
+            let rollDescription = '';
+            
+            if (hasUnstableArcana) {
+                // Roll for Unstable Arcana effect:
+                // 25% double damage (0-24)
+                // 5% quad damage (25-29)
+                // 50% lingering DoT (30-79)
+                // 20% misspell (80-99)
+                const roll = Math.random() * 100;
+                
+                if (roll < 25) {
+                    unstableArcanaRoll = 'double';
+                    damageMultiplier = 2;
+                    rollDescription = 'Double Damage!';
+                } else if (roll < 30) {
+                    unstableArcanaRoll = 'quad';
+                    damageMultiplier = 4;
+                    rollDescription = 'QUAD DAMAGE!';
+                } else if (roll < 80) {
+                    unstableArcanaRoll = 'dot';
+                    damageMultiplier = 1;
+                    rollDescription = 'Lingering Burn';
+                } else {
+                    unstableArcanaRoll = 'misspell';
+                    damageMultiplier = 0.1;
+                    rollDescription = 'Misspell...';
+                }
+            }
+            
             // Create fireball projectile animation
             this.createFireballProjectile(unit, gridX, gridY, () => {
                 // Callback after animation completes
-                this.spellSystem.executeAoEDamage(spell, gridX, gridY, 1);
-                this.addCombatLog(`${unit.name} cast Fireball!`, 'ability');
+                this.executeSorcererFireball(spell, gridX, gridY, unit, damageMultiplier, unstableArcanaRoll);
+                
+                if (hasUnstableArcana) {
+                    this.addCombatLog(`${unit.name} cast Fireball! (${rollDescription})`, 'ability');
+                    this.uiManager.showFloatingText(rollDescription, gridX * this.tileSize + this.tileSize/2, gridY * this.tileSize - 30, 
+                        unstableArcanaRoll === 'misspell' ? '#888888' : 
+                        unstableArcanaRoll === 'quad' ? '#ff3333' : 
+                        unstableArcanaRoll === 'double' ? '#ff8c00' : '#ff6600');
+                } else {
+                    this.addCombatLog(`${unit.name} cast Fireball!`, 'ability');
+                }
                 
                 // End ability mode
                 unit.hasCastFireball = true;
@@ -438,6 +490,70 @@ export class BattleScene extends Phaser.Scene {
         this.time.delayedCall(100, () => {
             this._executingAbility = false;
         });
+    }
+
+    // Execute Sorcerer Fireball with Unstable Arcana support
+    executeSorcererFireball(spell, centerX, centerY, castingUnit, damageMultiplier, unstableArcanaRoll) {
+        const radius = 1; // 3x3 area
+        const targets = [];
+
+        // Find all targets in the AoE
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const x = centerX + dx;
+                const y = centerY + dy;
+                const unit = this.unitManager.getUnitAt(x, y);
+                if (unit && !unit.isPlayer) {
+                    targets.push(unit);
+                }
+            }
+        }
+
+        // Create explosion effect
+        this.spellSystem.createExplosionEffect(centerX, centerY, radius);
+
+        // Calculate base damage with Sorcerer passive boost
+        let baseDamage = spell.power;
+        const playerUnits = this.unitManager.getPlayerUnits();
+        const sorcererCount = playerUnits.filter(u => u.type === 'SORCERER' && u.health > 0).length;
+        if (sorcererCount > 0) {
+            baseDamage = Math.floor(baseDamage * (1 + sorcererCount * 0.5));
+        }
+
+        // Apply Unstable Arcana multiplier
+        const finalDamage = Math.floor(baseDamage * damageMultiplier);
+
+        // Apply damage to all targets
+        for (const unit of targets) {
+            this.time.delayedCall(200, () => {
+                const actualDamage = unit.takeSpellDamage(finalDamage);
+                this.uiManager.showDamageText(unit, actualDamage);
+                
+                let damageText = `${spell.name} hit ${unit.name} dealing ${actualDamage} damage.`;
+                if (unstableArcanaRoll) {
+                    const effectNames = {
+                        'double': 'Double Damage',
+                        'quad': 'QUAD DAMAGE',
+                        'dot': 'Lingering Burn',
+                        'misspell': 'Misspell'
+                    };
+                    damageText += ` [${effectNames[unstableArcanaRoll]}]`;
+                }
+                this.addCombatLog(damageText, 'damage');
+
+                // Apply DoT if rolling the DoT effect (and target is still alive)
+                if (unstableArcanaRoll === 'dot' && unit.health > 0) {
+                    // DoT does 50% of initial damage at the start of each turn for 2 turns
+                    const dotAmount = Math.floor(finalDamage * 0.5);
+                    unit.unstableArcanaDotAmount = dotAmount;
+                    unit.unstableArcanaDotRounds = 2;
+                    this.uiManager.showFloatingText(`Burning!`, unit.sprite.x, unit.sprite.y - 40, '#ff6600');
+                    this.addCombatLog(`${unit.name} is burning for ${dotAmount} damage for 2 turns!`, 'buff');
+                }
+
+                this.checkVictoryCondition();
+            });
+        }
     }
 
     createEnemyUnits() {
@@ -1912,7 +2028,7 @@ export class BattleScene extends Phaser.Scene {
         `;
     }
 
-    // Show special Loot Goblin reward - choice of 3 unit buffs
+    // Show special Loot Goblin reward - 4 choices of 3 buffs each (2x2 grid)
     showLootGoblinReward() {
         const rewardsContainer = document.getElementById('rewards-container');
 
@@ -1931,36 +2047,68 @@ export class BattleScene extends Phaser.Scene {
                 Choose one of these powerful buffs for your army:
             </div>
             <div style="margin-top: 20px; color: #4CAF50;">
-                ✨ 3 buff choices available! ✨
+                ✨ 4 buff sets available - each with 3 options! ✨
             </div>
         `;
         rewardsContainer.appendChild(lootSection);
 
-        // Create buff selection container
-        const buffContainer = document.createElement('div');
-        buffContainer.id = 'loot-goblin-buffs';
-        buffContainer.className = 'reward-column';
-        buffContainer.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;';
-        rewardsContainer.appendChild(buffContainer);
+        // Track used legendary/mythic buffs to prevent duplicates
+        const usedLegendaryBuffs = new Set();
+        const usedMythicBuffs = new Set();
 
-        // Generate 3 random buffs (weighted by rarity)
-        const buffOptions = this.getRandomBuffs(3);
+        // Create 4 choice slots in a 2x2 grid
+        const choicesContainer = document.createElement('div');
+        choicesContainer.style.cssText = 'grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 20px;';
+        rewardsContainer.appendChild(choicesContainer);
 
-        buffOptions.forEach(buff => {
-            const card = this.uiManager.createRewardCard(buff.rarity === 'epic' ? 'epic' : 'buff', buff.id, `
-                <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
-                <div style="color: ${buff.rarity === 'epic' ? '#9B6BAB' : '#6B8B5B'}; font-weight: bold;${buff.rarity === 'epic' ? ' text-shadow: 0 0 6px rgba(139, 91, 155, 0.5);' : ''}">${buff.name}</div>
-                <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
-                ${buff.rarity === 'epic' ? '<div style="font-size: 11px; color: #9B6BAB; margin-top: 4px; text-shadow: 0 0 4px rgba(139, 91, 155, 0.4);">⚡ Epic Power</div>' : ''}
-            `, buff, buff.rarity);
+        // Generate 4 choice slots
+        for (let choiceIndex = 0; choiceIndex < 4; choiceIndex++) {
+            const choiceSlot = document.createElement('div');
+            choiceSlot.style.cssText = 'background: rgba(45, 36, 30, 0.6); border: 2px solid #5D4E3E; border-radius: 8px; padding: 15px;';
+            choiceSlot.innerHTML = `<div style="color: #A68966; text-align: center; margin-bottom: 10px; font-weight: bold;">Choice ${choiceIndex + 1}</div>`;
+            
+            const buffsContainer = document.createElement('div');
+            buffsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
+            
+            // Generate buff options for this choice (3 buffs like regular rewards)
+            const buffOptions = this.generateLootGoblinBuffChoice(usedLegendaryBuffs, usedMythicBuffs);
+            
+            buffOptions.forEach(buff => {
+                const isMythic = buff.rarity === 'mythic';
+                const isLegendary = buff.rarity === 'legendary' || buff.id.startsWith('legendary_');
+                const isEpic = buff.rarity === 'epic';
+                const rarity = isMythic ? 'mythic' : (isLegendary ? 'legendary' : (isEpic ? 'epic' : 'common'));
+                
+                const nameColor = rarity === 'mythic' ? '#ff3333' : (rarity === 'legendary' ? '#ff8c00' : (rarity === 'epic' ? '#9B6BAB' : '#6B8B5B'));
+                const textShadow = rarity === 'mythic' ? ' text-shadow: 0 0 8px rgba(255, 26, 26, 0.6);' : (rarity === 'legendary' ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : (rarity === 'epic' ? ' text-shadow: 0 0 6px rgba(139, 91, 155, 0.5);' : ''));
+                
+                let rarityLabel = '';
+                if (rarity === 'mythic') {
+                    rarityLabel = '<div style="font-size: 10px; color: #ff3333; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 26, 26, 0.5);">🔥 Mythic</div>';
+                } else if (rarity === 'legendary') {
+                    rarityLabel = '<div style="font-size: 10px; color: #ff8c00; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">⚡ Legendary</div>';
+                } else if (rarity === 'epic') {
+                    rarityLabel = '<div style="font-size: 10px; color: #9B6BAB; margin-top: 2px; text-shadow: 0 0 4px rgba(139, 91, 155, 0.4);">⚡ Epic</div>';
+                }
+                
+                const card = this.uiManager.createRewardCard(rarity === 'mythic' ? 'mythic' : (rarity === 'legendary' ? 'legendary' : (rarity === 'epic' ? 'epic' : 'buff')), buff.id, `
+                    <div style="font-size: 24px; margin-bottom: 3px;">${buff.icon}</div>
+                    <div style="color: ${nameColor}; font-weight: bold; font-size: 13px;${textShadow}">${buff.name}</div>
+                    ${rarityLabel}
+                    <div style="font-size: 11px; color: #B8A896; margin-top: 3px;">${buff.desc}</div>
+                `, buff, rarity);
 
-            card.onclick = () => {
-                // Show unit selection for this buff
-                this.showBuffTargetSelectionForLootGoblin(buff, card);
-            };
+                card.onclick = () => {
+                    // Show unit selection for this buff
+                    this.showBuffTargetSelectionForLootGoblin(buff, card);
+                };
 
-            buffContainer.appendChild(card);
-        });
+                buffsContainer.appendChild(card);
+            });
+            
+            choiceSlot.appendChild(buffsContainer);
+            choicesContainer.appendChild(choiceSlot);
+        }
 
         // Skip button
         const skipBtn = document.createElement('button');
@@ -1973,6 +2121,199 @@ export class BattleScene extends Phaser.Scene {
             this.generateRewardChoices();
         };
         rewardsContainer.appendChild(skipBtn);
+    }
+
+    // Generate a single buff choice for Loot Goblin (3 buffs like regular rewards, with used buff tracking)
+    generateLootGoblinBuffChoice(usedLegendaryBuffs, usedMythicBuffs) {
+        const buffOptions = [];
+        
+        // Try to get a special buff (legendary or mythic) with 50% chance
+        let specialBuff = null;
+        
+        // Priority to mythic if eligible, then legendary
+        const mythicBuff = this.tryGenerateMythicBuffForLootGoblin(usedMythicBuffs);
+        if (mythicBuff && !usedMythicBuffs.has(mythicBuff.id) && Math.random() < 0.5) {
+            specialBuff = mythicBuff;
+            usedMythicBuffs.add(specialBuff.id);
+        } else {
+            const legendaryBuff = this.tryGenerateLegendaryBuffForLootGoblin(usedLegendaryBuffs);
+            if (legendaryBuff && !usedLegendaryBuffs.has(legendaryBuff.id) && Math.random() < 0.5) {
+                specialBuff = legendaryBuff;
+                usedLegendaryBuffs.add(specialBuff.id);
+            }
+        }
+        
+        if (specialBuff) {
+            buffOptions.push(specialBuff);
+        }
+        
+        // Fill remaining slots with regular buffs
+        const regularBuffs = this.getRandomBuffs(3 - buffOptions.length);
+        buffOptions.push(...regularBuffs);
+        
+        // Shuffle so special buff isn't always first
+        for (let i = buffOptions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [buffOptions[i], buffOptions[j]] = [buffOptions[j], buffOptions[i]];
+        }
+        
+        return buffOptions;
+    }
+
+    // Try to generate a legendary buff for Loot Goblin (respects used buffs)
+    tryGenerateLegendaryBuffForLootGoblin(usedBuffs) {
+        const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
+        const availableLegendaryBuffs = [];
+
+        const hasBuff = (unitType, buffProperty) => {
+            return playerUnits.some(u => u.type === unitType && u[buffProperty]);
+        };
+
+        if (playerUnits.some(u => u.type === 'BERSERKER') && !hasBuff('BERSERKER', 'hasDoubleStrike') && !usedBuffs.has('legendary_frenzy')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_frenzy',
+                name: 'Blood Frenzy',
+                icon: '🩸',
+                desc: 'Berserker: Strikes 2 times per attack',
+                unitType: 'BERSERKER',
+                rarity: 'legendary',
+                effect: (unit) => {
+                    unit.hasDoubleStrike = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasDoubleStrike = true;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'PALADIN') && !hasBuff('PALADIN', 'hasCleave') && !usedBuffs.has('legendary_cleave')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_cleave',
+                name: 'Divine Wrath',
+                icon: '⚡',
+                desc: 'Paladin: 3x3 cleave attack, +40 damage',
+                unitType: 'PALADIN',
+                rarity: 'legendary',
+                effect: (unit) => {
+                    unit.hasCleave = true;
+                    unit.damage += 40;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasCleave = true;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 40;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'RANGER') && !hasBuff('RANGER', 'hasRicochet') && !usedBuffs.has('legendary_ricochet')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_ricochet',
+                name: 'Ricochet Shot',
+                icon: '🏹',
+                desc: 'Ranger: Arrows bounce to nearby targets (2 range, 50% dmg), +40 damage',
+                unitType: 'RANGER',
+                rarity: 'legendary',
+                effect: (unit) => {
+                    unit.hasRicochet = true;
+                    unit.damage += 40;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasRicochet = true;
+                    unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 40;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'SORCERER') && !hasBuff('SORCERER', 'hasPiercing') && !usedBuffs.has('legendary_piercing')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_piercing',
+                name: 'Arcane Pierce',
+                icon: '🔮',
+                desc: 'Sorcerer: Infinite range, shots pierce all units in path',
+                unitType: 'SORCERER',
+                rarity: 'legendary',
+                effect: (unit) => {
+                    unit.hasPiercing = true;
+                    unit.rangedRange = 999;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasPiercing = true;
+                    unit.statModifiers.rangedRange = 999;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'ROGUE') && !hasBuff('ROGUE', 'hasBackstab') && !usedBuffs.has('legendary_backstab')) {
+            availableLegendaryBuffs.push({
+                id: 'legendary_backstab',
+                name: 'Shadow Strike',
+                icon: '🗡️',
+                desc: 'Rogue: 4x damage when attacking from behind (or side)',
+                unitType: 'ROGUE',
+                rarity: 'legendary',
+                effect: (unit) => {
+                    unit.hasBackstab = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasBackstab = true;
+                }
+            });
+        }
+
+        if (availableLegendaryBuffs.length === 0) {
+            return null;
+        }
+
+        return availableLegendaryBuffs[Math.floor(Math.random() * availableLegendaryBuffs.length)];
+    }
+
+    // Try to generate a mythic buff for Loot Goblin (respects used buffs)
+    tryGenerateMythicBuffForLootGoblin(usedBuffs) {
+        const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
+        const availableMythicBuffs = [];
+
+        const hasProperty = (unitType, buffProperty) => {
+            return playerUnits.some(u => u.type === unitType && u[buffProperty]);
+        };
+
+        if (hasProperty('PALADIN', 'hasCleave') && !hasProperty('PALADIN', 'hasDivineRetribution') && !usedBuffs.has('mythic_divine_retribution')) {
+            availableMythicBuffs.push({
+                id: 'mythic_divine_retribution',
+                name: 'Divine Retribution',
+                icon: '✨',
+                desc: 'Paladin: Removes passive debuffs. Unlimited retaliation vs melee (x2 DMG).',
+                unitType: 'PALADIN',
+                rarity: 'mythic',
+                effect: (unit) => {
+                    unit.hasDivineRetribution = true;
+                    if (unit.statModifiers && unit.statModifiers.rangedDefense) {
+                        delete unit.statModifiers.rangedDefense;
+                    }
+                    if (unit.statModifiers && unit.statModifiers.healingBoost) {
+                        delete unit.statModifiers.healingBoost;
+                    }
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasDivineRetribution = true;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'SORCERER') && hasProperty('SORCERER', 'hasPiercing') && !hasProperty('SORCERER', 'hasUnstableArcana') && !usedBuffs.has('mythic_unstable_arcana')) {
+            availableMythicBuffs.push({
+                id: 'mythic_unstable_arcana',
+                name: 'Unstable Arcana',
+                icon: '🔥',
+                desc: 'Sorcerer Fireball: 25% 2x dmg, 5% 4x dmg, 50% lingering DoT (50% dmg for 2 turns), 20% 0.1x dmg.',
+                unitType: 'SORCERER',
+                rarity: 'mythic',
+                effect: (unit) => {
+                    unit.hasUnstableArcana = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasUnstableArcana = true;
+                }
+            });
+        }
+
+        if (availableMythicBuffs.length === 0) {
+            return null;
+        }
+
+        return availableMythicBuffs[Math.floor(Math.random() * availableMythicBuffs.length)];
     }
 
     // Show unit selection for Loot Goblin buff
@@ -2122,6 +2463,7 @@ export class BattleScene extends Phaser.Scene {
                     unit.damage += dmgDiff;
                     unit.statModifiers = unit.statModifiers || {};
                     unit.statModifiers.damage = (unit.statModifiers.damage || 0) + dmgDiff;
+                    unit.statModifiers.hasTemporalShift = true;
                 }
             }
         ];
@@ -2243,7 +2585,7 @@ export class BattleScene extends Phaser.Scene {
             {
                 id: 'mana_max', name: 'Expanded Mana Pool', icon: '💧', desc: '+50 Max Mana',
                 buffType: 'maxMana', buffValue: 50,
-                effect: () => { this.maxMana += 50; this.mana += 50; this.uiManager.updateManaDisplay(); }
+                effect: () => { this.uiManager.updateManaDisplay(); }
             },
             {
                 id: 'mana_regen', name: 'Mana Flow', icon: '🌊', desc: '+2 Base Mana Regen per round',
@@ -2462,19 +2804,18 @@ export class BattleScene extends Phaser.Scene {
         }
 
         // Sorcerer mythic requires the unit to have Sorcerer Legendary `hasPiercing`
-        if (playerUnits.some(u => u.type === 'SORCERER') && hasProperty('SORCERER', 'hasPiercing') && !hasProperty('SORCERER', 'hasArcaneFocus')) {
-            // Note: If you want this to STRICTLY require a legendary perk first, we'd have to create a Sorcerer legendary perk. For now we just make them eligible if they exist.
+        if (playerUnits.some(u => u.type === 'SORCERER') && hasProperty('SORCERER', 'hasPiercing') && !hasProperty('SORCERER', 'hasUnstableArcana')) {
             availableMythicBuffs.push({
-                id: 'mythic_arcane_focus',
-                name: 'Arcane Focus',
+                id: 'mythic_unstable_arcana',
+                name: 'Unstable Arcana',
                 icon: '🔥',
-                desc: 'Sorcerer: Consecutive casts of same spell increase its DMG by 50%.',
+                desc: 'Sorcerer Fireball: 25% 2x dmg, 5% 4x dmg, 50% lingering DoT (50% dmg for 2 turns), 20% 0.1x dmg.',
                 unitType: 'SORCERER',
                 rarity: 'mythic',
                 effect: (unit) => {
-                    unit.hasArcaneFocus = true;
+                    unit.hasUnstableArcana = true;
                     unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasArcaneFocus = true;
+                    unit.statModifiers.hasUnstableArcana = true;
                 }
             });
         }
@@ -2586,7 +2927,7 @@ export class BattleScene extends Phaser.Scene {
             'legendary_piercing': 'hasPiercing',
             'legendary_backstab': 'hasBackstab',
             'mythic_divine_retribution': 'hasDivineRetribution',
-            'mythic_arcane_focus': 'hasArcaneFocus'
+            'mythic_unstable_arcana': 'hasUnstableArcana'
         };
         const buffProperty = buffIdToProperty[buffId];
 
@@ -2833,7 +3174,9 @@ export class BattleScene extends Phaser.Scene {
                 blessRounds: u.blessRounds,
                 blessValue: u.blessValue,
                 regenerateRounds: u.regenerateRounds,
-                regenerateAmount: u.regenerateAmount
+                regenerateAmount: u.regenerateAmount,
+                unstableArcanaDotRounds: u.unstableArcanaDotRounds,
+                unstableArcanaDotAmount: u.unstableArcanaDotAmount
             }
         }));
 
@@ -2843,7 +3186,7 @@ export class BattleScene extends Phaser.Scene {
             battleNumber: nextBattleNumber,
             placedUnits: playerUnits,
             magicBuffs: this.magicBuffs,
-            currentEnemyFaction: this.currentEnemyFaction,
+            selectedEnemyFaction: this.currentEnemyFaction,
             stageId: this.currentStage.id
         });
     }
@@ -2884,6 +3227,7 @@ export class PreGameScene extends Phaser.Scene {
         this.selectedPlacementUnit = null;
         this.currentStage = STAGES.forest; // Default
         this.selectedStageId = 'forest';
+        this.selectedEnemyFaction = 'random'; // Default to random
         this.tileSize = this.tileSize;
     }
 
@@ -3183,6 +3527,10 @@ export class PreGameScene extends Phaser.Scene {
         this.drawGrid(); // Redraw grid to clear any highlights
     }
 
+    selectEnemyFaction(factionId) {
+        this.selectedEnemyFaction = factionId;
+    }
+
     confirmPlacement() {
         this.placementMode = false;
         document.getElementById('placement-bar').classList.add('hidden');
@@ -3192,10 +3540,26 @@ export class PreGameScene extends Phaser.Scene {
         this.placedUnits.forEach(u => u.sprite.destroy());
         this.placedUnits = [];
 
+        // Determine the actual faction to use
+        let enemyFaction = this.selectedEnemyFaction;
+        if (enemyFaction === 'random' || !enemyFaction) {
+            const factions = Object.keys(ENEMY_FACTIONS);
+            enemyFaction = factions[Math.floor(Math.random() * factions.length)];
+        } else {
+            // Map the faction ID to the actual faction key
+            const factionMap = {
+                'greenskin': 'GREENSKIN_HORDE',
+                'dungeon': 'DUNGEON_DWELLERS',
+                'cultist': 'OLD_GOD_WORSHIPPERS'
+            };
+            enemyFaction = factionMap[enemyFaction] || 'GREENSKIN_HORDE';
+        }
+
         this.scene.start('BattleScene', {
             placedUnits: finalPlacement,
             battleNumber: 1,
-            stageId: this.currentStage.id
+            stageId: this.currentStage.id,
+            selectedEnemyFaction: enemyFaction
         });
     }
 }

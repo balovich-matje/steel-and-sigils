@@ -56,6 +56,10 @@ export class Unit {
         this.regenerateRounds = 0;
         this.regenerateAmount = 0;
 
+        // Unstable Arcana DoT tracking
+        this.unstableArcanaDotRounds = 0;
+        this.unstableArcanaDotAmount = 0;
+
         // Ogre Chieftain slow debuff tracking
         this.slowDebuffRounds = 0;
         this.slowDebuffValue = 0;
@@ -369,6 +373,34 @@ export class Unit {
             }
         }
 
+        // Handle Unstable Arcana DoT damage at start of turn
+        if (this.unstableArcanaDotRounds > 0) {
+            const dotDamage = this.unstableArcanaDotAmount;
+            this.health -= dotDamage;
+            if (this.scene && this.scene.uiManager) {
+                this.scene.uiManager.showDamageText(this, dotDamage);
+                this.scene.uiManager.showFloatingText('Burning!', this.sprite.x, this.sprite.y - 50, '#ff6600');
+            }
+            if (this.scene) {
+                this.scene.addCombatLog(`${this.name} takes ${dotDamage} burning damage from Unstable Arcana.`, 'damage');
+            }
+            this.updateHealthBar();
+            
+            this.unstableArcanaDotRounds--;
+            if (this.unstableArcanaDotRounds === 0) {
+                this.unstableArcanaDotAmount = 0;
+            }
+            
+            // Check if unit died from DoT
+            if (this.health <= 0) {
+                this.die();
+                if (this.scene) {
+                    this.scene.checkVictoryCondition();
+                }
+                return; // Skip rest of turn if died
+            }
+        }
+
         // Decrement buff durations (skip if permanent with rounds = -1)
         if (this.hasteRounds > 0) {
             this.hasteRounds--;
@@ -416,8 +448,94 @@ export class Unit {
         }
     }
 
-    getDisplayStats() {
+    // Get base stats from template
+    getBaseStats() {
+        const template = UNIT_TYPES[this.type];
+        return {
+            health: template.health,
+            maxHealth: template.maxHealth,
+            damage: template.damage,
+            moveRange: template.moveRange,
+            initiative: template.initiative,
+            rangedRange: template.rangedRange || 0
+        };
+    }
+
+    // Calculate modifiers (current - base)
+    // includeBuffs: if true, includes temporary buffs like Bless, Haste, etc.
+    getStatModifiers(includeBuffs = false) {
+        const base = this.getBaseStats();
+        const mods = {
+            health: this.health - base.health,
+            maxHealth: this.maxHealth - base.maxHealth,
+            damage: this.damage - base.damage,
+            moveRange: this.moveRange - base.moveRange,
+            initiative: this.initiative - base.initiative,
+            rangedRange: this.rangedRange - base.rangedRange
+        };
+        
+        // If including buffs, calculate the effective modifiers from temporary buffs
+        if (includeBuffs) {
+            // Bless increases damage by 50% (blessValue = 1.5 means +50%)
+            if (this.blessValue > 1) {
+                const blessBonus = Math.floor(this.damage * (this.blessValue - 1));
+                mods.damage += blessBonus;
+            }
+            // Haste increases move range
+            if (this.hasteRounds > 0 || this.hasteRounds === -1) {
+                const hasteBonus = this.moveRange - base.moveRange - mods.moveRange;
+                if (hasteBonus > 0) mods.moveRange += hasteBonus;
+            }
+        }
+        
+        return mods;
+    }
+
+    // Get HP color based on health percentage (gradient from default to red at 10%)
+    getHPColor() {
+        const baseMaxHealth = this.getBaseStats().maxHealth;
+        const healthPercent = this.health / baseMaxHealth;
+        
+        // At 10% or below, return pure red
+        if (healthPercent <= 0.1) {
+            return '#ff0000';
+        }
+        
+        // Interpolate between default text color (#E3D5B8) and red (#ff0000)
+        // healthPercent goes from 0.1 to 1.0
+        // We want t to go from 0 (red) to 1 (default)
+        const t = (healthPercent - 0.1) / 0.9;
+        
+        const defaultR = 227, defaultG = 213, defaultB = 184;
+        const redR = 255, redG = 0, redB = 0;
+        
+        const r = Math.round(redR + (defaultR - redR) * t);
+        const g = Math.round(redG + (defaultG - redG) * t);
+        const b = Math.round(redB + (redB - redB) * t);
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // Format stat value with modifier for mode 1 (base + green modifier)
+    formatStatMode1(value, modifier) {
+        if (modifier === 0) return value;
+        const sign = modifier > 0 ? '+' : '';
+        return `${value} <span style="color: #4CAF50;">${sign}${modifier}</span>`;
+    }
+
+    // Format stat value for mode 2 (current value, green if positively modified, red if negatively)
+    formatStatMode2(value, modifier) {
+        if (modifier === 0) return value;
+        const color = modifier > 0 ? '#4CAF50' : '#ff4444';
+        return `<span style="color: ${color};">${value}</span>`;
+    }
+
+    getDisplayStats(displayMode = 1) {
+        const base = this.getBaseStats();
+        // Mode 1 includes buffs in the modifier display
+        const mods = this.getStatModifiers(displayMode === 1);
         const rangedInfo = this.rangedRange > 0 ? ` | RNG: ${this.rangedRange}` : '';
+        const rangedMod = mods.rangedRange;
 
         let buffs = [];
         if (this.hasteRounds > 0) buffs.push(`Haste(${this.hasteRounds})`);
@@ -431,6 +549,7 @@ export class Unit {
         if (this.iceSlowRounds > 0) buffs.push(`IceSlow(${this.iceSlowRounds})`);
         if (this.slowDebuffRounds > 0) buffs.push(`Crippled(${this.slowDebuffRounds})`);
         if (this.voidSlowRounds > 0) buffs.push(`VoidSlow(${this.voidSlowRounds})`);
+        if (this.unstableArcanaDotRounds > 0) buffs.push(`Burning(${this.unstableArcanaDotRounds})`);
 
         const buffDisplay = buffs.length > 0 ? `<br>✨ ${buffs.join(', ')}` : '';
 
@@ -450,10 +569,54 @@ export class Unit {
         // Boss indicator
         const bossDisplay = this.isBoss ? `<br>👑 BOSS (Size: ${this.bossSize}x${this.bossSize})` : '';
 
+        // HP color based on health percentage
+        const hpColor = this.getHPColor();
+
+        let statsHtml;
+        if (displayMode === 1) {
+            // Mode 1: Base + modifiers (green)
+            // For damage, include bless buff in the modifier
+            const effectiveDmgMod = mods.damage;
+            const dmgDisplay = this.formatStatMode1(base.damage, effectiveDmgMod);
+            const movDisplay = this.formatStatMode1(base.moveRange, mods.moveRange);
+            const initDisplay = this.formatStatMode1(base.initiative, mods.initiative);
+            const rngDisplay = base.rangedRange > 0 ? ` | RNG: ${this.formatStatMode1(base.rangedRange, rangedMod)}` : '';
+            
+            statsHtml = `DMG: ${dmgDisplay} | MOV: ${movDisplay}${rngDisplay}<br>
+                        INIT: ${initDisplay}`;
+        } else {
+            // Mode 2: Current values (green if positively modified, red if negatively)
+            const currentDmg = Math.floor(this.damage * this.blessValue);
+            // For mode 2, we want to know if the stat is different from base
+            const baseMods = this.getStatModifiers(false);
+            const effectiveDmgMod = currentDmg - base.damage;
+            
+            // Format with color: green for positive, red for negative
+            const dmgDisplay = effectiveDmgMod !== 0 
+                ? `<span style="color: ${effectiveDmgMod > 0 ? '#4CAF50' : '#ff4444'};">${currentDmg}</span>`
+                : `${currentDmg}`;
+                
+            const movDisplay = mods.moveRange !== 0
+                ? `<span style="color: ${mods.moveRange > 0 ? '#4CAF50' : '#ff4444'};">${this.moveRange}</span>`
+                : `${this.moveRange}`;
+                
+            const initDisplay = mods.initiative !== 0
+                ? `<span style="color: ${mods.initiative > 0 ? '#4CAF50' : '#ff4444'};">${this.initiative}</span>`
+                : `${this.initiative}`;
+                
+            const rngDisplay = this.rangedRange > 0 
+                ? ` | RNG: ${mods.rangedRange !== 0 
+                    ? `<span style="color: ${mods.rangedRange > 0 ? '#4CAF50' : '#ff4444'};">${this.rangedRange}</span>`
+                    : `${this.rangedRange}`}` 
+                : '';
+            
+            statsHtml = `DMG: ${dmgDisplay} | MOV: ${movDisplay}${rngDisplay}<br>
+                        INIT: ${initDisplay}`;
+        }
+
         return `${this.emoji} ${this.name}${bossDisplay}<br>
-                HP: ${this.health}/${this.maxHealth}<br>
-                DMG: ${Math.floor(this.damage * this.blessValue)} | MOV: ${this.moveRange}${rangedInfo}<br>
-                INIT: ${this.initiative}${buffDisplay}${passiveDisplay}${specialDisplay}`;
+                <span style="color: ${hpColor};">HP: ${this.health}/${this.maxHealth}</span><br>
+                ${statsHtml}${buffDisplay}${passiveDisplay}${specialDisplay}`;
     }
 
     updateHealthBar() {
@@ -514,8 +677,10 @@ export class UnitManager {
             // Target: fit within 64px tile, but allow up to 1.3x (83px) for tall units
             // For 2x2 bosses, allow larger sprites
             const maxSize = bossSize > 1 ? this.scene.tileSize * bossSize * 1.2 : this.scene.tileSize * 1.3;
-            const scale = Math.min(maxSize / srcWidth, maxSize / srcHeight);
-            unit.sprite.setScale(scale);
+            const baseScale = Math.min(maxSize / srcWidth, maxSize / srcHeight);
+            // Apply additional sprite scale from unit template (e.g., Goblin Stone Thrower is 30% smaller)
+            const spriteScale = template.spriteScale || 1;
+            unit.sprite.setScale(baseScale * spriteScale);
             unit.sprite.setOrigin(0.5, 1.0); // Bottom center so feet are on the tile
             
             // Flip enemy units to face right-to-left, players face left-to-right
@@ -551,6 +716,12 @@ export class UnitManager {
             // If a spell is selected, cast it at this unit's position
             if (this.scene.spellSystem.activeSpell) {
                 this.scene.spellSystem.executeSpellAt(unit.gridX, unit.gridY);
+                return;
+            }
+
+            // If a unit ability is active (e.g., Sorcerer Fireball), execute it at this unit's position
+            if (this.scene.activeUnitAbility) {
+                this.scene.executeUnitAbilityAt(unit.gridX, unit.gridY);
                 return;
             }
 
@@ -676,22 +847,24 @@ export class TurnSystem {
         const sorted = aliveUnits.sort((a, b) => b.initiative - a.initiative);
         this.turnQueue = [];
         for (const unit of sorted) {
-            this.turnQueue.push(unit);
+            this.turnQueue.push({ unit, isTemporalShift: false });
             if (unit.hasTemporalShift) {
-                this.turnQueue.push(unit);
+                this.turnQueue.push({ unit, isTemporalShift: true });
             }
         }
     }
 
     nextTurn() {
-        this.turnQueue = this.turnQueue.filter(u => !u.isDead);
+        this.turnQueue = this.turnQueue.filter(entry => !entry.unit.isDead);
 
         if (this.turnQueue.length === 0) {
             this.startNewRound();
             return;
         }
 
-        this.currentUnit = this.turnQueue.shift();
+        const entry = this.turnQueue.shift();
+        this.currentUnit = entry.unit;
+        this.currentUnitIsTemporalShift = entry.isTemporalShift;
 
         if (this.currentUnit.isDead) {
             this.nextTurn();
@@ -1569,16 +1742,19 @@ export class TurnSystem {
         if (!queueEl) return;
 
         // Build queue: current unit + next up to 7 units
-        const displayQueue = [this.currentUnit, ...this.turnQueue.slice(0, 7)];
+        // turnQueue entries are now {unit, isTemporalShift} objects
+        const currentEntry = { unit: this.currentUnit, isTemporalShift: this.currentUnitIsTemporalShift || false };
+        const displayQueue = [currentEntry, ...this.turnQueue.slice(0, 7)];
 
         let html = '';
-        displayQueue.forEach((unit, index) => {
-            if (!unit || unit.isDead) return;
+        displayQueue.forEach((entry, index) => {
+            if (!entry || !entry.unit || entry.unit.isDead) return;
             const isActive = index === 0;
             const activeClass = isActive ? 'active' : '';
+            const temporalShiftClass = entry.isTemporalShift ? 'temporal-shift' : '';
             html += `
-                <div class="initiative-unit ${activeClass}">
-                    <div class="unit-emoji">${unit.emoji}</div>
+                <div class="initiative-unit ${activeClass} ${temporalShiftClass}">
+                    <div class="unit-emoji">${entry.unit.emoji}</div>
                 </div>
             `;
         });
