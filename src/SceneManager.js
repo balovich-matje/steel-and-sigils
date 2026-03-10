@@ -88,6 +88,7 @@ export class BattleScene extends Phaser.Scene {
         // Load tile background images
         this.load.image('grass_tile', 'images/tiles/grass.png');
         this.load.image('dirt_tile', 'images/tiles/dirt.png');
+        this.load.image('rock_tile', 'images/tiles/rock.png');
         this.load.image('road_tile', 'images/tiles/road.png');
     }
 

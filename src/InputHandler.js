@@ -24,7 +24,8 @@ export class GridSystem {
     create() {
         // Determine tile image key based on stage
         const tileType = this.scene.currentStage?.tileType || 'grass';
-        const tileImageKey = tileType === 'dirt' ? 'dirt_tile' : 'grass_tile';
+        const tileImageKey = tileType === 'dirt' ? 'dirt_tile' : 
+                             tileType === 'rock' ? 'rock_tile' : 'grass_tile';
         const tileSize = this.tileSize;
         const hasTileImage = this.scene.textures.exists(tileImageKey);
 

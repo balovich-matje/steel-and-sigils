@@ -60,7 +60,7 @@ export const STAGES = {
         obstacleType: 'mountain',  // Custom obstacle generation
         spawnLogic: 'right_flank',  // Enemies on right and corners
         startingPoints: 1300,
-        tileType: 'dirt'
+        tileType: 'rock'
     }
 };
 
