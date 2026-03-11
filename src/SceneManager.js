@@ -137,10 +137,8 @@ export class BattleScene extends Phaser.Scene {
         this.gridSystem = new GridSystem(this, this.currentStage.width, this.currentStage.height, this.tileSize);
         this.gridSystem.create();
 
-        // Generate obstacles if applicable
-        if (this.currentStage.hasObstacles) {
-            this.generateObstacles();
-        }
+        // NOTE: Obstacles are now generated after player units are placed
+        // to avoid spawning rocks on top of existing units
 
         // Track battle number for scaling
         if (data && data.battleNumber) {
@@ -260,6 +258,12 @@ export class BattleScene extends Phaser.Scene {
                     }
                 }
             }
+        }
+
+        // Generate obstacles after player units are placed (so rocks avoid unit positions)
+        // and before enemy units are created (so enemies avoid rock positions)
+        if (this.currentStage.hasObstacles) {
+            this.generateObstacles();
         }
 
         // Create enemy units
@@ -716,6 +720,9 @@ export class BattleScene extends Phaser.Scene {
     generateObstacles() {
         if (!this.currentStage || !this.currentStage.hasObstacles) return;
 
+        // Clear any existing obstacles first (when scene restarts, we need fresh obstacles)
+        this.clearObstacles();
+
         // Mountain Pass: Use random rock generation with constraints
         if (this.currentStage.obstacleType === 'mountain') {
             this.generateMountainObstacles();
@@ -765,6 +772,22 @@ export class BattleScene extends Phaser.Scene {
                         this.gridSystem.addObstacle(x, y, 'wall');
                     }
                 }
+            }
+        }
+    }
+
+    clearObstacles() {
+        // Clear the obstacles Set in gridSystem
+        if (this.gridSystem) {
+            this.gridSystem.obstacles.clear();
+            // Also clear any wall images that were created
+            if (this.gridSystem.wallImages) {
+                for (const wallImg of this.gridSystem.wallImages) {
+                    if (wallImg.image && wallImg.image.destroy) {
+                        wallImg.image.destroy();
+                    }
+                }
+                this.gridSystem.wallImages = [];
             }
         }
     }
@@ -831,6 +854,11 @@ export class BattleScene extends Phaser.Scene {
                    y >= spawnStartY && y < spawnEndY;
         };
 
+        // Helper to check if there's a unit at position (player units already placed)
+        const hasUnit = (x, y) => {
+            return this.unitManager.getUnitAt(x, y) !== null;
+        };
+
         // Density gradient based on Y position for chokepoint effect
         // For Mountain Pass (19x19 grid, height=19):
         // Row 0-1: 80-90% rocks (dense edge)
@@ -853,6 +881,9 @@ export class BattleScene extends Phaser.Scene {
                 
                 // Skip enemy spawn zone - NO ROCKS HERE
                 if (isEnemySpawnZone(x, y)) continue;
+
+                // Skip if there's a unit at this position (player units already placed)
+                if (hasUnit(x, y)) continue;
 
                 // Random placement with density based on Y position (chokepoint gradient)
                 if (Math.random() < rockChance(y)) {
