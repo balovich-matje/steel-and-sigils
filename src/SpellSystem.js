@@ -3,6 +3,21 @@
 // ============================================
 
 import { SPELLS, CONFIG } from './GameConfig.js';
+
+// i18n helper function
+function t(key, ...args) {
+    if (typeof window !== 'undefined' && window.i18n) {
+        return window.i18n.t(key, ...args);
+    }
+    let text = key;
+    if (args.length > 0) {
+        return text.replace(/\{(\d+)\}/g, (match, index) => {
+            return args[parseInt(index)] !== undefined ? args[parseInt(index)] : match;
+        });
+    }
+    return text;
+}
+
 export class SpellSystem {
     constructor(scene) {
         this.scene = scene;
@@ -17,7 +32,7 @@ export class SpellSystem {
         // Check if silence is active
         if (this.scene.silenceActive) {
             this.scene.uiManager.showFloatingText(
-                '🔇 Spells are silenced!',
+                t('combat.silenced'),
                 400, 300, '#9B59B6'
             );
             return;
@@ -26,7 +41,7 @@ export class SpellSystem {
         // Check spells per round limit
         if (this.scene.spellsCastThisRound >= this.scene.spellsPerRound) {
             this.scene.uiManager.showFloatingText(
-                `Can only cast ${this.scene.spellsPerRound} spell(s) per round!`,
+                t('error.spells_per_round', this.scene.spellsPerRound),
                 400, 300, '#ff4444'
             );
             return;
@@ -35,7 +50,7 @@ export class SpellSystem {
         // Check mana (with cost multiplier)
         const actualCost = Math.floor(spell.manaCost * (this.scene.manaCostMultiplier || 1));
         if (this.scene.mana < actualCost) {
-            this.scene.uiManager.showFloatingText('Not enough mana!', 400, 300, '#ff4444');
+            this.scene.uiManager.showFloatingText(t('error.no_mana'), 400, 300, '#ff4444');
             return;
         }
 
@@ -45,7 +60,7 @@ export class SpellSystem {
                 this.activeSpell = spellId;
                 document.body.style.cursor = 'crosshair';
                 this.scene.closeSpellBook();
-                this.scene.uiManager.showFloatingText('Select target area', 400, 300, '#A68966');
+                this.scene.uiManager.showFloatingText(t('combat.select_target_area'), 400, 300, '#A68966');
                 break;
             case 'enemy':
                 if (spell.effect === 'aoeDamage' || spell.effect === 'iceStorm' || spell.effect === 'meteor') {
@@ -53,27 +68,27 @@ export class SpellSystem {
                     this.activeSpell = spellId;
                     document.body.style.cursor = 'crosshair';
                     this.scene.closeSpellBook();
-                    this.scene.uiManager.showFloatingText('Select an enemy to target', 400, 300, '#A68966');
+                    this.scene.uiManager.showFloatingText(t('combat.select_target_enemy'), 400, 300, '#A68966');
                 } else {
                     // Single target damage spells
                     this.activeSpell = spellId;
                     document.body.style.cursor = 'crosshair';
                     this.scene.closeSpellBook();
-                    this.scene.uiManager.showFloatingText('Select target enemy', 400, 300, '#A68966');
+                    this.scene.uiManager.showFloatingText(t('combat.select_target_enemy'), 400, 300, '#A68966');
                 }
                 break;
             case 'ally':
                 this.activeSpell = spellId;
                 document.body.style.cursor = 'crosshair';
                 this.scene.closeSpellBook();
-                this.scene.uiManager.showFloatingText('Select friendly unit', 400, 300, '#A68966');
+                this.scene.uiManager.showFloatingText(t('combat.select_friendly_unit'), 400, 300, '#A68966');
                 break;
             case 'ally_then_tile':
                 // For teleport - first select unit
                 this.activeSpell = spellId;
                 document.body.style.cursor = 'crosshair';
                 this.scene.closeSpellBook();
-                this.scene.uiManager.showFloatingText('Select a unit to teleport', 400, 300, '#A68966');
+                this.scene.uiManager.showFloatingText(t('combat.select_unit_teleport'), 400, 300, '#A68966');
                 break;
         }
     }
@@ -109,7 +124,7 @@ export class SpellSystem {
             case 'ally_then_tile':
                 if (unit && unit.isPlayer && !this.teleportUnit) {
                     this.teleportUnit = unit;
-                    this.scene.uiManager.showFloatingText('Now select destination', 400, 300, '#A68966');
+                    this.scene.uiManager.showFloatingText(t('combat.select_destination'), 400, 300, '#A68966');
                     this._executingSpell = false;
                     return;
                 } else if (this.teleportUnit && !unit) {
@@ -173,7 +188,7 @@ export class SpellSystem {
                 console.warn(`Unhandled spell effect in executeTileSpell: ${spell.effect}`);
                 this.scene.mana += actualCost;
                 this.scene.uiManager.updateManaDisplay();
-                this.scene.uiManager.showFloatingText('Spell failed!', 400, 300, '#ff4444');
+                this.scene.uiManager.showFloatingText(t('error.spell_failed'), 400, 300, '#ff4444');
                 break;
         }
 
@@ -250,7 +265,7 @@ export class SpellSystem {
                     console.warn(`Unhandled spell effect in executeUnitSpell: ${spell.effect}`);
                     this.scene.mana += actualCost;
                     this.scene.uiManager.updateManaDisplay();
-                    this.scene.uiManager.showFloatingText('Spell failed!', 400, 300, '#ff4444');
+                    this.scene.uiManager.showFloatingText(t('error.spell_failed'), 400, 300, '#ff4444');
                     break;
             }
         }

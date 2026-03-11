@@ -6,6 +6,20 @@ import { CONFIG, SPELLS } from './GameConfig.js';
 
 // Note: UNIT_TYPES is available globally from units.js (loaded as script tag)
 
+// i18n helper function
+function t(key, ...args) {
+    if (typeof window !== 'undefined' && window.i18n) {
+        return window.i18n.t(key, ...args);
+    }
+    let text = key;
+    if (args.length > 0) {
+        return text.replace(/\{(\d+)\}/g, (match, index) => {
+            return args[parseInt(index)] !== undefined ? args[parseInt(index)] : match;
+        });
+    }
+    return text;
+}
+
 // ============================================
 // UNIT CLASS
 // ============================================
@@ -581,7 +595,7 @@ export class Unit {
         const base = this.getBaseStats();
         // Mode 1 includes buffs in the modifier display
         const mods = this.getStatModifiers(displayMode === 1);
-        const rangedInfo = this.rangedRange > 0 ? ` | RNG: ${this.rangedRange}` : '';
+        const rangedInfo = this.rangedRange > 0 ? ` | ${t('stat.rng')}: ${this.rangedRange}` : '';
         const rangedMod = mods.rangedRange;
 
         let buffs = [];
@@ -608,16 +622,19 @@ export class Unit {
             passiveDisplay = template.passives.map(p => `<br>⚔️ ${p.name}: ${p.description}`).join('');
         } else if (template.passive) {
             const passiveEmoji = this.type === 'KNIGHT' ? '🛡️' : '🔮';
-            passiveDisplay = `<br>${passiveEmoji} Passive: ${template.passive.name}`;
+            passiveDisplay = `<br>${passiveEmoji} ${t('panel.abilities').replace('⚡ ', '')}: ${template.passive.name}`;
         }
 
-        const specialDisplay = template.special ? `<br>⚡ Special: Hit & Run` : '';
+        const specialDisplay = template.special ? `<br>⚡ ${t('panel.abilities').replace('⚡ ', '')}: Hit & Run` : '';
 
         // Boss indicator
-        const bossDisplay = this.isBoss ? `<br>👑 BOSS (Size: ${this.bossSize}x${this.bossSize})` : '';
+        const bossDisplay = this.isBoss ? `<br>👑 BOSS (${this.bossSize}x${this.bossSize})` : '';
 
         // HP color based on health percentage
         const hpColor = this.getHPColor();
+
+        // Get translated unit name
+        const unitName = t('unit.' + this.type.toLowerCase());
 
         let statsHtml;
         if (displayMode === 1) {
@@ -627,10 +644,10 @@ export class Unit {
             const dmgDisplay = this.formatStatMode1(base.damage, effectiveDmgMod);
             const movDisplay = this.formatStatMode1(base.moveRange, mods.moveRange);
             const initDisplay = this.formatStatMode1(base.initiative, mods.initiative);
-            const rngDisplay = base.rangedRange > 0 ? ` | RNG: ${this.formatStatMode1(base.rangedRange, rangedMod)}` : '';
+            const rngDisplay = base.rangedRange > 0 ? ` | ${t('stat.rng')}: ${this.formatStatMode1(base.rangedRange, rangedMod)}` : '';
             
-            statsHtml = `DMG: ${dmgDisplay} | MOV: ${movDisplay}${rngDisplay}<br>
-                        INIT: ${initDisplay}`;
+            statsHtml = `${t('stat.dmg')}: ${dmgDisplay} | ${t('stat.mov')}: ${movDisplay}${rngDisplay}<br>
+                        ${t('stat.init')}: ${initDisplay}`;
         } else {
             // Mode 2: Current values (green if positively modified, red if negatively)
             const currentDmg = Math.floor(this.damage * this.blessValue);
@@ -652,17 +669,17 @@ export class Unit {
                 : `${this.initiative}`;
                 
             const rngDisplay = this.rangedRange > 0 
-                ? ` | RNG: ${mods.rangedRange !== 0 
+                ? ` | ${t('stat.rng')}: ${mods.rangedRange !== 0 
                     ? `<span style="color: ${mods.rangedRange > 0 ? '#4CAF50' : '#ff4444'};">${this.rangedRange}</span>`
                     : `${this.rangedRange}`}` 
                 : '';
             
-            statsHtml = `DMG: ${dmgDisplay} | MOV: ${movDisplay}${rngDisplay}<br>
-                        INIT: ${initDisplay}`;
+            statsHtml = `${t('stat.dmg')}: ${dmgDisplay} | ${t('stat.mov')}: ${movDisplay}${rngDisplay}<br>
+                        ${t('stat.init')}: ${initDisplay}`;
         }
 
-        return `${this.emoji} ${this.name}${bossDisplay}<br>
-                <span style="color: ${hpColor};">HP: ${this.health}/${this.maxHealth}</span><br>
+        return `${this.emoji} ${unitName}${bossDisplay}<br>
+                <span style="color: ${hpColor};">${t('stat.hp')}: ${this.health}/${this.maxHealth}</span><br>
                 ${statsHtml}${buffDisplay}${passiveDisplay}${specialDisplay}`;
     }
 

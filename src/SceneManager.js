@@ -10,6 +10,21 @@ import { GridSystem } from './InputHandler.js';
 import { SpellSystem } from './SpellSystem.js';
 import { UIManager } from './UIHandler.js';
 
+// i18n helper function - uses global i18n if available, otherwise returns key
+function t(key, ...args) {
+    if (typeof window !== 'undefined' && window.i18n) {
+        return window.i18n.t(key, ...args);
+    }
+    // Fallback: return key with placeholders replaced
+    let text = key;
+    if (args.length > 0) {
+        return text.replace(/\{(\d+)\}/g, (match, index) => {
+            return args[parseInt(index)] !== undefined ? args[parseInt(index)] : match;
+        });
+    }
+    return text;
+}
+
 const ENEMY_FACTIONS = {
     GREENSKIN_HORDE: ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER'],
     DUNGEON_DWELLERS: ['ANIMATED_ARMOR', 'SKELETON_ARCHER', 'SKELETON_SOLDIER', 'LOST_SPIRIT'],
@@ -95,6 +110,11 @@ export class BattleScene extends Phaser.Scene {
     create(data) {
         document.getElementById('left-panel').classList.remove('hidden', 'collapsed');
         document.getElementById('right-panel').classList.remove('hidden', 'collapsed');
+        // Ensure language toggle is hidden during gameplay
+        const langToggle = document.getElementById('lang-toggle-container');
+        if (langToggle) {
+            langToggle.style.display = 'none';
+        }
         
         // Initialize systems
         this.unitManager = new UnitManager(this);
@@ -602,12 +622,12 @@ export class BattleScene extends Phaser.Scene {
 
         if (this.battleNumber > 1) {
             this.uiManager.showFloatingText(
-                `Battle ${this.battleNumber} - ${spawnedEnemies.length} enemies!`,
+                t('combat.enemies', this.battleNumber, spawnedEnemies.length),
                 320, 100, '#A68966'
             );
         } else {
             this.uiManager.showFloatingText(
-                `Battle 1 - Defeat the enemy!`,
+                t('combat.defeat_enemy'),
                 320, 100, '#A68966'
             );
         }
@@ -656,7 +676,7 @@ export class BattleScene extends Phaser.Scene {
         if (validPositions.length === 0) {
             // Fallback to normal wave if no valid positions
             this.uiManager.showFloatingText(
-                `Battle ${this.battleNumber} - No space for boss!`,
+                t('combat.no_space_boss', this.battleNumber),
                 320, 100, '#ff0000'
             );
             return;
@@ -679,15 +699,15 @@ export class BattleScene extends Phaser.Scene {
             this.hasLootGoblin = (selectedBoss === 'LOOT_GOBLIN');
 
             // Show boss announcement
-            const bossName = UNIT_TYPES[selectedBoss].name;
+            const bossName = t('unit.' + selectedBoss.toLowerCase());
             const bossEmoji = UNIT_TYPES[selectedBoss].emoji;
 
             this.uiManager.showFloatingText(
-                `👑 BOSS WAVE! 👑`,
+                t('combat.boss_wave'),
                 320, 80, '#FFD700'
             );
             this.uiManager.showFloatingText(
-                `${bossEmoji} ${bossName} Appears!`,
+                t('combat.boss_appears', bossEmoji, bossName),
                 320, 120, '#ff4444'
             );
         }
@@ -982,7 +1002,7 @@ export class BattleScene extends Phaser.Scene {
 
         if (totalRegen > this.baseManaRegen) {
             this.uiManager.showFloatingText(
-                `+${totalRegen} Mana (${this.baseManaRegen} + ${wizardCount * 2} from Wizards)`,
+                t('mana.regen', totalRegen, this.baseManaRegen, wizardCount * 2),
                 320, 50, '#4A729E'
             );
         }
@@ -1005,15 +1025,17 @@ export class BattleScene extends Phaser.Scene {
             'ability': '#FF8C00',
             'info': '#B8A896'
         };
+        // Translate message if it's a translation key
+        const translatedMessage = message.startsWith('log.') || message.startsWith('combat.') || message.startsWith('error.') || message.startsWith('status.') ? t(message) : message;
         const color = colorMap[type] || '#B8A896';
-        this.combatLog.push({ message, color, type });
+        this.combatLog.push({ message: translatedMessage, color, type });
 
         // Update modal content (for backwards compatibility)
         const content = document.getElementById('combat-log-content');
         if (content) {
             const entry = document.createElement('div');
             entry.style.cssText = `color: ${color}; margin-bottom: 3px; border-bottom: 1px solid rgba(166, 137, 102, 0.15); padding-bottom: 3px;`;
-            entry.textContent = message;
+            entry.textContent = translatedMessage;
             content.appendChild(entry);
             content.scrollTop = content.scrollHeight;
         }
@@ -1023,7 +1045,7 @@ export class BattleScene extends Phaser.Scene {
         if (panelContent) {
             const entry = document.createElement('div');
             entry.style.cssText = `color: ${color}; margin-bottom: 3px; border-bottom: 1px solid rgba(166, 137, 102, 0.15); padding-bottom: 3px;`;
-            entry.textContent = message;
+            entry.textContent = translatedMessage;
             panelContent.appendChild(entry);
             panelContent.scrollTop = panelContent.scrollHeight;
         }
@@ -1764,25 +1786,25 @@ export class BattleScene extends Phaser.Scene {
         // Define categories with styles
         this.spellBookPages = [
             {
-                name: 'Destructo',
+                name: t('school.destructo'),
                 icon: '🔥',
                 filter: (s) => ['singleDamage', 'aoeDamage', 'meteor', 'iceStorm', 'chainLightning'].includes(s.effect),
                 style: { bg: '#2a1f1f', header: '#ff4444' }
             },
             {
-                name: 'Restoratio',
+                name: t('school.restoratio'),
                 icon: '💚',
                 filter: (s) => ['heal', 'regenerate', 'cure'].includes(s.effect),
                 style: { bg: '#2a3a2a', header: '#44ff44' }
             },
             {
-                name: 'Benedictio',
+                name: t('school.benedictio'),
                 icon: '🛡️',
                 filter: (s) => ['haste', 'shield', 'bless'].includes(s.effect),
                 style: { bg: '#2D241E', header: '#A68966' }
             },
             {
-                name: 'Utilitas',
+                name: t('school.utilitas'),
                 icon: '✨',
                 filter: (s) => !['singleDamage', 'aoeDamage', 'meteor', 'iceStorm', 'chainLightning', 'heal', 'regenerate', 'cure', 'haste', 'shield', 'bless'].includes(s.effect),
                 style: { bg: '#2D241E', header: '#A68966' }
@@ -1906,13 +1928,16 @@ export class BattleScene extends Phaser.Scene {
                     card.classList.add('disabled');
                 }
 
-                let displayName = spell.name;
-                const hotkey = spell.name.charAt(0).toUpperCase();
+                const spellName = t('spell.' + spell.id);
+                const spellType = t('spell.type.' + spell.type.toLowerCase().replace(/ /g, '_'));
+                const spellDesc = t('spell.desc.' + spell.id);
+                let displaySpellName = spellName;
+                const hotkey = spellName.charAt(0).toUpperCase();
 
                 // Assign hotkey if affordable and not already used on this page
-                if (canAfford && /^[A-Z]$/.test(hotkey) && !usedHotkeys.has(hotkey)) {
+                if (canAfford && /^[A-ZА-Я]$/.test(hotkey) && !usedHotkeys.has(hotkey)) {
                     usedHotkeys.add(hotkey);
-                    displayName = `<span style="color: #FFD700;">${hotkey}</span>${spell.name.substring(1)}`;
+                    displaySpellName = `<span style="color: #FFD700;">${hotkey}</span>${spellName.substring(1)}`;
 
                     // Register listener with a specific callback function
                     const spellKey = key; // Capture key for the closure
@@ -1929,10 +1954,10 @@ export class BattleScene extends Phaser.Scene {
 
                 card.innerHTML = `
                     <div style="font-size: 32px; margin-bottom: 5px;">${spell.icon}</div>
-                    <div style="color: ${page.style.header}; font-weight: bold;">${displayName}</div>
-                    <div class="spell-type">${spell.type}</div>
-                    <div class="spell-desc">${spell.description}</div>
-                    <div class="spell-cost ${!canAfford ? 'too-expensive' : ''}">💧 ${Math.floor(spell.manaCost * this.manaCostMultiplier)} Mana</div>
+                    <div style="color: ${page.style.header}; font-weight: bold;">${displaySpellName}</div>
+                    <div class="spell-type">${spellType}</div>
+                    <div class="spell-desc">${spellDesc}</div>
+                    <div class="spell-cost ${!canAfford ? 'too-expensive' : ''}">💧 ${Math.floor(spell.manaCost * this.manaCostMultiplier)} ${t('panel.mana').replace('💧 ', '')}</div>
                 `;
 
                 if (canAfford) {
@@ -1949,7 +1974,7 @@ export class BattleScene extends Phaser.Scene {
             emptyMsg.style.textAlign = 'center';
             emptyMsg.style.color = '#888';
             emptyMsg.style.padding = '40px';
-            emptyMsg.textContent = 'No spells known in this school.';
+            emptyMsg.textContent = t('spellbook.no_spells');
             grid.appendChild(emptyMsg);
         }
     }
@@ -1992,8 +2017,12 @@ export class BattleScene extends Phaser.Scene {
         const victoryText = document.getElementById('victory-text');
         const confirmBtn = document.getElementById('confirm-rewards');
 
-        victoryText.innerHTML = playerWon ? '🎉 Victory! 🎉' : 'Defeat...';
+        victoryText.innerHTML = playerWon ? t('victory.title') : t('defeat.title');
         victoryText.style.color = playerWon ? '#A68966' : '#9E4A4A';
+        // Update i18n text if available
+        if (typeof window !== 'undefined' && window.i18n) {
+            window.i18n.updatePage();
+        }
 
         if (playerWon) {
             // Check for Loot Goblin special reward
@@ -2033,17 +2062,17 @@ export class BattleScene extends Phaser.Scene {
         const rewardsContainer = document.getElementById('rewards-container');
         rewardsContainer.innerHTML = `
             <div style="width: 100%;">
-                <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;">⚔️ Recruit a New Unit</h3>
+                <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;" data-i18n="reward.recruit">⚔️ Recruit a New Unit</h3>
                 <div id="reward-units" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
             </div>
             
             <div style="width: 100%;">
-                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 10px;">💪 Buff an Existing Unit</h3>
+                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 10px;" data-i18n="reward.buff">💪 Buff an Existing Unit</h3>
                 <div id="reward-buffs" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
             </div>
             
             <div style="width: 100%;">
-                <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 10px;">🧙 Spell or Mana Enhancement</h3>
+                <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 10px;" data-i18n="reward.magic">🧙 Spell or Mana Enhancement</h3>
                 <div id="reward-magic" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
             </div>
         `;
@@ -2062,13 +2091,13 @@ export class BattleScene extends Phaser.Scene {
         lootSection.innerHTML = `
             <div style="font-size: 48px; margin-bottom: 10px;">💰</div>
             <div style="color: #FFD700; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">
-                Loot Goblin Defeated!
+                ${t('loot_goblin.title')}
             </div>
             <div style="color: #A68966; font-size: 16px; margin-top: 10px;">
-                Choose one of these powerful buffs for your army:
+                ${t('loot_goblin.subtitle')}
             </div>
             <div style="margin-top: 20px; color: #4CAF50;">
-                ✨ 4 buff sets available - each with 3 options! ✨
+                ${t('loot_goblin.buff_sets')}
             </div>
         `;
         rewardsContainer.appendChild(lootSection);
@@ -2135,7 +2164,7 @@ export class BattleScene extends Phaser.Scene {
         const skipBtn = document.createElement('button');
         skipBtn.className = 'spellbook-close';
         skipBtn.style.cssText = 'grid-column: 1 / -1; margin-top: 20px;';
-        skipBtn.textContent = 'Skip Bonus (Continue to Normal Rewards)';
+        skipBtn.textContent = t('loot_goblin.skip');
         skipBtn.onclick = () => {
             this.lootGoblinReward = false;
             this.restoreRewardContainerStructure();
@@ -2349,12 +2378,12 @@ export class BattleScene extends Phaser.Scene {
         modal.innerHTML = `
             <div class="spellbook-content" style="max-width: 500px;">
                 <div class="spellbook-header">
-                    <h2>💰 Select Unit to Buff</h2>
+                    <h2>${t('loot_goblin.select_unit')}</h2>
                     <p style="color: #FFD700;">${buffData.icon} ${buffData.name}</p>
                     <p style="color: #8B7355; font-size: 12px;">${buffData.desc}</p>
                 </div>
                 <div class="spell-grid" id="loot-goblin-target-grid"></div>
-                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">Cancel</button>
+                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">${t('loot_goblin.cancel')}</button>
             </div>
         `;
 
@@ -2528,25 +2557,26 @@ export class BattleScene extends Phaser.Scene {
             unitOptions.forEach(unitType => {
                 const template = UNIT_TYPES[unitType];
                 const isLegendary = legendaryUnits.includes(unitType);
+                const unitName = t('unit.' + unitType.toLowerCase());
                 const card = this.uiManager.createRewardCard('unit', unitType, `
                     <div style="font-size: 40px; margin-bottom: 5px;">${template.emoji}</div>
-                    <div style="color: ${isLegendary ? '#ff8c00' : '#A68966'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${template.name}</div>
+                    <div style="color: ${isLegendary ? '#ff8c00' : '#A68966'}; font-weight: bold;${isLegendary ? ' text-shadow: 0 0 6px rgba(255, 140, 0, 0.5);' : ''}">${unitName}</div>
                     <div style="font-size: 12px; color: #B8A896;">
-                        HP: ${template.health} | DMG: ${template.damage}<br>
-                        MOV: ${template.moveRange}${template.rangedRange ? ` | RNG: ${template.rangedRange}` : ''}<br>
-                        INIT: ${template.initiative}
+                        ${t('stat.hp')}: ${template.health} | ${t('stat.dmg')}: ${template.damage}<br>
+                        ${t('stat.mov')}: ${template.moveRange}${template.rangedRange ? ` | ${t('stat.rng')}: ${template.rangedRange}` : ''}<br>
+                        ${t('stat.init')}: ${template.initiative}
                     </div>
-                    ${isLegendary ? '<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">⚡ Legendary Class</div>' : ''}
+                    ${isLegendary ? `<div style="font-size: 11px; color: #ff8c00; margin-top: 4px; text-shadow: 0 0 4px rgba(255, 140, 0, 0.4);">⚡ ${t('reward.legendary')}</div>` : ''}
                 `, null, isLegendary);
                 unitContainer.appendChild(card);
             });
         } else {
-            const roundMsg = this.battleNumber === 1 ? 'First victory! No new unit yet.' : `Victory! New unit available in round ${this.battleNumber + 1}.`;
+            const roundMsg = this.battleNumber === 1 ? t('reward.no_unit_round1') : t('reward.no_unit_later', this.battleNumber + 1);
             unitContainer.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align: center; color: #8B7355; padding: 20px;">
                     <div style="font-size: 24px; margin-bottom: 10px;">📦</div>
                     <div>${roundMsg}</div>
-                    <div style="font-size: 11px; margin-top: 5px;">(New units every 2 rounds)</div>
+                    <div style="font-size: 11px; margin-top: 5px;">(${t('reward.new_unit_every2')})</div>
                 </div>
             `;
         }
@@ -2687,6 +2717,10 @@ export class BattleScene extends Phaser.Scene {
         });
 
         this.updateConfirmButton();
+        // Update i18n for dynamically created content
+        if (typeof window !== 'undefined' && window.i18n) {
+            window.i18n.updatePage();
+        }
     }
 
     // Try to generate a legendary buff (50% chance when called)
@@ -2898,12 +2932,12 @@ export class BattleScene extends Phaser.Scene {
         modal.innerHTML = `
             <div class="spellbook-content" style="max-width: 500px;">
                 <div class="spellbook-header">
-                    <h2>💪 Select Unit to Buff</h2>
+                    <h2>${t('loot_goblin.select_unit')}</h2>
                     <p style="color: #6B8B5B;">${buffData.icon} ${buffData.name}</p>
                     <p style="color: #8B7355; font-size: 12px;">${buffData.desc}</p>
                 </div>
                 <div class="spell-grid" id="buff-target-grid"></div>
-                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">Cancel</button>
+                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">${t('loot_goblin.cancel')}</button>
             </div>
         `;
 
@@ -2967,12 +3001,12 @@ export class BattleScene extends Phaser.Scene {
         modal.innerHTML = `
             <div class="spellbook-content" style="max-width: 500px;">
                 <div class="spellbook-header">
-                    <h2 style="color: #D4A574;">⚡ Select Legendary Champion</h2>
+                    <h2 style="color: #D4A574;">${t('loot_goblin.select_legendary')}</h2>
                     <p style="color: #D4A574; text-shadow: 0 0 10px rgba(212, 165, 116, 0.5);">${buffData.icon} ${buffData.name}</p>
                     <p style="color: #8B7355; font-size: 12px;">${buffData.desc}</p>
                 </div>
                 <div class="spell-grid" id="legendary-target-grid"></div>
-                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">Cancel</button>
+                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">${t('loot_goblin.cancel')}</button>
             </div>
         `;
 
@@ -3370,7 +3404,7 @@ export class PreGameScene extends Phaser.Scene {
 
         const confirmBtn = document.getElementById('confirm-army');
         const totalUnits = Object.values(this.unitCounts).reduce((a, b) => a + b, 0);
-        confirmBtn.textContent = `Confirm Army (${totalUnits} units)`;
+        confirmBtn.textContent = t('army.confirm.units', totalUnits);
         confirmBtn.disabled = totalUnits === 0;
     }
 
@@ -3399,6 +3433,11 @@ export class PreGameScene extends Phaser.Scene {
         document.getElementById('left-panel').classList.remove('collapsed');
         document.getElementById('right-panel').classList.remove('collapsed');
         this.placementMode = true;
+        // Hide language toggle when game starts
+        const langToggle = document.getElementById('lang-toggle-container');
+        if (langToggle) {
+            langToggle.style.display = 'none';
+        }
         this.placedUnits = [];
         this.selectedPlacementUnit = null;
 

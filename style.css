@@ -1255,3 +1255,57 @@ body {
         display: none;
     }
 }
+
+
+/* ============================================
+   LANGUAGE TOGGLE BUTTON
+   ============================================ */
+
+.lang-toggle {
+    background: linear-gradient(135deg, #2D241E 0%, #3D342E 100%);
+    border: 2px solid #A68966;
+    color: #E3D5B8;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lang-toggle:hover {
+    background: linear-gradient(135deg, #3D342E 0%, #4D443E 100%);
+    border-color: #B69976;
+    box-shadow: 0 0 15px rgba(166, 137, 102, 0.3);
+    transform: translateY(-1px);
+}
+
+.lang-toggle:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+#lang-toggle-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hide language toggle on game screens */
+#game-layout ~ #lang-toggle-container,
+#game-layout:not(.hidden) ~ #lang-toggle-container {
+    display: none;
+}

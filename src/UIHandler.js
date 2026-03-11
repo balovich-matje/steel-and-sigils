@@ -7,6 +7,20 @@
 // Global display mode for unit stats (1 = base + modifiers, 2 = current values)
 window.unitStatDisplayMode = window.unitStatDisplayMode || 1;
 
+// i18n helper function
+function t(key, ...args) {
+    if (typeof window !== 'undefined' && window.i18n) {
+        return window.i18n.t(key, ...args);
+    }
+    let text = key;
+    if (args.length > 0) {
+        return text.replace(/\{(\d+)\}/g, (match, index) => {
+            return args[parseInt(index)] !== undefined ? args[parseInt(index)] : match;
+        });
+    }
+    return text;
+}
+
 // ============================================
 // UI MANAGER
 // ============================================
@@ -40,6 +54,11 @@ export class UIManager {
 
         const display = document.getElementById('mana-display');
         if (display) {
+            // Update the label text with i18n
+            const labelSpan = display.querySelector('span[data-i18n="panel.mana"]');
+            if (labelSpan && typeof window !== 'undefined' && window.i18n) {
+                labelSpan.textContent = window.i18n.t('panel.mana');
+            }
             if (this.scene.mana < 20) {
                 display.classList.add('low');
             } else {
@@ -54,20 +73,20 @@ export class UIManager {
         if (!buffsList) return;
 
         if (!this.scene.magicBuffs || this.scene.magicBuffs.length === 0) {
-            buffsList.innerHTML = '<div style="color: #B8A896; font-style: italic; text-align: center;">No active buffs</div>';
+            buffsList.innerHTML = `<div style="color: #B8A896; font-style: italic; text-align: center;">${t('panel.no_buffs')}</div>`;
             return;
         }
 
         let html = '';
         for (const buff of this.scene.magicBuffs) {
             let valueText = '';
-            if (buff.type === 'manaRegen') valueText = `+${buff.value} regen`;
-            else if (buff.type === 'manaCost') valueText = `-${Math.round(buff.value * 100)}% mana cost`;
-            else if (buff.type === 'spellPower') valueText = `+${Math.round(buff.value * 100)}% damage`;
-            else if (buff.type === 'spellsPerRound') valueText = `+${buff.value} spell/round`;
-            else if (buff.type === 'maxMana') valueText = `+${buff.value} max mana`;
-            else if (buff.type === 'permanentBuffs') valueText = `Permanent buffs`;
-            else if (buff.type === 'armyBuffs') valueText = `Army-wide spells`;
+            if (buff.type === 'manaRegen') valueText = `+${buff.value} ${t('magic.mana_regen').replace('+2 Base ', '').replace(' per round', '')}`;
+            else if (buff.type === 'manaCost') valueText = `-${Math.round(buff.value * 100)}% ${t('magic.spell_efficiency').replace('Efficient ', '').replace(' for all spells', '')}`;
+            else if (buff.type === 'spellPower') valueText = `+${Math.round(buff.value * 100)}% ${t('stat.dmg')}`;
+            else if (buff.type === 'spellsPerRound') valueText = `+${buff.value} ${t('magic.double_cast').replace('+1 ', '').replace(' per round', '')}`;
+            else if (buff.type === 'maxMana') valueText = `+${buff.value} ${t('magic.mana_max').replace('+50 ', '').replace('Max ', '')}`;
+            else if (buff.type === 'permanentBuffs') valueText = t('magic.permanent_buffs');
+            else if (buff.type === 'armyBuffs') valueText = t('magic.army_buffs');
 
             html += `
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; padding: 3px 6px; background: rgba(166, 137, 102, 0.15); border-radius: 4px;">
@@ -116,7 +135,7 @@ export class UIManager {
                 }
             }
 
-            abilityNameSpan.innerHTML = '<span style="color: #FFD700;">U</span>nique ability';
+            abilityNameSpan.innerHTML = t('panel.unique_ability');
 
             if (canUseAbility) {
                 abilityBtn.disabled = false;
@@ -135,11 +154,11 @@ export class UIManager {
                 abilityBtn.style.color = '#888';
 
                 if (unit && unit.isPlayer) {
-                    if (unit.hasMoved && unit.hasAttacked) abilityBtn.title = 'Unit has already acted';
-                    else if (unit.type === 'CLERIC' && unit.hasHealed) abilityBtn.title = 'Heal already used this turn';
-                    else if (unit.type === 'OCTO' && unit.hasPulled) abilityBtn.title = 'Pull already used this turn';
-                    else if (unit.type === 'SORCERER' && unit.hasCastFireball) abilityBtn.title = 'Fireball already used this turn';
-                    else abilityBtn.title = 'Ability not available';
+                    if (unit.hasMoved && unit.hasAttacked) abilityBtn.title = t('error.unit_acted');
+                    else if (unit.type === 'CLERIC' && unit.hasHealed) abilityBtn.title = t('error.heal_used');
+                    else if (unit.type === 'OCTO' && unit.hasPulled) abilityBtn.title = t('error.pull_used');
+                    else if (unit.type === 'SORCERER' && unit.hasCastFireball) abilityBtn.title = t('error.fireball_used');
+                    else abilityBtn.title = t('error.ability_unavailable');
                 } else {
                     abilityBtn.title = '';
                 }

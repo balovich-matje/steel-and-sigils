@@ -4,12 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Steel and Sigils - Tactical Combat</title>
+    <title data-i18n="game.title">Steel and Sigils - Tactical Combat</title>
     <link rel="icon" type="image/png" href="images/favicon.png">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <!-- units.js provides UNIT_TYPES globally -->
     <script src="src/units.js"></script>
+    <!-- i18n.js provides internationalization -->
+    <script src="src/i18n.js"></script>
 </head>
 
 <body>
@@ -19,19 +21,19 @@
         <div id="left-panel">
             <!-- Hero Controls (Top) -->
             <div class="panel-section">
-                <div class="panel-title">🔮 Hero</div>
+                <div class="panel-title" data-i18n="panel.hero">🔮 Hero</div>
                 <div class="mana-display" id="mana-display">
-                    💧 Mana: <span id="mana-current">100</span>/<span id="mana-max">100</span>
+                    <span data-i18n="panel.mana">💧 Mana:</span> <span id="mana-current">100</span>/<span id="mana-max">100</span>
                 </div>
                 <!-- Magic Buffs merged with Hero section -->
                 <div id="magic-buffs-list" style="margin-top: 10px; padding: 8px; background: #1A1C1E; border: 1px solid #5D4E3E; border-radius: 4px; font-size: 12px;">
-                    <div style="color: #8B7355; font-style: italic; text-align: center;">No active buffs</div>
+                    <div style="color: #8B7355; font-style: italic; text-align: center;" data-i18n="panel.no_buffs">No active buffs</div>
                 </div>
             </div>
 
             <!-- Spell Book Button -->
             <div class="panel-section">
-                <button id="spellbook-btn" class="spell-button" onclick="gameScene.openSpellBook()">
+                <button id="spellbook-btn" class="spell-button" onclick="openSpellBook()" data-i18n-html="panel.spellbook">
                     📖 <span style="color: #FFD700;">S</span>pell Book
                 </button>
             </div>
@@ -41,24 +43,24 @@
 
             <!-- Unit Controls (Bottom) -->
             <div class="panel-section">
-                <div class="panel-title">⚔️ Unit Info</div>
+                <div class="panel-title" data-i18n="panel.unit_info">⚔️ Unit Info</div>
                 <div id="unit-info" style="background: #1A1C1E; border: 1px solid #5D4E3E; border-radius: 4px; padding: 10px; font-size: 13px; line-height: 1.5; min-height: 100px;">
-                    <em>Select a unit</em>
+                    <em data-i18n="panel.select_unit">Select a unit</em>
                 </div>
             </div>
 
             <!-- Unit Abilities -->
             <div class="panel-section">
-                <div class="panel-title">⚡ Abilities</div>
-                <button id="unit-ability-btn" class="spell-button" onclick="gameScene.useUnitAbility()" disabled
-                    style="filter: grayscale(100%); opacity: 0.5; background: #3c3c3c; border-color: #555; color: #888; width: 100%;">
+                <div class="panel-title" data-i18n="panel.abilities">⚡ Abilities</div>
+                <button id="unit-ability-btn" class="spell-button" onclick="useUnitAbility()" disabled
+                    style="filter: grayscale(100%); opacity: 0.5; background: #3c3c3c; border-color: #555; color: #888; width: 100%;" data-i18n-html="panel.unique_ability">
                     ⭐ <span id="unit-ability-name"><span style="color: #FFD700;">U</span>nique ability</span>
                 </button>
             </div>
 
             <!-- End Turn Button -->
             <div class="panel-section">
-                <button class="spell-button" onclick="gameScene.endTurn()" style="width: 100%;">
+                <button class="spell-button" onclick="endTurn()" style="width: 100%;" data-i18n-html="panel.end_turn">
                     ⏹️ <span style="color: #FFD700;">E</span>nd Turn
                 </button>
             </div>
@@ -78,7 +80,7 @@
             <div class="panel-content-area">
                 <!-- Initiative Bar View -->
                 <div id="initiative-view" class="panel-section">
-                    <div class="panel-title">📊 Initiative</div>
+                    <div class="panel-title" data-i18n="panel.initiative">📊 Initiative</div>
                     <div id="initiative-queue">
                         <!-- Initiative units will be inserted here -->
                     </div>
@@ -86,7 +88,7 @@
 
                 <!-- Combat Log View (hidden by default) -->
                 <div id="combat-log-view" class="panel-section hidden">
-                    <div class="panel-title">📜 Battle Log</div>
+                    <div class="panel-title" data-i18n="panel.battle_log">📜 Battle Log</div>
                     <div id="combat-log-panel-content">
                         <!-- Combat log entries will be inserted here -->
                     </div>
@@ -95,7 +97,7 @@
 
             <!-- Toggle Button at Bottom (fixed) -->
             <div class="panel-toggle-section" style="display: flex; gap: 8px;">
-                <button id="view-toggle-btn" class="spell-button" onclick="toggleRightPanelView()" style="flex: 1;">
+                <button id="view-toggle-btn" class="spell-button" onclick="toggleRightPanelView()" style="flex: 1;" data-i18n="panel.show_battle_log">
                     📜 Show Battle Log
                 </button>
                 <button id="grid-toggle-btn" class="spell-button" onclick="toggleGrid()" title="Toggle Grid" style="opacity: 0.5;">
@@ -112,12 +114,12 @@
 
     <!-- Placement Bar (shown during placement phase) -->
     <div id="placement-bar" class="hidden">
-        <div class="placement-title">📍 Army Placement</div>
+        <div class="placement-title" data-i18n="placement.title">📍 Army Placement</div>
         <div class="action-divider"></div>
         <div style="display: flex; gap: 10px;">
-            <button id="randomize-placement" class="spell-button" onclick="gameScene.randomizePlacement()">🎲
+            <button id="randomize-placement" class="spell-button" onclick="randomizePlacement()" data-i18n="placement.randomize">🎲
                 Randomize</button>
-            <button id="confirm-placement" class="spell-button" onclick="gameScene.confirmPlacement()">Start
+            <button id="confirm-placement" class="spell-button" onclick="confirmPlacement()" data-i18n="placement.start">Start
                 Battle</button>
         </div>
     </div>
@@ -131,8 +133,8 @@
     ">
         <div
             style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #A68966;">
-            <strong style="color: #A68966; font-size: 14px;">📜 Combat Log</strong>
-            <button onclick="gameScene.toggleCombatLog()"
+            <strong style="color: #A68966; font-size: 14px;" data-i18n="combat_log.title">📜 Combat Log</strong>
+            <button onclick="toggleCombatLog()"
                 style="background: none; border: none; color: #A68966; font-size: 18px; cursor: pointer;">✕</button>
         </div>
         <div id="combat-log-content" style="
@@ -143,17 +145,22 @@
 
     <!-- Pre-game: Two Step Process -->
     <div id="pregame-screen" class="victory-screen">
+        <!-- Language Toggle Button (visible on pre-game screens) -->
+        <div id="lang-toggle-container" style="position: fixed; top: 20px; right: 20px; z-index: 2000;">
+            <button id="lang-toggle-btn" class="lang-toggle" onclick="toggleLanguage()" title="Switch language">RU</button>
+        </div>
+
         <!-- Step 1: Map Selection -->
         <div id="step-1-map" class="pregame-step">
-            <h1 style="color: #A68966; margin-bottom: 30px;">⚔️ Steel and Sigils 🛡️</h1>
-            <h2 style="color: #A68966; margin-bottom: 40px;">Choose Your Battlefield</h2>
+            <h1 style="color: #A68966; margin-bottom: 30px;" data-i18n="game.title">⚔️ Steel and Sigils 🛡️</h1>
+            <h2 style="color: #A68966; margin-bottom: 40px;" data-i18n="map.select.title">Choose Your Battlefield</h2>
 
             <div style="display: flex; gap: 30px; justify-content: center; align-items: stretch; margin-bottom: 40px; flex-wrap: wrap;">
                 <!-- Forest Map Option -->
                 <button class="map-select-btn" onclick="selectMap('forest')" data-stage="forest">
                     <div class="map-preview forest-preview">🌲</div>
-                    <div class="map-name">Whispering Woods</div>
-                    <div class="map-stats">
+                    <div class="map-name" data-i18n="map.forest.name">Whispering Woods</div>
+                    <div class="map-stats" data-i18n-html="map.forest.stats">
                         10×8 Grid<br>
                         1000 Points<br>
                         Grass Terrain
@@ -163,8 +170,8 @@
                 <!-- Mountain Map Option -->
                 <button class="map-select-btn" onclick="selectMap('mountain')" data-stage="mountain">
                     <div class="map-preview mountain-preview">⛰️</div>
-                    <div class="map-name">Mountain Pass</div>
-                    <div class="map-stats">
+                    <div class="map-name" data-i18n="map.mountain.name">Mountain Pass</div>
+                    <div class="map-stats" data-i18n-html="map.mountain.stats">
                         13×11 Grid<br>
                         1300 Points<br>
                         Chokepoint
@@ -174,8 +181,8 @@
                 <!-- Ruins Map Option -->
                 <button class="map-select-btn" onclick="selectMap('ruins')" data-stage="ruins">
                     <div class="map-preview ruins-preview">🏰</div>
-                    <div class="map-name">Ruins of a Castle</div>
-                    <div class="map-stats">
+                    <div class="map-name" data-i18n="map.ruins.name">Ruins of a Castle</div>
+                    <div class="map-stats" data-i18n-html="map.ruins.stats">
                         15×15 Grid<br>
                         1700 Points<br>
                         Dirt & Walls
@@ -186,15 +193,15 @@
 
         <!-- Step 2: Faction Selection (Hidden initially) -->
         <div id="step-2-faction" class="pregame-step hidden">
-            <h2 style="color: #A68966; margin-bottom: 10px;">👹 Choose Your Enemy</h2>
-            <p style="color: #E3D5B8; margin-bottom: 30px; font-size: 16px;">Select which faction you will face in battle</p>
+            <h2 style="color: #A68966; margin-bottom: 10px;" data-i18n="faction.select.title">👹 Choose Your Enemy</h2>
+            <p style="color: #E3D5B8; margin-bottom: 30px; font-size: 16px;" data-i18n="faction.select.subtitle">Select which faction you will face in battle</p>
 
             <div style="display: flex; gap: 30px; justify-content: center; align-items: stretch; margin-bottom: 40px; flex-wrap: wrap;">
                 <!-- Random Faction Option (Default) -->
                 <button class="faction-select-btn selected" onclick="selectFaction('random')" data-faction="random">
                     <div class="faction-preview random-preview">🎲</div>
-                    <div class="faction-name">Random Faction</div>
-                    <div class="faction-description">
+                    <div class="faction-name" data-i18n="faction.random.name">Random Faction</div>
+                    <div class="faction-description" data-i18n-html="faction.random.desc">
                         Face a random enemy faction.<br>
                         <em>Recommended for new players</em>
                     </div>
@@ -207,8 +214,8 @@
                         <img src="images/enemy/greenskin/goblin_stone_thrower.png" alt="Goblin" class="faction-unit-img sub1">
                         <img src="images/enemy/greenskin/orc_brute.png" alt="Orc Brute" class="faction-unit-img sub2">
                     </div>
-                    <div class="faction-name">Greenskin Horde</div>
-                    <div class="faction-description">
+                    <div class="faction-name" data-i18n="faction.greenskin.name">Greenskin Horde</div>
+                    <div class="faction-description" data-i18n-html="faction.greenskin.desc">
                         Brutal orcs and cunning goblins.<br>
                         <span style="color: #8B9A6B;">Balanced • Aggressive</span>
                     </div>
@@ -221,8 +228,8 @@
                         <img src="images/enemy/dungeon/skeleton_archer.png" alt="Skeleton Archer" class="faction-unit-img sub1">
                         <img src="images/enemy/dungeon/animated_armor.png" alt="Animated Armor" class="faction-unit-img sub2">
                     </div>
-                    <div class="faction-name">Dungeon Dwellers</div>
-                    <div class="faction-description">
+                    <div class="faction-name" data-i18n="faction.dungeon.name">Dungeon Dwellers</div>
+                    <div class="faction-description" data-i18n-html="faction.dungeon.desc">
                         Undead skeletons and animated armor.<br>
                         <span style="color: #9B6BAB;">Defensive • Resilient</span>
                     </div>
@@ -235,8 +242,8 @@
                         <img src="images/enemy/cultist/gibbering_horror.png" alt="Horror" class="faction-unit-img sub1">
                         <img src="images/enemy/cultist/flesh_warped_stalker.png" alt="Stalker" class="faction-unit-img sub2">
                     </div>
-                    <div class="faction-name">Old God Worshippers</div>
-                    <div class="faction-description">
+                    <div class="faction-name" data-i18n="faction.cultist.name">Old God Worshippers</div>
+                    <div class="faction-description" data-i18n-html="faction.cultist.desc">
                         Twisted cultists and eldritch horrors.<br>
                         <span style="color: #d94a4a;">Fast • Unpredictable</span>
                     </div>
@@ -244,10 +251,10 @@
             </div>
 
             <div style="display: flex; gap: 15px; justify-content: center;">
-                <button class="spell-button" onclick="goBackToMapSelectionFromFaction()" style="background: #5D4E3E;">
+                <button class="spell-button" onclick="goBackToMapSelectionFromFaction()" style="background: #5D4E3E;" data-i18n="faction.back">
                     ← Back to Map
                 </button>
-                <button id="confirm-faction" class="spellbook-close" onclick="confirmFactionSelection()">
+                <button id="confirm-faction" class="spellbook-close" onclick="confirmFactionSelection()" data-i18n="faction.confirm">
                     Confirm Selection
                 </button>
             </div>
@@ -255,10 +262,10 @@
 
         <!-- Step 3: Army Selection (Hidden initially) -->
         <div id="step-3-army" class="pregame-step hidden">
-            <h2 style="color: #A68966; margin-bottom: 10px;">⚔️ Build Your Army ⚔️</h2>
-            <p style="color: #E3D5B8; margin-bottom: 10px; font-size: 16px;">Spend your points wisely!</p>
+            <h2 style="color: #A68966; margin-bottom: 10px;" data-i18n="army.title">⚔️ Build Your Army ⚔️</h2>
+            <p style="color: #E3D5B8; margin-bottom: 10px; font-size: 16px;" data-i18n="army.subtitle">Spend your points wisely!</p>
             <div class="mana-display" style="margin-bottom: 15px;">
-                💰 Points: <span id="points-remaining">1000</span>/<span id="points-total">1000</span>
+                <span data-i18n="army.points">💰 Points:</span> <span id="points-remaining">1000</span>/<span id="points-total">1000</span>
             </div>
 
             <!-- Compact Unit Grid -->
@@ -268,34 +275,34 @@
                 <div class="unit-card compact" data-type="KNIGHT">
                     <div class="unit-header">
                         <span class="unit-emoji">⚔️</span>
-                        <span class="unit-name">Knight</span>
-                        <span class="unit-cost">💰200</span>
+                        <span class="unit-name" data-i18n="unit.knight">Knight</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>200
                     </div>
-                    <div class="unit-stats">HP:100 | DMG:25 | MOV:4 | INIT:12</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:100 | <span data-i18n="stat.dmg">DMG</span>:25 | <span data-i18n="stat.mov">MOV</span>:4 | <span data-i18n="stat.init">INIT</span>:12</div>
                     <div class="unit-skills">
-                        <span class="passive">🛡️ Passive: -50% ranged dmg</span>
+                        <span class="passive" data-i18n="passive.heavy_armor">🛡️ Passive: -50% ranged dmg</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('KNIGHT', -1)">-</button>
                         <span id="count-KNIGHT" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('KNIGHT', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('KNIGHT', 1)">+</button>
                     </div>
                 </div>
 
                 <div class="unit-card compact" data-type="ARCHER">
                     <div class="unit-header">
                         <span class="unit-emoji">🏹</span>
-                        <span class="unit-name">Archer</span>
-                        <span class="unit-cost">💰300</span>
+                        <span class="unit-name" data-i18n="unit.archer">Archer</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>300
                     </div>
-                    <div class="unit-stats">HP:60 | DMG:35 | MOV:2 | RNG:6</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:60 | <span data-i18n="stat.dmg">DMG</span>:35 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:6</div>
                     <div class="unit-skills">
-                        <span class="passive">📐 Ranged unit</span>
+                        <span class="passive" data-i18n="passive.ranged">📐 Ranged unit</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('ARCHER', -1)">-</button>
                         <span id="count-ARCHER" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('ARCHER', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('ARCHER', 1)">+</button>
                     </div>
                 </div>
 
@@ -303,52 +310,52 @@
                 <div class="unit-card compact specialist" data-type="WIZARD">
                     <div class="unit-header">
                         <span class="unit-emoji">🧙</span>
-                        <span class="unit-name">Wizard</span>
-                        <span class="unit-cost">💰500</span>
+                        <span class="unit-name" data-i18n="unit.wizard">Wizard</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>500
                     </div>
-                    <div class="unit-stats">HP:40 | DMG:45 | MOV:2 | RNG:4</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:40 | <span data-i18n="stat.dmg">DMG</span>:45 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:4</div>
                     <div class="unit-skills">
-                        <span class="passive">🔮 Passive: +2 Mana/turn</span>
+                        <span class="passive" data-i18n="passive.arcane_channeling">🔮 Passive: +2 Mana/turn</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('WIZARD', -1)">-</button>
                         <span id="count-WIZARD" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('WIZARD', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('WIZARD', 1)">+</button>
                     </div>
                 </div>
 
                 <div class="unit-card compact specialist" data-type="CLERIC">
                     <div class="unit-header">
                         <span class="unit-emoji">✝️</span>
-                        <span class="unit-name">Cleric</span>
-                        <span class="unit-cost">💰500</span>
+                        <span class="unit-name" data-i18n="unit.cleric">Cleric</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>500
                     </div>
-                    <div class="unit-stats">HP:80 | DMG:15 | MOV:2 | RNG:4</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:80 | <span data-i18n="stat.dmg">DMG</span>:15 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:4</div>
                     <div class="unit-skills">
-                        <span class="active">💚 Active: Cast Heal</span>
-                        <span class="passive">+50% army healing</span>
+                        <span class="active" data-i18n="passive.blessed_touch">💚 Active: Cast Heal</span>
+                        <span class="passive" data-i18n="passive.blessed_touch2">+50% army healing</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('CLERIC', -1)">-</button>
                         <span id="count-CLERIC" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('CLERIC', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('CLERIC', 1)">+</button>
                     </div>
                 </div>
 
                 <div class="unit-card compact specialist" data-type="ROGUE">
                     <div class="unit-header">
                         <span class="unit-emoji">🗡️</span>
-                        <span class="unit-name">Rogue</span>
-                        <span class="unit-cost">💰500</span>
+                        <span class="unit-name" data-i18n="unit.rogue">Rogue</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>500
                     </div>
-                    <div class="unit-stats">HP:55 | DMG:40 | MOV:8 | INIT:16</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:55 | <span data-i18n="stat.dmg">DMG</span>:40 | <span data-i18n="stat.mov">MOV</span>:8 | <span data-i18n="stat.init">INIT</span>:16</div>
                     <div class="unit-skills">
-                        <span class="passive">👤 Passive: Hit & Run</span>
+                        <span class="passive" data-i18n="passive.shadow_step">👤 Passive: Hit & Run</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('ROGUE', -1)">-</button>
                         <span id="count-ROGUE" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('ROGUE', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('ROGUE', 1)">+</button>
                     </div>
                 </div>
 
@@ -356,80 +363,80 @@
                 <div class="unit-card compact legendary" data-type="PALADIN">
                     <div class="unit-header">
                         <span class="unit-emoji">🛡️</span>
-                        <span class="unit-name">Paladin</span>
-                        <span class="unit-cost">💰800</span>
+                        <span class="unit-name" data-i18n="unit.paladin">Paladin</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>800
                     </div>
-                    <div class="unit-stats">HP:150 | DMG:50 | MOV:4 | INIT:9</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:150 | <span data-i18n="stat.dmg">DMG</span>:50 | <span data-i18n="stat.mov">MOV</span>:4 | <span data-i18n="stat.init">INIT</span>:9</div>
                     <div class="unit-skills">
-                        <span class="passive">🛡️ -50% ranged dmg</span>
-                        <span class="passive">💚 +50% healing</span>
+                        <span class="passive" data-i18n="passive.divine_protection1">🛡️ -50% ranged dmg</span>
+                        <span class="passive" data-i18n="passive.divine_protection2">💚 +50% healing</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('PALADIN', -1)">-</button>
                         <span id="count-PALADIN" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('PALADIN', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('PALADIN', 1)">+</button>
                     </div>
                 </div>
 
                 <div class="unit-card compact legendary" data-type="RANGER">
                     <div class="unit-header">
                         <span class="unit-emoji">🎯</span>
-                        <span class="unit-name">Ranger</span>
-                        <span class="unit-cost">💰800</span>
+                        <span class="unit-name" data-i18n="unit.ranger">Ranger</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>800
                     </div>
-                    <div class="unit-stats">HP:70 | DMG:50 | MOV:2 | RNG:10</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:70 | <span data-i18n="stat.dmg">DMG</span>:50 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:10</div>
                     <div class="unit-skills">
-                        <span class="passive">📐 Longest range unit</span>
+                        <span class="passive" data-i18n="passive.eagle_eye">📐 Longest range unit</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('RANGER', -1)">-</button>
                         <span id="count-RANGER" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('RANGER', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('RANGER', 1)">+</button>
                     </div>
                 </div>
 
                 <div class="unit-card compact legendary" data-type="BERSERKER">
                     <div class="unit-header">
                         <span class="unit-emoji">🪓</span>
-                        <span class="unit-name">Berserker</span>
-                        <span class="unit-cost">💰800</span>
+                        <span class="unit-name" data-i18n="unit.berserker">Berserker</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>800
                     </div>
-                    <div class="unit-stats">HP:90 | DMG:50 | MOV:4 | INIT:11</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:90 | <span data-i18n="stat.dmg">DMG</span>:50 | <span data-i18n="stat.mov">MOV</span>:4 | <span data-i18n="stat.init">INIT</span>:11</div>
                     <div class="unit-skills">
-                        <span class="passive">⚔️ Passive: Bloodlust</span>
-                        <span class="passive">Reckless</span>
+                        <span class="passive" data-i18n="passive.bloodlust">⚔️ Passive: Bloodlust</span>
+                        <span class="passive" data-i18n="passive.reckless">Reckless</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('BERSERKER', -1)">-</button>
                         <span id="count-BERSERKER" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('BERSERKER', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('BERSERKER', 1)">+</button>
                     </div>
                 </div>
 
                 <div class="unit-card compact legendary" data-type="SORCERER">
                     <div class="unit-header">
                         <span class="unit-emoji">🔮</span>
-                        <span class="unit-name">Sorcerer</span>
-                        <span class="unit-cost">💰800</span>
+                        <span class="unit-name" data-i18n="unit.sorcerer">Sorcerer</span>
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>800
                     </div>
-                    <div class="unit-stats">HP:50 | DMG:55 | MOV:2 | RNG:4</div>
+                    <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:50 | <span data-i18n="stat.dmg">DMG</span>:55 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:4</div>
                     <div class="unit-skills">
-                        <span class="active">🔥 Active: Cast Fireball</span>
-                        <span class="passive">✨ +50% spell dmg</span>
+                        <span class="active" data-i18n="passive.arcane_mastery1">🔥 Active: Cast Fireball</span>
+                        <span class="passive" data-i18n="passive.arcane_mastery2">✨ +50% spell dmg</span>
                     </div>
                     <div class="unit-controls">
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', -1)">-</button>
+                        <button class="spell-button" onclick="updateUnitCount('SORCERER', -1)">-</button>
                         <span id="count-SORCERER" class="unit-count">0</span>
-                        <button class="spell-button" onclick="gameScene.updateUnitCount('SORCERER', 1)">+</button>
+                        <button class="spell-button" onclick="updateUnitCount('SORCERER', 1)">+</button>
                     </div>
                 </div>
             </div>
 
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
-                <button class="spell-button" onclick="goBackToFactionSelection()" style="background: #5D4E3E;">
+                <button class="spell-button" onclick="goBackToFactionSelection()" style="background: #5D4E3E;" data-i18n="army.back">
                     ← Back to Faction
                 </button>
-                <button id="confirm-army" class="spellbook-close" onclick="gameScene.confirmArmySelection()" disabled>
+                <button id="confirm-army" class="spellbook-close" onclick="confirmArmySelection()" disabled data-i18n="army.confirm.units">
                     Confirm Army (0 units)
                 </button>
             </div>
@@ -441,41 +448,41 @@
 
     <!-- Victory Screen -->
     <div id="victory-screen" class="victory-screen hidden">
-        <h2 id="victory-text">🎉 Victory! 🎉</h2>
-        <p id="victory-subtitle" style="color: #E3D5B8; margin-bottom: 20px; font-size: 18px;">Choose your rewards for
+        <h2 id="victory-text" data-i18n="victory.title">🎉 Victory! 🎉</h2>
+        <p id="victory-subtitle" style="color: #E3D5B8; margin-bottom: 20px; font-size: 18px;" data-i18n="victory.subtitle">Choose your rewards for
             the next battle:</p>
 
         <div id="rewards-container"
             style="display: flex; flex-direction: column; gap: 20px; align-items: center; max-width: 1200px; width: 100%;">
             <div style="width: 100%;">
-                <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;">⚔️ Recruit a New Unit</h3>
+                <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;" data-i18n="reward.recruit">⚔️ Recruit a New Unit</h3>
                 <div id="reward-units" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
                 </div>
             </div>
 
             <div style="width: 100%;">
-                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 10px;">💪 Buff an Existing Unit</h3>
+                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 10px;" data-i18n="reward.buff">💪 Buff an Existing Unit</h3>
                 <div id="reward-buffs" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
                 </div>
             </div>
 
             <div style="width: 100%;">
-                <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 10px;">🧙 Spell or Mana Enhancement</h3>
+                <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 10px;" data-i18n="reward.magic">🧙 Spell or Mana Enhancement</h3>
                 <div id="reward-magic" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
                 </div>
             </div>
         </div>
 
         <div id="defeat-message" style="display: none; text-align: center; padding: 30px;">
-            <p style="color: #B8A896; font-size: 18px; margin-bottom: 20px;">Your army has fallen...</p>
-            <p style="color: #8B7355; font-size: 14px; margin-bottom: 30px; font-style: italic;">Better luck next time,
+            <p style="color: #B8A896; font-size: 18px; margin-bottom: 20px;" data-i18n="defeat.message">Your army has fallen...</p>
+            <p style="color: #8B7355; font-size: 14px; margin-bottom: 30px; font-style: italic;" data-i18n="defeat.submessage">Better luck next time,
                 commander.</p>
-            <button class="spell-button" onclick="location.reload()" style="font-size: 16px; padding: 12px 30px;">⚔️ Try
+            <button class="spell-button" onclick="location.reload()" style="font-size: 16px; padding: 12px 30px;" data-i18n="defeat.retry">⚔️ Try
                 Again</button>
         </div>
 
         <button id="confirm-rewards" class="spellbook-close" style="margin-top: 30px;"
-            onclick="gameScene.confirmRewards()" disabled>
+            onclick="confirmRewards()" disabled data-i18n="reward.confirm">
             Confirm Choices (0/3)
         </button>
     </div>
@@ -484,17 +491,107 @@
     <div id="spellbook-modal" class="spellbook-modal hidden">
         <div class="spellbook-content">
             <div class="spellbook-header">
-                <h2>📖 Spell Book</h2>
-                <p style="color: #4A729E;">💧 Mana: <span id="spellbook-mana">100</span>/<span
-                        id="spellbook-max-mana">100</span> (Regenerates +1 per turn)</p>
+                <h2 data-i18n="spellbook.title">📖 Spell Book</h2>
+                <p style="color: #4A729E;"><span data-i18n="spellbook.mana">💧 Mana:</span> <span id="spellbook-mana">100</span>/<span
+                        id="spellbook-max-mana">100</span> <span data-i18n="spellbook.regen">(Regenerates +1 per turn)</span></p>
             </div>
             <div class="spell-grid" id="spell-grid"></div>
-            <button class="spellbook-close" onclick="gameScene.closeSpellBook()">Close</button>
+            <button class="spellbook-close" onclick="closeSpellBook()" data-i18n="spellbook.close">Close</button>
         </div>
     </div>
 
     <!-- Panel Toggle Script -->
     <script>
+        // Language toggle function
+        function toggleLanguage() {
+            if (typeof i18n !== 'undefined') {
+                i18n.toggleLanguage();
+                updateLanguageToggleButton();
+                i18n.updatePage();
+                // Update army confirm button text
+                updateArmyConfirmButton();
+            }
+        }
+
+        // Update language toggle button text
+        function updateLanguageToggleButton() {
+            const btn = document.getElementById('lang-toggle-btn');
+            if (btn && typeof i18n !== 'undefined') {
+                const otherLang = i18n.getLanguage() === 'en' ? 'ru' : 'en';
+                btn.textContent = otherLang.toUpperCase();
+                btn.title = i18n.t('lang.tooltip');
+            }
+        }
+
+        // Update army confirm button with unit count
+        function updateArmyConfirmButton() {
+            const confirmBtn = document.getElementById('confirm-army');
+            if (confirmBtn && typeof i18n !== 'undefined') {
+                const currentText = confirmBtn.textContent;
+                const match = currentText.match(/\d+/);
+                const unitCount = match ? parseInt(match[0]) : 0;
+                const isDisabled = confirmBtn.disabled;
+                confirmBtn.textContent = i18n.t('army.confirm.units', unitCount);
+                confirmBtn.disabled = isDisabled;
+            }
+        }
+
+        // Initialize i18n on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof i18n !== 'undefined') {
+                updateLanguageToggleButton();
+                i18n.updatePage();
+            }
+        });
+
+        // Safe wrapper functions for gameScene calls
+        function safeGameSceneCall(methodName, ...args) {
+            if (typeof gameScene !== 'undefined' && gameScene && gameScene[methodName]) {
+                return gameScene[methodName](...args);
+            }
+            console.warn(`gameScene.${methodName} is not available yet`);
+        }
+
+        function updateUnitCount(type, delta) {
+            return safeGameSceneCall('updateUnitCount', type, delta);
+        }
+
+        function confirmArmySelection() {
+            return safeGameSceneCall('confirmArmySelection');
+        }
+
+        function randomizePlacement() {
+            return safeGameSceneCall('randomizePlacement');
+        }
+
+        function confirmPlacement() {
+            return safeGameSceneCall('confirmPlacement');
+        }
+
+        function openSpellBook() {
+            return safeGameSceneCall('openSpellBook');
+        }
+
+        function closeSpellBook() {
+            return safeGameSceneCall('closeSpellBook');
+        }
+
+        function useUnitAbility() {
+            return safeGameSceneCall('useUnitAbility');
+        }
+
+        function endTurn() {
+            return safeGameSceneCall('endTurn');
+        }
+
+        function toggleCombatLog() {
+            return safeGameSceneCall('toggleCombatLog');
+        }
+
+        function confirmRewards() {
+            return safeGameSceneCall('confirmRewards');
+        }
+
         function toggleLeftPanel() {
             const panel = document.getElementById('left-panel');
             const toggle = document.getElementById('left-toggle');
@@ -520,12 +617,12 @@
                 // Switch to initiative view
                 initiativeView.classList.remove('hidden');
                 combatLogView.classList.add('hidden');
-                toggleBtn.innerHTML = '📜 Show Battle Log';
+                toggleBtn.textContent = i18n.t('panel.show_battle_log');
             } else {
                 // Switch to combat log view
                 initiativeView.classList.add('hidden');
                 combatLogView.classList.remove('hidden');
-                toggleBtn.innerHTML = '📊 Show Initiative';
+                toggleBtn.textContent = i18n.t('panel.show_initiative');
             }
         }
 
@@ -606,6 +703,14 @@
             // Go to army selection
             document.getElementById('step-2-faction').classList.add('hidden');
             document.getElementById('step-3-army').classList.remove('hidden');
+        }
+
+        // Function to hide language toggle when game starts
+        function hideLanguageToggle() {
+            const toggleContainer = document.getElementById('lang-toggle-container');
+            if (toggleContainer) {
+                toggleContainer.style.display = 'none';
+            }
         }
 
         function goBackToFactionSelection() {
