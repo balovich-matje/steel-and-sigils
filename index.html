@@ -53,8 +53,8 @@
             <div class="panel-section">
                 <div class="panel-title" data-i18n="panel.abilities">⚡ Abilities</div>
                 <button id="unit-ability-btn" class="spell-button" onclick="useUnitAbility()" disabled
-                    style="filter: grayscale(100%); opacity: 0.5; background: #3c3c3c; border-color: #555; color: #888; width: 100%;" data-i18n-html="panel.unique_ability">
-                    ⭐ <span id="unit-ability-name"><span style="color: #FFD700;">U</span>nique ability</span>
+                    style="filter: grayscale(100%); opacity: 0.5; background: #3c3c3c; border-color: #555; color: #888; width: 100%;">
+                    ⭐ <span id="unit-ability-name" data-i18n-html="panel.unique_ability"><span style="color: #FFD700;">U</span>nique ability</span>
                 </button>
             </div>
 
@@ -145,9 +145,13 @@
 
     <!-- Pre-game: Two Step Process -->
     <div id="pregame-screen" class="victory-screen">
-        <!-- Language Toggle Button (visible on pre-game screens) -->
+        <!-- Language Toggle Switch (visible on pre-game screens) -->
         <div id="lang-toggle-container" style="position: fixed; top: 20px; right: 20px; z-index: 2000;">
-            <button id="lang-toggle-btn" class="lang-toggle" onclick="toggleLanguage()" title="Switch language">RU</button>
+            <div class="lang-toggle-switch" onclick="toggleLanguage()">
+                <span class="lang-label left" id="lang-label-en">EN</span>
+                <span class="lang-label right" id="lang-label-ru">RU</span>
+                <div class="lang-slider" id="lang-slider"></div>
+            </div>
         </div>
 
         <!-- Step 1: Map Selection -->
@@ -513,13 +517,16 @@
             }
         }
 
-        // Update language toggle button text
+        // Update language toggle switch state
         function updateLanguageToggleButton() {
-            const btn = document.getElementById('lang-toggle-btn');
-            if (btn && typeof i18n !== 'undefined') {
-                const otherLang = i18n.getLanguage() === 'en' ? 'ru' : 'en';
-                btn.textContent = otherLang.toUpperCase();
-                btn.title = i18n.t('lang.tooltip');
+            const switchEl = document.querySelector('.lang-toggle-switch');
+            if (switchEl && typeof i18n !== 'undefined') {
+                const currentLang = i18n.getLanguage();
+                if (currentLang === 'ru') {
+                    switchEl.classList.add('ru');
+                } else {
+                    switchEl.classList.remove('ru');
+                }
             }
         }
 

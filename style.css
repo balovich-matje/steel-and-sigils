@@ -1258,35 +1258,95 @@ body {
 
 
 /* ============================================
-   LANGUAGE TOGGLE BUTTON
+   LANGUAGE TOGGLE SWITCH
    ============================================ */
 
-.lang-toggle {
-    background: linear-gradient(135deg, #2D241E 0%, #3D342E 100%);
+.lang-toggle-switch {
+    position: relative;
+    width: 80px;
+    height: 32px;
+    background: #2D241E;
     border: 2px solid #A68966;
-    color: #E3D5B8;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
-    font-weight: bold;
-    padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    overflow: hidden;
 }
 
-.lang-toggle:hover {
-    background: linear-gradient(135deg, #3D342E 0%, #4D443E 100%);
+.lang-toggle-switch:hover {
     border-color: #B69976;
     box-shadow: 0 0 15px rgba(166, 137, 102, 0.3);
-    transform: translateY(-1px);
 }
 
-.lang-toggle:active {
-    transform: translateY(1px);
+.lang-toggle-switch:active {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.lang-label {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8B7355;
+    z-index: 2;
+    transition: color 0.3s ease;
+    pointer-events: none;
+}
+
+.lang-label.left {
+    margin-right: auto;
+    padding-left: 4px;
+}
+
+.lang-label.right {
+    margin-left: auto;
+    padding-right: 4px;
+}
+
+.lang-label.active {
+    color: #E3D5B8;
+}
+
+.lang-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 36px;
+    height: 24px;
+    background: linear-gradient(135deg, #A68966 0%, #8B7355 100%);
+    border-radius: 12px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    z-index: 1;
+}
+
+/* When Russian is active, slide to the right */
+.lang-toggle-switch.ru .lang-slider {
+    transform: translateX(36px);
+}
+
+.lang-toggle-switch.ru .lang-label.left {
+    color: #8B7355;
+}
+
+.lang-toggle-switch.ru .lang-label.right {
+    color: #E3D5B8;
+}
+
+/* When English is active (default) */
+.lang-toggle-switch:not(.ru) .lang-label.left {
+    color: #E3D5B8;
+}
+
+.lang-toggle-switch:not(.ru) .lang-label.right {
+    color: #8B7355;
 }
 
 #lang-toggle-container {

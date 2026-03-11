@@ -117,7 +117,7 @@ const TRANSLATIONS = {
         'panel.select_unit': 'Select a unit',
         'panel.unit_defeated': 'Unit defeated',
         'panel.abilities': '⚡ Abilities',
-        'panel.unique_ability': '⭐ <span id="unit-ability-name"><span style="color: #FFD700;">U</span>nique ability</span>',
+        'panel.unique_ability': '<span style="color: #FFD700;">U</span>nique ability',
         'panel.end_turn': '⏹️ <span style="color: #FFD700;">E</span>nd Turn',
 
         // Game UI - Right Panel
@@ -467,7 +467,7 @@ const TRANSLATIONS = {
         'panel.select_unit': 'Выберите юнита',
         'panel.unit_defeated': 'Юнит повержен',
         'panel.abilities': '⚡ Способности',
-        'panel.unique_ability': '⭐ <span id="unit-ability-name"><span style="color: #FFD700;">У</span>никальная способность</span>',
+        'panel.unique_ability': '<span style="color: #FFD700;">У</span>никальная способность',
         'panel.end_turn': '⏹️ <span style="color: #FFD700;">З</span>акончить Ход',
 
         // Game UI - Right Panel
@@ -885,6 +885,11 @@ class I18n {
 
 // Create global instance
 const i18n = new I18n();
+
+// Make it available globally in browser
+if (typeof window !== 'undefined') {
+    window.i18n = i18n;
+}
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {

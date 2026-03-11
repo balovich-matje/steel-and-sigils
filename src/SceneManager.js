@@ -1784,28 +1784,25 @@ export class BattleScene extends Phaser.Scene {
         this.uiManager.updateManaDisplay();
 
         // Define categories with styles
+        // Note: translations already include emojis, so we don't use separate icon property
         this.spellBookPages = [
             {
                 name: t('school.destructo'),
-                icon: '🔥',
                 filter: (s) => ['singleDamage', 'aoeDamage', 'meteor', 'iceStorm', 'chainLightning'].includes(s.effect),
                 style: { bg: '#2a1f1f', header: '#ff4444' }
             },
             {
                 name: t('school.restoratio'),
-                icon: '💚',
                 filter: (s) => ['heal', 'regenerate', 'cure'].includes(s.effect),
                 style: { bg: '#2a3a2a', header: '#44ff44' }
             },
             {
                 name: t('school.benedictio'),
-                icon: '🛡️',
                 filter: (s) => ['haste', 'shield', 'bless'].includes(s.effect),
                 style: { bg: '#2D241E', header: '#A68966' }
             },
             {
                 name: t('school.utilitas'),
-                icon: '✨',
                 filter: (s) => !['singleDamage', 'aoeDamage', 'meteor', 'iceStorm', 'chainLightning', 'heal', 'regenerate', 'cure', 'haste', 'shield', 'bless'].includes(s.effect),
                 style: { bg: '#2D241E', header: '#A68966' }
             }
@@ -1884,7 +1881,7 @@ export class BattleScene extends Phaser.Scene {
         // Category tabs
         this.spellBookPages.forEach((p, i) => {
             const tab = document.createElement('div');
-            tab.innerHTML = `${p.icon} ${p.name}`;
+            tab.innerHTML = p.name;
             tab.style.cssText = 'cursor: pointer; padding: 5px 10px; border-radius: 4px; transition: all 0.2s ease; user-select: none; font-family: serif;';
             tab.onclick = () => {
                 this.currentSpellPage = i;
