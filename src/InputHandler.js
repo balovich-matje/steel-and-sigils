@@ -19,6 +19,7 @@ export class GridSystem {
         this.selectedUnit = null;
         this.validMoves = [];
         this.obstacles = new Set(); // Store as "x,y" strings
+        this.wallImages = []; // Store obstacle image references for cleanup
     }
 
     create() {
@@ -473,7 +474,8 @@ export class GridSystem {
             
             const hasImage = this.scene.textures.exists(imageKey);
             const finalImageKey = hasImage ? imageKey : (isRock ? 'rock_img' : 'wall_img');
-            const displaySize = isRock ? tileSize * 1.35 : tileSize - 4;
+            // Walls: 140% of tile size, Rocks: 135% of tile size
+            const displaySize = isRock ? tileSize * 1.35 : tileSize * 1.40;
             
             const obstacleImage = this.scene.add.image(
                 x * tileSize + tileSize / 2,
@@ -483,10 +485,11 @@ export class GridSystem {
             obstacleImage.setDisplaySize(displaySize, displaySize);
             obstacleImage.setDepth(5); // Above tiles (0), below units (10)
             
-            // Obstacles no longer flipped - use sprites as-is
+            // Random horizontal flip for variety (50% chance)
+            obstacleImage.setFlipX(Math.random() < 0.5);
             
             if (!this.wallImages) this.wallImages = [];
-            this.wallImages.push({ x, y, image: obstacleImage });
+            this.wallImages.push({ x, y, type: type, image: obstacleImage });
         }
     }
 

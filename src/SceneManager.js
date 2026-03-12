@@ -262,8 +262,10 @@ export class BattleScene extends Phaser.Scene {
 
         // Generate obstacles after player units are placed (so rocks avoid unit positions)
         // and before enemy units are created (so enemies avoid rock positions)
+        // Use saved obstacles from previous battle if available (persist across battles on same map)
         if (this.currentStage.hasObstacles) {
-            this.generateObstacles();
+            const savedObstacles = data && data.savedObstacles ? data.savedObstacles : null;
+            this.generateObstacles(savedObstacles);
         }
 
         // Create enemy units
@@ -717,11 +719,19 @@ export class BattleScene extends Phaser.Scene {
         }
     }
 
-    generateObstacles() {
+    generateObstacles(savedObstacles = null) {
         if (!this.currentStage || !this.currentStage.hasObstacles) return;
 
-        // Clear any existing obstacles first (when scene restarts, we need fresh obstacles)
+        // Clear any existing obstacles first
         this.clearObstacles();
+        
+        // If we have saved obstacles from a previous battle, restore them
+        if (savedObstacles && savedObstacles.length > 0) {
+            for (const obs of savedObstacles) {
+                this.gridSystem.addObstacle(obs.x, obs.y, obs.type || 'wall');
+            }
+            return;
+        }
 
         // Mountain Pass: Use random rock generation with constraints
         if (this.currentStage.obstacleType === 'mountain') {
@@ -730,50 +740,86 @@ export class BattleScene extends Phaser.Scene {
         }
 
         // Ruins of a Castle logic:
-        // Player spawn area is 5x5 at center (x: 5-9, y: 5-9 for 15x15 grid)
-        // Walls spawn ONE CELL LAYER around this area (border ring)
-        // WITH GAPS (1-2 cells) to allow players/enemies to pass through
+        // Generate only 2-3 wall pieces around player area
+        // Each wall must have minimum 2-cell gap between them
         const size = this.currentStage.width;
-        const center = Math.floor(size / 2);  // 7 for 15x15
+        const playerArea = this.currentStage.playerArea;
         
-        // Player spawn area: 5x5 centered
-        const spawnStart = center - 2;  // 5
-        const spawnEnd = center + 2;    // 9
+        // Possible wall positions - around the player area but not inside
+        // Define positions on each side of player area (one cell outside)
+        const candidatePositions = [];
         
-        // Wall layer is ONE CELL outside the spawn area
-        const wallStart = spawnStart - 1;  // 4
-        const wallEnd = spawnEnd + 1;      // 10
-        
-        // Create gaps in the wall border (2 cells wide at center of each side)
-        const gapPositions = [
-            { x: center - 1, y: wallStart }, { x: center, y: wallStart },      // Top gap (2 cells)
-            { x: center - 1, y: wallEnd }, { x: center, y: wallEnd },          // Bottom gap (2 cells)
-            { x: wallStart, y: center - 1 }, { x: wallStart, y: center },      // Left gap (2 cells)
-            { x: wallEnd, y: center - 1 }, { x: wallEnd, y: center }           // Right gap (2 cells)
-        ];
-        const gapSet = new Set(gapPositions.map(g => `${g.x},${g.y}`));
-        
-        // Create wall border around spawn area (with gaps)
-        for (let x = wallStart; x <= wallEnd; x++) {
-            for (let y = wallStart; y <= wallEnd; y++) {
-                // Skip if inside spawn area (walls only on border)
-                if (x >= spawnStart && x <= spawnEnd && y >= spawnStart && y <= spawnEnd) {
-                    continue;
-                }
-                
-                // Only place walls on the border ring (one cell layer)
-                if (x === wallStart || x === wallEnd || y === wallStart || y === wallEnd) {
-                    // Skip if this position is a gap
-                    if (gapSet.has(`${x},${y}`)) {
-                        continue;
-                    }
-                    // Ensure within bounds
-                    if (x >= 0 && x < size && y >= 0 && y < size) {
-                        this.gridSystem.addObstacle(x, y, 'wall');
-                    }
-                }
+        // Top side (above player area)
+        for (let x = playerArea.x1; x < playerArea.x2; x++) {
+            const y = playerArea.y1 - 1;
+            if (y >= 0 && this.isValidWallPosition(x, y, playerArea)) {
+                candidatePositions.push({ x, y });
             }
         }
+        
+        // Bottom side (below player area)
+        for (let x = playerArea.x1; x < playerArea.x2; x++) {
+            const y = playerArea.y2;
+            if (y < size && this.isValidWallPosition(x, y, playerArea)) {
+                candidatePositions.push({ x, y });
+            }
+        }
+        
+        // Left side (left of player area)
+        for (let y = playerArea.y1; y < playerArea.y2; y++) {
+            const x = playerArea.x1 - 1;
+            if (x >= 0 && this.isValidWallPosition(x, y, playerArea)) {
+                candidatePositions.push({ x, y });
+            }
+        }
+        
+        // Right side (right of player area)
+        for (let y = playerArea.y1; y < playerArea.y2; y++) {
+            const x = playerArea.x2;
+            if (x < size && this.isValidWallPosition(x, y, playerArea)) {
+                candidatePositions.push({ x, y });
+            }
+        }
+        
+        // Shuffle candidate positions
+        for (let i = candidatePositions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [candidatePositions[i], candidatePositions[j]] = [candidatePositions[j], candidatePositions[i]];
+        }
+        
+        // Place 2-3 walls with minimum 2-cell gap
+        const numWalls = 2 + Math.floor(Math.random() * 2); // 2 or 3 walls
+        const placedWalls = [];
+        
+        for (const pos of candidatePositions) {
+            if (placedWalls.length >= numWalls) break;
+            
+            // Check minimum 2-cell gap from all placed walls
+            let minDistance = Infinity;
+            for (const placed of placedWalls) {
+                const dist = Math.abs(pos.x - placed.x) + Math.abs(pos.y - placed.y);
+                minDistance = Math.min(minDistance, dist);
+            }
+            
+            // Place if gap >= 2 cells (or it's the first wall)
+            if (placedWalls.length === 0 || minDistance >= 2) {
+                this.gridSystem.addObstacle(pos.x, pos.y, 'wall');
+                placedWalls.push(pos);
+            }
+        }
+    }
+    
+    // Helper to check if position is valid for wall placement
+    isValidWallPosition(x, y, playerArea) {
+        // Must be within bounds
+        if (x < 0 || x >= this.currentStage.width || y < 0 || y >= this.currentStage.height) {
+            return false;
+        }
+        // Must not be inside player area
+        if (x >= playerArea.x1 && x < playerArea.x2 && y >= playerArea.y1 && y < playerArea.y2) {
+            return false;
+        }
+        return true;
     }
 
     clearObstacles() {
@@ -793,126 +839,60 @@ export class BattleScene extends Phaser.Scene {
     }
 
     generateMountainObstacles() {
-        // Mountain Pass: Generate rocks randomly without trapping units
-        // Ensure 2x2 bosses can spawn and move
-        // Chokepoint layout: density gradient based on Y position
+        // Mountain Pass: Generate rocks ONLY on the top and bottom edges
+        // 90% on row 0 and row 10 (last row)
+        // 75% on row 1 and row 9 (second row)
+        // 25% on row 2 and row 8 (third row)
+        // NO rocks in the middle (rows 3-7)
+        // Rocks never spawn on player or enemy spawn areas
         const width = this.gridSystem.width;
         const height = this.gridSystem.height;
         const playerArea = this.currentStage.playerArea;
 
-        // Define enemy spawn zone (must match getEnemySpawnPositions!)
-        const spawnZoneHeight = 6;
-        const spawnStartY = Math.floor((height - spawnZoneHeight) / 2);
-        const spawnEndY = spawnStartY + spawnZoneHeight;
+        // Define enemy spawn zone - rightmost 3 columns
         const spawnStartX = width - 3;
         const spawnEndX = width;
 
         const obstacles = [];
-        const rockSet = new Set();
-
-        // Helper to check if a position has a rock
-        const hasRock = (x, y) => rockSet.has(`${x},${y}`);
-
-        // Helper to check if placing a rock at (x,y) would create a 2x2 block
-        const creates2x2Block = (x, y) => {
-            // Check all four possible 2x2 squares that include (x,y)
-            const checks = [
-                [[x-1, y-1], [x, y-1], [x-1, y], [x, y]],  // top-left
-                [[x, y-1], [x+1, y-1], [x, y], [x+1, y]],  // top-right
-                [[x-1, y], [x, y], [x-1, y+1], [x, y+1]],  // bottom-left
-                [[x, y], [x+1, y], [x, y+1], [x+1, y+1]]   // bottom-right
-            ];
-
-            for (const square of checks) {
-                let rockCount = 0;
-                let validCells = 0;
-                for (const [cx, cy] of square) {
-                    if (cx >= 0 && cx < width && cy >= 0 && cy < height) {
-                        validCells++;
-                        if (hasRock(cx, cy) || (cx === x && cy === y)) {
-                            rockCount++;
-                        }
-                    }
-                }
-                // If all 4 cells exist and would be blocked, that's a problem
-                if (validCells === 4 && rockCount === 4) {
-                    return true;
-                }
-            }
-            return false;
-        };
 
         // Helper to check if position is in player spawn area (keep clear)
-        const isSpawnArea = (x, y) => {
+        const isPlayerSpawn = (x, y) => {
             return x >= playerArea.x1 && x < playerArea.x2 &&
                    y >= playerArea.y1 && y < playerArea.y2;
         };
 
         // Helper to check if position is in enemy spawn zone (keep clear)
-        const isEnemySpawnZone = (x, y) => {
-            return x >= spawnStartX && x < spawnEndX &&
-                   y >= spawnStartY && y < spawnEndY;
+        const isEnemySpawn = (x, y) => {
+            return x >= spawnStartX && x < spawnEndX;
         };
 
-        // Helper to check if there's a unit at position (player units already placed)
-        const hasUnit = (x, y) => {
-            return this.unitManager.getUnitAt(x, y) !== null;
+        // Rock density by row - only edges
+        const getRockChance = (y) => {
+            if (y === 0 || y === height - 1) return 0.98;  // First/last row: 98% (almost solid)
+            if (y === 1 || y === height - 2) return 0.88;  // Second row: 88%
+            if (y === 2 || y === height - 3) return 0.35;  // Third row: 35%
+            return 0;  // Middle rows: no rocks
         };
 
-        // Density gradient based on Y position for chokepoint effect
-        // For Mountain Pass (19x19 grid, height=19):
-        // Row 0-1: 80-90% rocks (dense edge)
-        // Row 2: 30% rocks (transition)
-        // Row 3+: Open (chokepoint)
-        // Same pattern from bottom (rows 16-18 mirror rows 0-2)
-        const rockChance = (y) => {
-            if (y <= 1) return 0.85;          // Top edge (rows 0-1): 85% density
-            if (y === 2) return 0.30;          // Row 2: 30% transition
-            if (y < height - 2) return 0.05;   // Middle (rows 3 to height-3): nearly open
-            if (y === height - 2) return 0.30; // Row height-2: 30% transition
-            return 0.85;                       // Bottom edge (last 2 rows): 85% density
-        };
-
-        // Generate rocks with constraints
+        // Generate rocks only on edge rows
         for (let y = 0; y < height; y++) {
+            const chance = getRockChance(y);
+            if (chance === 0) continue;  // Skip middle rows
+
             for (let x = 0; x < width; x++) {
                 // Skip player spawn area
-                if (isSpawnArea(x, y)) continue;
+                if (isPlayerSpawn(x, y)) continue;
                 
-                // Skip enemy spawn zone - NO ROCKS HERE
-                if (isEnemySpawnZone(x, y)) continue;
+                // Skip enemy spawn zone
+                if (isEnemySpawn(x, y)) continue;
 
-                // Skip if there's a unit at this position (player units already placed)
-                if (hasUnit(x, y)) continue;
-
-                // Random placement with density based on Y position (chokepoint gradient)
-                if (Math.random() < rockChance(y)) {
-                    // Check if this would create a 2x2 block (traps 1x1 units)
-                    if (!creates2x2Block(x, y)) {
-                        rockSet.add(`${x},${y}`);
-                        // Random rock variation
-                        const rockTypes = ['rock', 'rock_tall', 'rock_wide', 'rock_jagged'];
-                        const rockType = rockTypes[Math.floor(Math.random() * rockTypes.length)];
-                        obstacles.push({ x, y, type: rockType });
-                    }
+                // Random placement based on row density
+                if (Math.random() < chance) {
+                    // Random rock variation
+                    const rockTypes = ['rock', 'rock_tall', 'rock_wide', 'rock_jagged'];
+                    const rockType = rockTypes[Math.floor(Math.random() * rockTypes.length)];
+                    obstacles.push({ x, y, type: rockType });
                 }
-            }
-        }
-        
-        // Simple path check: ensure spawn area is connected to enemy spawn areas
-        const reachable = this.countReachable(width, height, obstacles, 
-            Math.floor((playerArea.x1 + playerArea.x2) / 2),
-            Math.floor((playerArea.y1 + playerArea.y2) / 2)
-        );
-        const totalCells = width * height - ((playerArea.x2 - playerArea.x1) * (playerArea.y2 - playerArea.y1));
-        
-        // If less than 50% of map is reachable, reduce rocks
-        if (reachable < totalCells * 0.5) {
-            console.warn('[SceneManager] Map connectivity low, reducing rocks');
-            while (obstacles.length > totalCells * 0.1 && reachable < totalCells * 0.7) {
-                const idx = Math.floor(Math.random() * obstacles.length);
-                const removed = obstacles.splice(idx, 1)[0];
-                rockSet.delete(`${removed.x},${removed.y}`);
             }
         }
         
@@ -3264,13 +3244,21 @@ export class BattleScene extends Phaser.Scene {
         }));
 
         const nextBattleNumber = this.battleNumber + 1;
+        
+        // Save obstacles to persist across battles on the same map
+        const savedObstacles = this.gridSystem.wallImages ? this.gridSystem.wallImages.map(w => ({
+            x: w.x,
+            y: w.y,
+            type: w.type || 'wall'
+        })) : null;
 
         this.scene.restart({
             battleNumber: nextBattleNumber,
             placedUnits: playerUnits,
             magicBuffs: this.magicBuffs,
             selectedEnemyFaction: this.currentEnemyFaction,
-            stageId: this.currentStage.id
+            stageId: this.currentStage.id,
+            savedObstacles: savedObstacles
         });
     }
 
