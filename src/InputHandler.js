@@ -25,10 +25,28 @@ export class GridSystem {
     create() {
         // Determine tile image key based on stage
         const tileType = this.scene.currentStage?.tileType || 'grass';
-        const tileImageKey = tileType === 'dirt' ? 'dirt_tile' : 
-                             tileType === 'rock' ? 'rock_tile' : 'grass_tile';
+        const stageId = this.scene.currentStage?.id;
         const tileSize = this.tileSize;
-        const hasTileImage = this.scene.textures.exists(tileImageKey);
+        
+        // Forest map uses random grass tiles for variety
+        const grassTileKeys = ['grass1', 'grass2', 'grass3'];
+        const isForest = stageId === 'forest';
+        
+        let tileImageKey;
+        if (tileType === 'dirt') {
+            tileImageKey = 'dirt_tile';
+        } else if (tileType === 'rock') {
+            tileImageKey = 'rock_tile';
+        } else if (isForest) {
+            // Forest uses random grass tiles
+            tileImageKey = grassTileKeys; // Array for random selection
+        } else {
+            tileImageKey = 'dirt_tile'; // fallback
+        }
+        
+        const hasTileImage = isForest 
+            ? grassTileKeys.some(key => this.scene.textures.exists(key))
+            : this.scene.textures.exists(tileImageKey);
 
         // Create tile graphics
         for (let y = 0; y < this.height; y++) {
@@ -38,10 +56,15 @@ export class GridSystem {
                 
                 if (hasTileImage) {
                     // Use tile image sprite
+                    // For forest, randomly pick one of the grass tiles
+                    const selectedTileKey = isForest 
+                        ? grassTileKeys[Math.floor(Math.random() * grassTileKeys.length)]
+                        : tileImageKey;
+                    
                     tile = this.scene.add.image(
                         x * tileSize + tileSize / 2,
                         y * tileSize + tileSize / 2,
-                        tileImageKey
+                        selectedTileKey
                     );
                     tile.setDisplaySize(tileSize, tileSize);
                 } else {
