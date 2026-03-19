@@ -3,20 +3,7 @@
 // ============================================
 
 import { SPELLS, CONFIG } from './GameConfig.js';
-
-// i18n helper function
-function t(key, ...args) {
-    if (typeof window !== 'undefined' && window.i18n) {
-        return window.i18n.t(key, ...args);
-    }
-    let text = key;
-    if (args.length > 0) {
-        return text.replace(/\{(\d+)\}/g, (match, index) => {
-            return args[parseInt(index)] !== undefined ? args[parseInt(index)] : match;
-        });
-    }
-    return text;
-}
+import { t } from './i18n-helper.js';
 
 export class SpellSystem {
     constructor(scene) {
@@ -373,7 +360,11 @@ export class SpellSystem {
     }
 
     executeHaste(spell, unit) {
-        unit.moveRange += spell.power;
+        // Only apply the movement bonus if haste is not already active (hasteRounds 0 = inactive).
+        // Recasting on an already-hasted unit just refreshes the duration without stacking the bonus.
+        if (unit.hasteRounds === 0) {
+            unit.moveRange += spell.power;
+        }
         // If permanentBuffs is enabled, duration is -1 (permanent), otherwise use spell duration
         unit.hasteRounds = this.scene.permanentBuffs ? -1 : spell.duration;
         this.scene.uiManager.showBuffText(unit, 'HASTE!', '#ffff00');

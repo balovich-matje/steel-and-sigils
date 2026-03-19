@@ -2,24 +2,12 @@
 // UI HANDLER - HUD, Buttons, Text Overlays
 // ============================================
 
+import { t } from './i18n-helper.js';
+
 // Note: UNIT_TYPES is available globally from units.js (loaded as script tag)
 
 // Global display mode for unit stats (1 = base + modifiers, 2 = current values)
 window.unitStatDisplayMode = window.unitStatDisplayMode || 1;
-
-// i18n helper function
-function t(key, ...args) {
-    if (typeof window !== 'undefined' && window.i18n) {
-        return window.i18n.t(key, ...args);
-    }
-    let text = key;
-    if (args.length > 0) {
-        return text.replace(/\{(\d+)\}/g, (match, index) => {
-            return args[parseInt(index)] !== undefined ? args[parseInt(index)] : match;
-        });
-    }
-    return text;
-}
 
 // ============================================
 // UI MANAGER

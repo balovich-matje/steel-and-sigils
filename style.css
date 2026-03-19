@@ -467,15 +467,15 @@ body {
     justify-content: flex-start;
     align-items: center;
     z-index: 1000;
-    overflow-y: auto;
-    padding: 40px 20px;
+    overflow: hidden;
+    padding: 12px 20px 8px;
     box-sizing: border-box;
 }
 
 .victory-screen h2 {
     color: #A68966;
-    font-size: 48px;
-    margin-bottom: 20px;
+    font-size: 32px;
+    margin-bottom: 6px;
     text-shadow: 2px 2px 4px #000;
 }
 
@@ -871,6 +871,8 @@ body {
     user-select: none;
     display: flex;
     flex-direction: column;
+    padding: 10px !important;
+    min-width: 130px !important;
 }
 
 .reward-card:hover {

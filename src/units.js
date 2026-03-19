@@ -15,12 +15,14 @@ const UNIT_TYPES = {
         initiative: 12,
         isPlayer: true,
         cost: 200,
-        passive: {
-            name: 'Heavy Armor',
-            description: '-50% damage from ranged attacks',
-            effect: 'rangedDefense',
-            value: 0.5
-        }
+        passives: [
+            {
+                name: 'Heavy Armor',
+                description: '-50% damage from ranged attacks',
+                effect: 'rangedDefense',
+                value: 0.5
+            }
+        ]
     },
     ARCHER: {
         name: 'Archer',
@@ -47,12 +49,14 @@ const UNIT_TYPES = {
         initiative: 10,
         isPlayer: true,
         cost: 500,
-        passive: {
-            name: 'Arcane Channeling',
-            description: 'Each Wizard increases mana regen by +2 per turn',
-            effect: 'manaRegen',
-            value: 2
-        }
+        passives: [
+            {
+                name: 'Arcane Channeling',
+                description: 'Each Wizard increases mana regen by +2 per turn',
+                effect: 'manaRegen',
+                value: 2
+            }
+        ]
     },
     PALADIN: {
         name: 'Paladin',
@@ -65,12 +69,14 @@ const UNIT_TYPES = {
         initiative: 9,
         isPlayer: true,
         cost: 800,
-        passive: {
-            name: 'Divine Protection',
-            description: '-50% ranged damage taken, +50% healing received',
-            effects: ['rangedDefense', 'healingBoost'],
-            values: [0.5, 0.5]
-        }
+        passives: [
+            {
+                name: 'Divine Protection',
+                description: '-50% ranged damage taken, +50% healing received',
+                effects: ['rangedDefense', 'healingBoost'],
+                values: [0.5, 0.5]
+            }
+        ]
     },
     RANGER: {
         name: 'Ranger',
@@ -84,10 +90,12 @@ const UNIT_TYPES = {
         initiative: 13,
         isPlayer: true,
         cost: 800,
-        passive: {
-            name: 'Eagle Eye',
-            description: '10 tile range'
-        }
+        passives: [
+            {
+                name: 'Eagle Eye',
+                description: '10 tile range'
+            }
+        ]
     },
     BERSERKER: {
         name: 'Berserker',
@@ -123,10 +131,12 @@ const UNIT_TYPES = {
         initiative: 10,
         isPlayer: true,
         cost: 500,
-        passive: {
-            name: 'Blessed Touch',
-            description: 'Can cast Heal once per turn. Army-wide +50% healing.'
-        }
+        passives: [
+            {
+                name: 'Blessed Touch',
+                description: 'Can cast Heal once per turn. Army-wide +50% healing.'
+            }
+        ]
     },
     ROGUE: {
         name: 'Rogue',
@@ -139,10 +149,12 @@ const UNIT_TYPES = {
         initiative: 16,
         isPlayer: true,
         cost: 500,
-        passive: {
-            name: 'Shadow Step',
-            description: 'Returns to starting position after attack'
-        }
+        passives: [
+            {
+                name: 'Shadow Step',
+                description: 'Returns to starting position after attack'
+            }
+        ]
     },
     SORCERER: {
         name: 'Sorcerer',
@@ -156,10 +168,12 @@ const UNIT_TYPES = {
         initiative: 14,
         isPlayer: true,
         cost: 800,
-        passive: {
-            name: 'Arcane Mastery',
-            description: '+50% spell damage'
-        }
+        passives: [
+            {
+                name: 'Arcane Mastery',
+                description: '+50% spell damage'
+            }
+        ]
     },
     // Enemy unit types with point costs
     ORC_WARRIOR: {
@@ -227,12 +241,14 @@ const UNIT_TYPES = {
         cost: 1500,
         isBoss: true,
         bossSize: 2, // 2x2 cells
-        passive: {
-            name: 'Brutal Regeneration',
-            description: 'Regenerates 10% max HP per turn. Attacks slow enemies by 0.5 MOV for 2 turns.',
-            effect: 'regenerationAndSlow',
-            value: 0.1
-        }
+        passives: [
+            {
+                name: 'Brutal Regeneration',
+                description: 'Regenerates 10% max HP per turn. Attacks slow enemies by 0.5 MOV for 2 turns.',
+                effect: 'regenerationAndSlow',
+                value: 0.1
+            }
+        ]
     },
     ORC_SHAMAN_KING: {
         name: 'Orc Shaman King',
@@ -248,12 +264,14 @@ const UNIT_TYPES = {
         cost: 1200,
         isBoss: true,
         bossSize: 2, // 2x2 cells
-        passive: {
-            name: 'Arcane Mastery',
-            description: 'Casts Chain Lightning and Fireball spells. Keeps distance from enemies.',
-            effect: 'spellcaster',
-            spells: ['chain_lightning', 'fireball']
-        }
+        passives: [
+            {
+                name: 'Arcane Mastery',
+                description: 'Casts Chain Lightning and Fireball spells. Keeps distance from enemies.',
+                effect: 'spellcaster',
+                spells: ['chain_lightning', 'fireball']
+            }
+        ]
     },
     LOOT_GOBLIN: {
         name: 'Loot Goblin',
@@ -270,11 +288,13 @@ const UNIT_TYPES = {
         isBoss: true,
         bossSize: 1, // 1x1 cell
         isRare: true, // Reduced spawn chance
-        passive: {
-            name: 'Hit and Run',
-            description: 'Returns to starting position after attacking. Drops legendary loot on death.',
-            effect: 'hitAndRun'
-        }
+        passives: [
+            {
+                name: 'Hit and Run',
+                description: 'Returns to starting position after attacking. Drops legendary loot on death.',
+                effect: 'hitAndRun'
+            }
+        ]
     },
     SUMMONER_LICH: {
         name: 'Summoner Lich',
@@ -352,7 +372,9 @@ const UNIT_TYPES = {
         health: 90, maxHealth: 90,
         damage: 25, moveRange: 4, initiative: 11,
         isPlayer: false, cost: 250,
-        passive: { name: 'Shielded', description: 'Takes 50% less damage from ranged attacks.', effect: 'rangedDefense', value: 0.5 }
+        passives: [
+            { name: 'Shielded', description: 'Takes 50% less damage from ranged attacks.', effect: 'rangedDefense', value: 0.5 }
+        ]
     },
     LOST_SPIRIT: {
         name: 'Lost Spirit',

@@ -3,22 +3,9 @@
 // ============================================
 
 import { CONFIG, SPELLS } from './GameConfig.js';
+import { t } from './i18n-helper.js';
 
 // Note: UNIT_TYPES is available globally from units.js (loaded as script tag)
-
-// i18n helper function
-function t(key, ...args) {
-    if (typeof window !== 'undefined' && window.i18n) {
-        return window.i18n.t(key, ...args);
-    }
-    let text = key;
-    if (args.length > 0) {
-        return text.replace(/\{(\d+)\}/g, (match, index) => {
-            return args[parseInt(index)] !== undefined ? args[parseInt(index)] : match;
-        });
-    }
-    return text;
-}
 
 // ============================================
 // UNIT CLASS
@@ -145,13 +132,17 @@ export class Unit {
             // Divine Retribution removes the ranged defense and healing boost passives
             if (!this.hasDivineRetribution) {
                 const template = UNIT_TYPES[this.type];
-                if (template.passive) {
-                    // Handle both formats: effect/value and effects/values array
-                    if (template.passive.effect === 'rangedDefense') {
-                        amount = Math.floor(amount * (1 - template.passive.value));
-                    } else if (template.passive.effects && template.passive.effects.includes('rangedDefense')) {
-                        const idx = template.passive.effects.indexOf('rangedDefense');
-                        amount = Math.floor(amount * (1 - template.passive.values[idx]));
+                if (template.passives) {
+                    // Find passive with rangedDefense effect
+                    for (const passive of template.passives) {
+                        if (passive.effect === 'rangedDefense') {
+                            amount = Math.floor(amount * (1 - passive.value));
+                            break;
+                        } else if (passive.effects && passive.effects.includes('rangedDefense')) {
+                            const idx = passive.effects.indexOf('rangedDefense');
+                            amount = Math.floor(amount * (1 - passive.values[idx]));
+                            break;
+                        }
                     }
                 }
             }
@@ -167,7 +158,8 @@ export class Unit {
         this.updateHealthBar();
 
         // Ogre Chieftain: Apply slow debuff on attack (if attacker is Ogre Chieftain)
-        if (attacker && attacker.type === 'OGRE_CHIEFTAIN' && this.health > 0) {
+        // Berserker's Reckless passive makes them immune to movement reduction
+        if (attacker && attacker.type === 'OGRE_CHIEFTAIN' && this.health > 0 && this.type !== 'BERSERKER') {
             // Remove existing slow if any (doesn't stack)
             if (this.slowDebuffRounds > 0) {
                 this.moveRange += this.slowDebuffValue;
@@ -234,6 +226,17 @@ export class Unit {
             }
         }
 
+        // Clear silence aura if The Silence was killed
+        if (this.type === 'THE_SILENCE' && scene && scene.silenceActive) {
+            scene.silenceActive = false;
+            if (scene.uiManager) {
+                scene.uiManager.showFloatingText('🔇 Silence lifted!', 400, 250, '#6B8B5B');
+            }
+            if (scene.addCombatLog) {
+                scene.addCombatLog('The aura of silence dissipates as The Silence falls!', 'spell');
+            }
+        }
+
         // Bloodlust: If killed by Berserker, they get +15 permanent damage
         if (this.killedBy && this.killedBy.type === 'BERSERKER' && !this.killedBy.isDead) {
             this.killedBy.damage += 15;
@@ -244,6 +247,18 @@ export class Unit {
             }
             if (scene && scene.addCombatLog) {
                 scene.addCombatLog(`${this.killedBy.name} gained +15 DMG from Bloodlust! (${this.killedBy.bloodlustStacks} stacks)`, 'buff');
+            }
+            // Warlust mythic: each kill also grants +5 permanent Max HP
+            if (this.killedBy.hasWarlust) {
+                this.killedBy.maxHealth += 5;
+                this.killedBy.health = Math.min(this.killedBy.health + 5, this.killedBy.maxHealth);
+                this.killedBy.updateHealthBar();
+                if (scene && scene.uiManager) {
+                    scene.uiManager.showFloatingText('+5 HP', this.killedBy.sprite.x, this.killedBy.sprite.y - 60, '#cc4444');
+                }
+                if (scene && scene.addCombatLog) {
+                    scene.addCombatLog(`${this.killedBy.name} gained +5 Max HP from Warlust!`, 'buff');
+                }
             }
         }
 
@@ -482,7 +497,7 @@ export class Unit {
             if (this.unstableFormRounds === 0) {
                 // Revert the buff by subtracting the bonus (preserves scaling and other modifiers)
                 if (this.unstableFormType === 'movement' && this.unstableFormBonus) {
-                    this.moveRange -= this.unstableFormBonus;
+                    this.moveRange = Math.max(1, this.moveRange - this.unstableFormBonus);
                 } else if (this.unstableFormType === 'damage' && this.unstableFormBonus) {
                     this.damage -= this.unstableFormBonus;
                 }
@@ -617,12 +632,9 @@ export class Unit {
         const template = UNIT_TYPES[this.type];
         let passiveDisplay = '';
 
-        // Handle multiple passives (e.g., Berserker)
+        // Handle passives
         if (template.passives) {
             passiveDisplay = template.passives.map(p => `<br>⚔️ ${p.name}: ${p.description}`).join('');
-        } else if (template.passive) {
-            const passiveEmoji = this.type === 'KNIGHT' ? '🛡️' : '🔮';
-            passiveDisplay = `<br>${passiveEmoji} ${t('panel.abilities').replace('⚡ ', '')}: ${template.passive.name}`;
         }
 
         const specialDisplay = template.special ? `<br>⚡ ${t('panel.abilities').replace('⚡ ', '')}: Hit & Run` : '';
@@ -957,6 +969,13 @@ export class TurnSystem {
         this.scene.spellsCastThisRound = 0;
         // Reset spell button at start of new round
         this.scene.spellSystem.resetSpellButton();
+
+        // Apply The Silence aura immediately at round start so no unit can cast before its turn
+        const silence = this.scene.unitManager.units.find(u => u.type === 'THE_SILENCE' && !u.isDead);
+        if (silence) {
+            this.scene.silenceActive = true;
+        }
+
         this.updateQueue();
         this.nextTurn();
     }
@@ -1237,6 +1256,8 @@ export class TurnSystem {
             scene.uiManager.showFloatingText('🌑 VOID SLOW! Movement reduced!', 400, 200, '#6B5B8B');
 
             for (const player of playerUnits) {
+                // Berserker's Reckless passive: immune to movement reduction
+                if (player.type === 'BERSERKER') continue;
                 // Reduce movement by 3, minimum 1
                 const slowAmount = 3;
                 player.moveRange = Math.max(1, player.moveRange - slowAmount);

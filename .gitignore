@@ -2,6 +2,10 @@
 *.md
 !README.md
 
+# macOS system files
+.DS_Store
+**/.DS_Store
+
 # Utils folder - image generation outputs and temp files
 utils/*
 

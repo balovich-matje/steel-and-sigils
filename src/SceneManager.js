@@ -3,27 +3,14 @@
 // ============================================
 
 import { CONFIG, SPELLS, STAGES } from './GameConfig.js';
+import { t } from './i18n-helper.js';
+import { initDebug } from './debug.js';
 
 // Note: UNIT_TYPES is available globally from units.js (loaded as script tag)
 import { UnitManager, TurnSystem } from './EntityManager.js';
 import { GridSystem } from './InputHandler.js';
 import { SpellSystem } from './SpellSystem.js';
 import { UIManager } from './UIHandler.js';
-
-// i18n helper function - uses global i18n if available, otherwise returns key
-function t(key, ...args) {
-    if (typeof window !== 'undefined' && window.i18n) {
-        return window.i18n.t(key, ...args);
-    }
-    // Fallback: return key with placeholders replaced
-    let text = key;
-    if (args.length > 0) {
-        return text.replace(/\{(\d+)\}/g, (match, index) => {
-            return args[parseInt(index)] !== undefined ? args[parseInt(index)] : match;
-        });
-    }
-    return text;
-}
 
 const ENEMY_FACTIONS = {
     GREENSKIN_HORDE: ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER'],
@@ -60,6 +47,7 @@ export class BattleScene extends Phaser.Scene {
         this.currentStage = null;
         this.tileSize = CONFIG.TILE_SIZE || 64;
         this.silenceActive = false; // The Silence boss ability
+        this.lastBossSpawned = null; // Tracks last boss to prevent back-to-back repeats
     }
 
     preload() {
@@ -107,7 +95,6 @@ export class BattleScene extends Phaser.Scene {
         this.load.image('grass3', 'images/tiles/grass3.png');
         this.load.image('dirt_tile', 'images/tiles/dirt.png');
         this.load.image('rock_tile', 'images/tiles/rock.png');
-        this.load.image('road_tile', 'images/tiles/road.png');
     }
 
     create(data) {
@@ -146,6 +133,11 @@ export class BattleScene extends Phaser.Scene {
         // Track battle number for scaling
         if (data && data.battleNumber) {
             this.battleNumber = data.battleNumber;
+        }
+
+        // Restore last boss to enforce no-repeat rule
+        if (data && data.lastBossSpawned) {
+            this.lastBossSpawned = data.lastBossSpawned;
         }
 
         // Determine enemy faction for this run
@@ -206,7 +198,13 @@ export class BattleScene extends Phaser.Scene {
                         unit.maxHealth += unitData.statModifiers.maxHealth;
                         unit.health += unitData.statModifiers.maxHealth;
                     }
-                    if (unitData.statModifiers.moveRange) unit.moveRange += unitData.statModifiers.moveRange;
+                    if (unitData.statModifiers.moveRange) {
+                        // Berserker is immune to movement reduction — only apply positive modifiers
+                        const movAdj = unit.type === 'BERSERKER'
+                            ? Math.max(0, unitData.statModifiers.moveRange)
+                            : unitData.statModifiers.moveRange;
+                        unit.moveRange += movAdj;
+                    }
                     if (unitData.statModifiers.initiative) unit.initiative += unitData.statModifiers.initiative;
                     if (unitData.statModifiers.rangedRange) unit.rangedRange = unitData.statModifiers.rangedRange;
 
@@ -221,6 +219,8 @@ export class BattleScene extends Phaser.Scene {
                     if (unitData.statModifiers.hasDivineRetribution) unit.hasDivineRetribution = true;
                     if (unitData.statModifiers.hasUnstableArcana) unit.hasUnstableArcana = true;
                     if (unitData.statModifiers.hasTemporalShift) unit.hasTemporalShift = true;
+                    if (unitData.statModifiers.hasSilverArrows) unit.hasSilverArrows = true;
+                    if (unitData.statModifiers.hasWarlust) unit.hasWarlust = true;
 
                     unit.updateHealthBar();
                 }
@@ -229,6 +229,13 @@ export class BattleScene extends Phaser.Scene {
                 if (unitData.bloodlustStacks && unit.type === 'BERSERKER') {
                     unit.bloodlustStacks = unitData.bloodlustStacks;
                     unit.damage += unitData.bloodlustStacks * 15;
+                    // Warlust mythic: also restore HP bonus per stack
+                    if (unit.hasWarlust) {
+                        const hpBonus = unitData.bloodlustStacks * 5;
+                        unit.maxHealth += hpBonus;
+                        unit.health = Math.min(unit.health + hpBonus, unit.maxHealth);
+                        unit.updateHealthBar();
+                    }
                 }
 
                 // Restore current health (if saved)
@@ -308,6 +315,7 @@ export class BattleScene extends Phaser.Scene {
 
         // Make scene accessible globally for UI buttons
         window.gameScene = this;
+        initDebug(this);
 
         // Keyboard controls
         this.input.keyboard.on('keydown-S', () => {
@@ -645,19 +653,29 @@ export class BattleScene extends Phaser.Scene {
     createBossWave() {
         let selectedBoss;
         if (this.currentEnemyFaction === 'DUNGEON_DWELLERS') {
+            // Only one dungeon boss - always Summoner Lich
             selectedBoss = 'SUMMONER_LICH';
         } else if (this.currentEnemyFaction === 'OLD_GOD_WORSHIPPERS') {
-            // Randomly select between 3 cultist bosses
             const cultistBosses = ['OCTOTH_HROARATH', 'THE_SILENCE', 'VOID_HERALD'];
             selectedBoss = cultistBosses[Math.floor(Math.random() * cultistBosses.length)];
+            // No back-to-back: if same as last time, pick uniformly from the others
+            if (selectedBoss === this.lastBossSpawned) {
+                const others = cultistBosses.filter(b => b !== this.lastBossSpawned);
+                selectedBoss = others[Math.floor(Math.random() * others.length)];
+            }
         } else {
-            // Default to Greenskin Horde bosses
-            const bossTypes = ['OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN'];
+            // GREENSKIN_HORDE: weighted selection (30% Loot Goblin, 35%/35% the other two)
+            const bossPool = ['OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN'];
             const roll = Math.random();
             if (roll < 0.3) {
                 selectedBoss = 'LOOT_GOBLIN';
             } else {
                 selectedBoss = roll < 0.65 ? 'OGRE_CHIEFTAIN' : 'ORC_SHAMAN_KING';
+            }
+            // No back-to-back: if same as last time, pick uniformly from the others
+            if (selectedBoss === this.lastBossSpawned) {
+                const others = bossPool.filter(b => b !== this.lastBossSpawned);
+                selectedBoss = others[Math.floor(Math.random() * others.length)];
             }
         }
 
@@ -703,6 +721,9 @@ export class BattleScene extends Phaser.Scene {
             boss.health = boss.maxHealth;
             boss.damage = Math.floor(boss.damage * statMultiplier);
             boss.updateHealthBar();
+
+            // Track last boss spawned to prevent back-to-back repeats
+            this.lastBossSpawned = selectedBoss;
 
             // Mark this battle as having a loot goblin for special reward
             this.hasLootGoblin = (selectedBoss === 'LOOT_GOBLIN');
@@ -1329,14 +1350,14 @@ export class BattleScene extends Phaser.Scene {
             repeat: 2
         });
 
-        // Deal 50% damage to adjacent units in 3x3 area
+        // Deal 50% damage to all units in 3x3 area around the main target
         const cleaveDamage = Math.floor(fullDamage * 0.5);
         const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead);
 
         enemyUnits.forEach(enemy => {
             if (enemy === mainTarget) return;
-            const dist = Math.abs(enemy.gridX - mainTarget.gridX) + Math.abs(enemy.gridY - mainTarget.gridY);
-            if (dist <= 1) { // Adjacent in 3x3 area (including diagonals)
+            // Chebyshev distance: true 3x3 box (includes diagonals)
+            if (Math.abs(enemy.gridX - mainTarget.gridX) <= 1 && Math.abs(enemy.gridY - mainTarget.gridY) <= 1) {
                 const actualCleaveSplash = enemy.takeDamage(cleaveDamage, false, attacker);
                 this.uiManager.showDamageText(enemy, actualCleaveSplash);
                 this.addCombatLog(`${attacker.name} cleave hit ${enemy.name} dealing ${actualCleaveSplash} damage.`, 'damage');
@@ -1442,7 +1463,10 @@ export class BattleScene extends Phaser.Scene {
                 }
                 else {
                     const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
-                    const actualRangedDmg = defender.takeDamage(damage, true, attacker);
+                    const silverBonus = attacker.hasSilverArrows
+                        ? Math.floor(defender.maxHealth * (UNIT_TYPES[defender.type]?.isBoss ? 0.05 : 0.25))
+                        : 0;
+                    const actualRangedDmg = defender.takeDamage(damage + silverBonus, true, attacker);
                     this.uiManager.showDamageText(defender, actualRangedDmg);
                     this.addCombatLog(`${attacker.name} dealt ranged attack to ${defender.name} dealing ${actualRangedDmg} damage.`, 'damage');
 
@@ -1666,8 +1690,13 @@ export class BattleScene extends Phaser.Scene {
     performRicochetAttack(attacker, mainTarget) {
         const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
 
+        // Silver Arrows mythic: +25% of target's max HP as bonus damage (5% vs bosses)
+        const silverBonus = (target) => attacker.hasSilverArrows
+            ? Math.floor(target.maxHealth * (UNIT_TYPES[target.type]?.isBoss ? 0.05 : 0.25))
+            : 0;
+
         // Hit main target
-        const actualRicochetDmg = mainTarget.takeDamage(damage, true, attacker);
+        const actualRicochetDmg = mainTarget.takeDamage(damage + silverBonus(mainTarget), true, attacker);
         this.uiManager.showDamageText(mainTarget, actualRicochetDmg);
         this.uiManager.showBuffText(attacker, 'RICOCHET!', '#6B8B5B');
         this.addCombatLog(`${attacker.name} dealt ranged attack to ${mainTarget.name} dealing ${actualRicochetDmg} damage. Ricochet!`, 'damage');
@@ -1680,49 +1709,63 @@ export class BattleScene extends Phaser.Scene {
             repeat: 2
         });
 
-        // Find nearby enemies within 2 tiles to bounce to
+        // Chain ricochet: each bounce finds ONE new target within 2 tiles of the last hit,
+        // never revisiting already-hit units. All bounces deal the same damage (50% of base).
+        const hitTargets = new Set([mainTarget]);
         const bounceDamage = Math.floor(damage * 0.5);
-        const enemyUnits = this.unitManager.units.filter(u => !u.isPlayer && !u.isDead && u !== mainTarget);
 
-        enemyUnits.forEach((enemy, index) => {
-            const dist = Math.abs(enemy.gridX - mainTarget.gridX) + Math.abs(enemy.gridY - mainTarget.gridY);
-            if (dist <= 2) {
-                this.time.delayedCall(200 * (index + 1), () => {
-                    // Visual bounce arrow
-                    const bounceArrow = this.add.text(
-                        mainTarget.sprite.x, mainTarget.sprite.y - 20,
-                        '➤',
-                        { fontSize: '20px', color: '#8b4513' }
-                    ).setOrigin(0.5);
+        const bounceToNext = (lastHit, delay) => {
+            const candidates = this.unitManager.units.filter(u =>
+                !u.isPlayer && !u.isDead && !hitTargets.has(u) &&
+                Math.abs(u.gridX - lastHit.gridX) + Math.abs(u.gridY - lastHit.gridY) <= 2
+            );
+            if (candidates.length === 0) return;
 
-                    const bounceAngle = Phaser.Math.Angle.Between(
-                        mainTarget.sprite.x, mainTarget.sprite.y,
-                        enemy.sprite.x, enemy.sprite.y
-                    );
-                    bounceArrow.setRotation(bounceAngle);
+            const nextTarget = candidates[Math.floor(Math.random() * candidates.length)];
+            hitTargets.add(nextTarget);
 
-                    this.tweens.add({
-                        targets: bounceArrow,
-                        x: enemy.sprite.x,
-                        y: enemy.sprite.y,
-                        duration: 150,
-                        onComplete: () => {
-                            bounceArrow.destroy();
-                            const actualBounceDmg = enemy.takeDamage(bounceDamage, true, attacker);
-                            this.uiManager.showDamageText(enemy, actualBounceDmg);
-                            this.addCombatLog(`${attacker.name} ricochet hit ${enemy.name} dealing ${actualBounceDmg} damage.`, 'damage');
-                            this.tweens.add({
-                                targets: enemy.sprite,
-                                alpha: 0.3,
-                                duration: 50,
-                                yoyo: true,
-                                repeat: 1
-                            });
-                        }
-                    });
+            this.time.delayedCall(delay, () => {
+                if (nextTarget.isDead) return;
+
+                const bounceArrow = this.add.text(
+                    lastHit.sprite.x, lastHit.sprite.y - 20,
+                    '➤',
+                    { fontSize: '20px', color: '#8b4513' }
+                ).setOrigin(0.5);
+
+                const bounceAngle = Phaser.Math.Angle.Between(
+                    lastHit.sprite.x, lastHit.sprite.y,
+                    nextTarget.sprite.x, nextTarget.sprite.y
+                );
+                bounceArrow.setRotation(bounceAngle);
+
+                this.tweens.add({
+                    targets: bounceArrow,
+                    x: nextTarget.sprite.x,
+                    y: nextTarget.sprite.y,
+                    duration: 150,
+                    onComplete: () => {
+                        bounceArrow.destroy();
+                        if (nextTarget.isDead) return;
+                        const actualBounceDmg = nextTarget.takeDamage(bounceDamage + silverBonus(nextTarget), true, attacker);
+                        this.uiManager.showDamageText(nextTarget, actualBounceDmg);
+                        this.addCombatLog(`${attacker.name} ricochet hit ${nextTarget.name} dealing ${actualBounceDmg} damage.`, 'damage');
+                        this.tweens.add({
+                            targets: nextTarget.sprite,
+                            alpha: 0.3,
+                            duration: 50,
+                            yoyo: true,
+                            repeat: 1
+                        });
+                        this.checkVictoryCondition();
+                        // Continue chain from the newly hit target, damage halves each bounce
+                        bounceToNext(nextTarget, 350);
+                    }
                 });
-            }
-        });
+            });
+        };
+
+        bounceToNext(mainTarget, 200);
     }
 
     performPiercingAttack(attacker, target) {
@@ -2046,6 +2089,9 @@ export class BattleScene extends Phaser.Scene {
                 magic: null
             };
 
+            // Always rebuild the rewards container structure to get correct DOM elements
+            this.restoreRewardContainerStructure();
+
             // If loot goblin was killed, show special reward screen first
             if (this.lootGoblinReward) {
                 this.showLootGoblinReward();
@@ -2072,19 +2118,31 @@ export class BattleScene extends Phaser.Scene {
     restoreRewardContainerStructure() {
         const rewardsContainer = document.getElementById('rewards-container');
         rewardsContainer.innerHTML = `
-            <div style="width: 100%;">
-                <h3 style="color: #A68966; text-align: center; margin-bottom: 10px;" data-i18n="reward.recruit">⚔️ Recruit a New Unit</h3>
-                <div id="reward-units" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+            <div id="reward-units-section" style="width: 100%;">
+                <h3 style="color: #A68966; text-align: center; margin-bottom: 6px; font-size: 15px;" data-i18n="reward.recruit">⚔️ Recruit a New Unit</h3>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                    <div id="reward-units" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;"></div>
+                    <div id="discard-units-wrapper" style="display: none;">
+                        <button id="discard-units-btn" style="background: rgba(45,36,30,0.9); border: 2px solid #5D4E3E; color: #8B7355; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1.4; max-width: 120px; text-align: center;">
+                            🔄 Discard units<br>for bonus buff
+                        </button>
+                    </div>
+                </div>
             </div>
-            
-            <div style="width: 100%;">
-                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 10px;" data-i18n="reward.buff">💪 Buff an Existing Unit</h3>
-                <div id="reward-buffs" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+
+            <div id="reward-buffs-bonus-section" style="display: none; width: 100%;">
+                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 6px; font-size: 15px;">💪 Bonus Buff</h3>
+                <div id="reward-buffs-bonus" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;"></div>
             </div>
-            
+
             <div style="width: 100%;">
-                <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 10px;" data-i18n="reward.magic">🧙 Spell or Mana Enhancement</h3>
-                <div id="reward-magic" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;"></div>
+                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 6px; font-size: 15px;" data-i18n="reward.buff">💪 Buff an Existing Unit</h3>
+                <div id="reward-buffs" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;"></div>
+            </div>
+
+            <div style="width: 100%;">
+                <h3 style="color: #6B7A9A; text-align: center; margin-bottom: 6px; font-size: 15px;" data-i18n="reward.magic">🧙 Spell or Mana Enhancement</h3>
+                <div id="reward-magic" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;"></div>
             </div>
         `;
     }
@@ -2370,6 +2428,39 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
+        if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !hasProperty('RANGER', 'hasSilverArrows') && !usedBuffs.has('mythic_silver_arrows')) {
+            availableMythicBuffs.push({
+                id: 'mythic_silver_arrows',
+                name: 'Silver Arrows',
+                icon: '🏹',
+                desc: 'Ranger: Each hit deals +25% of target\'s max HP as bonus damage (5% vs bosses). Works with Ricochet.',
+                unitType: 'RANGER',
+                rarity: 'mythic',
+                effect: (unit) => {
+                    unit.hasSilverArrows = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasSilverArrows = true;
+                }
+            });
+        }
+
+        // Berserker mythic requires the unit to have Berserker Legendary `hasDoubleStrike`
+        if (playerUnits.some(u => u.type === 'BERSERKER') && hasProperty('BERSERKER', 'hasDoubleStrike') && !hasProperty('BERSERKER', 'hasWarlust') && !usedBuffs.has('mythic_warlust')) {
+            availableMythicBuffs.push({
+                id: 'mythic_warlust',
+                name: 'Warlust',
+                icon: '💀',
+                desc: 'Berserker: Each kill also grants +5 permanent Max HP (on top of Bloodlust\'s +15 DMG).',
+                unitType: 'BERSERKER',
+                rarity: 'mythic',
+                effect: (unit) => {
+                    unit.hasWarlust = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasWarlust = true;
+                }
+            });
+        }
+
         if (availableMythicBuffs.length === 0) {
             return null;
         }
@@ -2495,10 +2586,13 @@ export class BattleScene extends Phaser.Scene {
                     const hpDiff = unit.maxHealth;
                     unit.maxHealth += hpDiff;
                     unit.health += hpDiff;
-                    unit.moveRange = Math.max(1, unit.moveRange - 2);
                     unit.statModifiers = unit.statModifiers || {};
                     unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + hpDiff;
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) - 2;
+                    // Berserker's Reckless passive: immune to movement reduction
+                    if (unit.type !== 'BERSERKER') {
+                        unit.moveRange = Math.max(1, unit.moveRange - 2);
+                        unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) - 2;
+                    }
                     unit.updateHealthBar();
                 }
             },
@@ -2581,6 +2675,24 @@ export class BattleScene extends Phaser.Scene {
                 `, null, isLegendary);
                 unitContainer.appendChild(card);
             });
+
+            // Show the discard button with two-click confirmation
+            const discardWrapper = document.getElementById('discard-units-wrapper');
+            const discardBtn = document.getElementById('discard-units-btn');
+            if (discardWrapper && discardBtn) {
+                discardWrapper.style.display = 'flex';
+                let confirmPending = false;
+                discardBtn.onclick = () => {
+                    if (!confirmPending) {
+                        confirmPending = true;
+                        discardBtn.textContent = '⚠️ Confirm? This cannot be undone.';
+                        discardBtn.style.color = '#d94a4a';
+                        discardBtn.style.borderColor = '#d94a4a';
+                    } else {
+                        this.discardUnitsForBonusBuff();
+                    }
+                };
+            }
         } else {
             const roundMsg = this.battleNumber === 1 ? t('reward.no_unit_round1') : t('reward.no_unit_later', this.battleNumber + 1);
             unitContainer.innerHTML = `
@@ -2607,39 +2719,7 @@ export class BattleScene extends Phaser.Scene {
         }
 
         const buffContainer = document.getElementById('reward-buffs');
-        buffContainer.innerHTML = '';
-        buffOptions.forEach(buff => {
-            const isMythic = buff.id.startsWith('mythic_');
-            const isLegendary = buff.id.startsWith('legendary_');
-            const rarity = isMythic ? 'mythic' : (isLegendary ? 'legendary' : (buff.rarity || 'common'));
-
-            const nameColor = rarity === 'mythic' ? '#ff3333' : (rarity === 'legendary' ? '#ff8c00' : (rarity === 'epic' ? '#9B6BAB' : '#6B8B5B'));
-            const textShadow = rarity === 'mythic' ? ' text-shadow: 0 0 8px rgba(255, 26, 26, 0.6);' : (rarity === 'legendary' ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : (rarity === 'epic' ? ' text-shadow: 0 0 6px rgba(139, 91, 155, 0.5);' : ''));
-
-            let rarityLabel = '';
-            if (rarity === 'mythic') {
-                rarityLabel = '<div style="font-size: 11px; color: #ff3333; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 26, 26, 0.5);">🔥 Mythic Power</div>';
-            } else if (rarity === 'legendary') {
-                rarityLabel = '<div style="font-size: 11px; color: #ff8c00; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">⚡ Legendary Power</div>';
-            } else if (rarity === 'epic') {
-                rarityLabel = '<div style="font-size: 11px; color: #9B6BAB; margin-top: 2px; text-shadow: 0 0 4px rgba(139, 91, 155, 0.4);">⚡ Epic Power</div>';
-            }
-
-            const card = this.uiManager.createRewardCard(
-                rarity === 'mythic' ? 'mythic' : (rarity === 'legendary' ? 'legendary' : (rarity === 'epic' ? 'epic' : 'buff')),
-                buff.id,
-                `
-                    <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
-                    <div style="color: ${nameColor}; font-weight: bold;${textShadow}">${buff.name}</div>
-                    ${rarityLabel}
-                    <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
-                `,
-                buff,
-                rarity
-            );
-
-            buffContainer.appendChild(card);
-        });
+        this.renderBuffCards(buffOptions, buffContainer);
 
         // Filter out buffs that are already owned (unique buffs)
         const ownedBuffTypes = new Set(this.magicBuffs.map(b => b.type));
@@ -2732,6 +2812,70 @@ export class BattleScene extends Phaser.Scene {
         if (typeof window !== 'undefined' && window.i18n) {
             window.i18n.updatePage();
         }
+    }
+
+    // Render buff option cards into a container element
+    renderBuffCards(buffOptions, container) {
+        container.innerHTML = '';
+        buffOptions.forEach(buff => {
+            const isMythic = buff.id.startsWith('mythic_');
+            const isLegendary = buff.id.startsWith('legendary_');
+            const rarity = isMythic ? 'mythic' : (isLegendary ? 'legendary' : (buff.rarity || 'common'));
+
+            const nameColor = rarity === 'mythic' ? '#ff3333' : (rarity === 'legendary' ? '#ff8c00' : (rarity === 'epic' ? '#9B6BAB' : '#6B8B5B'));
+            const textShadow = rarity === 'mythic' ? ' text-shadow: 0 0 8px rgba(255, 26, 26, 0.6);' : (rarity === 'legendary' ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : (rarity === 'epic' ? ' text-shadow: 0 0 6px rgba(139, 91, 155, 0.5);' : ''));
+
+            let rarityLabel = '';
+            if (rarity === 'mythic') {
+                rarityLabel = '<div style="font-size: 11px; color: #ff3333; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 26, 26, 0.5);">🔥 Mythic Power</div>';
+            } else if (rarity === 'legendary') {
+                rarityLabel = '<div style="font-size: 11px; color: #ff8c00; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 140, 0, 0.5);">⚡ Legendary Power</div>';
+            } else if (rarity === 'epic') {
+                rarityLabel = '<div style="font-size: 11px; color: #9B6BAB; margin-top: 2px; text-shadow: 0 0 4px rgba(139, 91, 155, 0.4);">⚡ Epic Power</div>';
+            }
+
+            const card = this.uiManager.createRewardCard(
+                rarity === 'mythic' ? 'mythic' : (rarity === 'legendary' ? 'legendary' : (rarity === 'epic' ? 'epic' : 'buff')),
+                buff.id,
+                `
+                    <div style="font-size: 32px; margin-bottom: 5px;">${buff.icon}</div>
+                    <div style="color: ${nameColor}; font-weight: bold;${textShadow}">${buff.name}</div>
+                    ${rarityLabel}
+                    <div style="font-size: 12px; color: #B8A896; margin-top: 5px;">${buff.desc}</div>
+                `,
+                buff,
+                rarity
+            );
+            container.appendChild(card);
+        });
+    }
+
+    // Discard unit picks in exchange for a second buff row
+    discardUnitsForBonusBuff() {
+        // Mark unit as skipped so confirmRewards won't try to spawn one
+        this.selectedRewards.unit = { id: 'skipped' };
+
+        // Hide unit section
+        const unitSection = document.getElementById('reward-units-section');
+        if (unitSection) unitSection.style.display = 'none';
+
+        // Generate and show a bonus buff row
+        let specialBuff = this.tryGenerateMythicBuff() || this.tryGenerateLegendaryBuff();
+        let bonusBuffOptions;
+        if (specialBuff && Math.random() < 0.5) {
+            bonusBuffOptions = [specialBuff, ...this.getRandomBuffs(2)];
+        } else {
+            bonusBuffOptions = this.getRandomBuffs(3);
+        }
+
+        const bonusSection = document.getElementById('reward-buffs-bonus-section');
+        const bonusContainer = document.getElementById('reward-buffs-bonus');
+        if (bonusSection && bonusContainer) {
+            bonusSection.style.display = 'block';
+            this.renderBuffCards(bonusBuffOptions, bonusContainer);
+        }
+
+        this.updateConfirmButton();
     }
 
     // Try to generate a legendary buff (50% chance when called)
@@ -2886,6 +3030,40 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
+        // Ranger mythic requires the unit to have Ranger Legendary `hasRicochet`
+        if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !hasProperty('RANGER', 'hasSilverArrows')) {
+            availableMythicBuffs.push({
+                id: 'mythic_silver_arrows',
+                name: 'Silver Arrows',
+                icon: '🏹',
+                desc: 'Ranger: Each hit deals +25% of target\'s max HP as bonus damage (5% vs bosses). Works with Ricochet.',
+                unitType: 'RANGER',
+                rarity: 'mythic',
+                effect: (unit) => {
+                    unit.hasSilverArrows = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasSilverArrows = true;
+                }
+            });
+        }
+
+        // Berserker mythic requires the unit to have Berserker Legendary `hasDoubleStrike`
+        if (playerUnits.some(u => u.type === 'BERSERKER') && hasProperty('BERSERKER', 'hasDoubleStrike') && !hasProperty('BERSERKER', 'hasWarlust')) {
+            availableMythicBuffs.push({
+                id: 'mythic_warlust',
+                name: 'Warlust',
+                icon: '💀',
+                desc: 'Berserker: Each kill also grants +5 permanent Max HP (on top of Bloodlust\'s +15 DMG).',
+                unitType: 'BERSERKER',
+                rarity: 'mythic',
+                effect: (unit) => {
+                    unit.hasWarlust = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasWarlust = true;
+                }
+            });
+        }
+
         if (availableMythicBuffs.length === 0) {
             return null;
         }
@@ -2993,7 +3171,9 @@ export class BattleScene extends Phaser.Scene {
             'legendary_piercing': 'hasPiercing',
             'legendary_backstab': 'hasBackstab',
             'mythic_divine_retribution': 'hasDivineRetribution',
-            'mythic_unstable_arcana': 'hasUnstableArcana'
+            'mythic_unstable_arcana': 'hasUnstableArcana',
+            'mythic_silver_arrows': 'hasSilverArrows',
+            'mythic_warlust': 'hasWarlust'
         };
         const buffProperty = buffIdToProperty[buffId];
 
@@ -3119,7 +3299,7 @@ export class BattleScene extends Phaser.Scene {
         if (!hasBuff || !this.selectedRewards.magic) return;
         if (canGetNewUnit && !this.selectedRewards.unit) return;
 
-        if (canGetNewUnit && this.selectedRewards.unit) {
+        if (canGetNewUnit && this.selectedRewards.unit && this.selectedRewards.unit.id !== 'skipped') {
             const unitType = this.selectedRewards.unit.id;
             let spawnX, spawnY;
             
@@ -3261,7 +3441,8 @@ export class BattleScene extends Phaser.Scene {
             magicBuffs: this.magicBuffs,
             selectedEnemyFaction: this.currentEnemyFaction,
             stageId: this.currentStage.id,
-            savedObstacles: savedObstacles
+            savedObstacles: savedObstacles,
+            lastBossSpawned: this.lastBossSpawned
         });
     }
 
