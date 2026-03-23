@@ -1,4 +1,4 @@
-# ⚔️ Steel and Sigils v0.94
+# ⚔️ Steel and Sigils v0.96
 
 A browser-based tactical combat game inspired by Heroes of Might and Magic. Built with Phaser 3, vanilla JavaScript (ES6 modules), and CSS. No build tools required - runs directly in your browser.
 
@@ -17,6 +17,7 @@ A browser-based tactical combat game inspired by Heroes of Might and Magic. Buil
 - **Boss waves every 5th battle** featuring massive 2×2 bosses with unique mechanics
 - **Permadeath roguelike** - defeat means starting over
 - **Legendary & Mythic perks** that units can acquire through progression
+- **Mobile-friendly** layout with collapsible side panels and touch support
 
 ---
 
@@ -43,7 +44,7 @@ A browser-based tactical combat game inspired by Heroes of Might and Magic. Buil
 |------|-------|-----|-----|-----|------|------|---------|
 | **Paladin** | 🛡️ | 150 | 50 | 4 | 9 | 800 | Divine Protection: -50% ranged damage, +50% healing received |
 | **Ranger** | 🎯 | 70 | 50 | 2 | 13 | 800 | Eagle Eye: 10 tile range (longest in game) |
-| **Berserker** | 🪓 | 90 | 50 | 4 | 11 | 800 | Bloodlust: Killing blow permanently increases damage by 15. Reckless: +50% damage taken |
+| **Berserker** | 🪓 | 90 | 50 | 4 | 11 | 800 | Bloodlust: Killing blow permanently increases damage by 15. Reckless: +50% damage taken, movement immune to all reduction |
 | **Sorcerer** | 🔮 | 50 | 55 | 2 | 14 | 800 | Ranged: 4 tiles. Arcane Mastery: +50% spell damage. Active: Cast Fireball |
 
 ---
@@ -213,6 +214,8 @@ Units can acquire powerful perks through progression:
 |------|------|--------|
 | Paladin | **Divine Retribution** | Reflects melee damage to attackers (2× damage) |
 | Sorcerer | **Arcane Focus** | Consecutive same spells increase damage by 50% per stack |
+| Ranger | **Silver Arrows** | Bonus damage equal to 25% of target max HP (5% vs bosses), applies on all ricochet bounces |
+| Berserker | **Warlust** | Each kill grants +5 permanent Max HP (in addition to Bloodlust's +15 DMG) |
 
 ---
 

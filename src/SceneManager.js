@@ -100,6 +100,12 @@ export class BattleScene extends Phaser.Scene {
     create(data) {
         document.getElementById('left-panel').classList.remove('hidden', 'collapsed');
         document.getElementById('right-panel').classList.remove('hidden', 'collapsed');
+        // On mobile, keep panels collapsed so the canvas is fully visible
+        if (window.innerWidth <= 768) {
+            document.getElementById('left-panel').classList.add('collapsed');
+            document.getElementById('right-panel').classList.add('collapsed');
+            if (typeof window.syncMobileToggles === 'function') window.syncMobileToggles();
+        }
         // Ensure language toggle is hidden during gameplay
         const langToggle = document.getElementById('lang-toggle-container');
         if (langToggle) {
@@ -1870,6 +1876,8 @@ export class BattleScene extends Phaser.Scene {
 
         this.renderSpellBookPage();
         modal.classList.remove('hidden');
+        // Disable scene input so spellbook clicks don't pass through to the canvas
+        this.input.enabled = false;
 
         // Add navigation listeners
         this.input.keyboard.on('keydown-LEFT', this.prevSpellPage, this);
@@ -1878,6 +1886,7 @@ export class BattleScene extends Phaser.Scene {
 
     closeSpellBook() {
         document.getElementById('spellbook-modal').classList.add('hidden');
+        this.input.enabled = true;
         this.input.keyboard.off('keydown-LEFT', this.prevSpellPage, this);
         this.input.keyboard.off('keydown-RIGHT', this.nextSpellPage, this);
         this._clearSpellHotkeys();
@@ -2067,6 +2076,8 @@ export class BattleScene extends Phaser.Scene {
     }
 
     showVictoryScreen(playerWon) {
+        // Disable scene input so victory/defeat screen clicks don't pass through to canvas
+        this.input.enabled = false;
         const victoryScreen = document.getElementById('victory-screen');
         const victoryText = document.getElementById('victory-text');
         const confirmBtn = document.getElementById('confirm-rewards');
@@ -3402,6 +3413,12 @@ export class BattleScene extends Phaser.Scene {
         document.getElementById('victory-screen').classList.add('hidden');
         document.getElementById('left-panel').classList.remove('hidden', 'collapsed');
         document.getElementById('right-panel').classList.remove('hidden', 'collapsed');
+        // On mobile, keep panels collapsed so the canvas is fully visible
+        if (window.innerWidth <= 768) {
+            document.getElementById('left-panel').classList.add('collapsed');
+            document.getElementById('right-panel').classList.add('collapsed');
+            if (typeof window.syncMobileToggles === 'function') window.syncMobileToggles();
+        }
         document.getElementById('placement-bar').classList.add('hidden');
 
         const playerUnits = this.unitManager.getPlayerUnits().map(u => ({

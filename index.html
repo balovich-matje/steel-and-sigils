@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title data-i18n="game.title">Steel and Sigils - Tactical Combat</title>
     <link rel="icon" type="image/png" href="images/favicon.png">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
@@ -111,6 +111,9 @@
             ›
         </button>
     </div>
+
+    <!-- Mobile panel backdrop (closes panels when tapping outside) -->
+    <div id="panel-backdrop" onclick="closeMobilePanels()"></div>
 
     <!-- Placement Bar (shown during placement phase) -->
     <div id="placement-bar" class="hidden">
@@ -530,6 +533,13 @@
                 updateLanguageToggleButton();
                 i18n.updatePage();
             }
+
+            // Auto-collapse panels on mobile so the canvas is fully visible
+            if (window.innerWidth <= 768) {
+                document.getElementById('left-panel').classList.add('collapsed');
+                document.getElementById('right-panel').classList.add('collapsed');
+                syncMobileToggles();
+            }
         });
 
         // Safe wrapper functions for gameScene calls
@@ -580,20 +590,84 @@
             return safeGameSceneCall('confirmRewards');
         }
 
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
+        // Returns the panel drawer width in px at the current viewport size.
+        function mobilePanelWidth() {
+            return window.innerWidth <= 480 ? 230 : 260;
+        }
+
+        // Explicitly sets toggle button positions and labels to match current panel state.
+        // Called whenever panel state changes on mobile (toggle, close, scene create).
+        // Exposed as window.syncMobileToggles so SceneManager can call it too.
+        function syncMobileToggles() {
+            if (!isMobile()) return;
+            const leftOpen  = !document.getElementById('left-panel').classList.contains('collapsed');
+            const rightOpen = !document.getElementById('right-panel').classList.contains('collapsed');
+            const w = mobilePanelWidth() + 'px';
+
+            const lt = document.getElementById('left-toggle');
+            lt.textContent  = leftOpen ? '‹' : '›';
+            lt.style.left   = leftOpen ? w : '0';
+            lt.style.right  = '';
+
+            const rt = document.getElementById('right-toggle');
+            rt.textContent  = rightOpen ? '›' : '‹';
+            rt.style.right  = rightOpen ? w : '0';
+            rt.style.left   = '';
+        }
+        window.syncMobileToggles = syncMobileToggles;
+
+        function updateBackdrop() {
+            if (!isMobile()) return;
+            const leftOpen  = !document.getElementById('left-panel').classList.contains('collapsed');
+            const rightOpen = !document.getElementById('right-panel').classList.contains('collapsed');
+            const anyOpen = leftOpen || rightOpen;
+            document.getElementById('panel-backdrop').classList.toggle('visible', anyOpen);
+            // Block Phaser canvas pointer events while a panel drawer is open
+            document.getElementById('game-container').classList.toggle('input-blocked', anyOpen);
+        }
+
+        function closeMobilePanels() {
+            document.getElementById('left-panel').classList.add('collapsed');
+            document.getElementById('right-panel').classList.add('collapsed');
+            syncMobileToggles();
+            document.getElementById('panel-backdrop').classList.remove('visible');
+            document.getElementById('game-container').classList.remove('input-blocked');
+        }
+
         function toggleLeftPanel() {
             const panel = document.getElementById('left-panel');
-            const toggle = document.getElementById('left-toggle');
+            // On mobile: close the other panel first
+            if (isMobile() && !document.getElementById('right-panel').classList.contains('collapsed')) {
+                document.getElementById('right-panel').classList.add('collapsed');
+            }
             panel.classList.toggle('collapsed');
-            // Flip arrow direction: ‹ when open, › when collapsed
-            toggle.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
+            if (isMobile()) {
+                syncMobileToggles();
+                updateBackdrop();
+            } else {
+                const toggle = document.getElementById('left-toggle');
+                toggle.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
+            }
         }
 
         function toggleRightPanel() {
             const panel = document.getElementById('right-panel');
-            const toggle = document.getElementById('right-toggle');
+            // On mobile: close the other panel first
+            if (isMobile() && !document.getElementById('left-panel').classList.contains('collapsed')) {
+                document.getElementById('left-panel').classList.add('collapsed');
+            }
             panel.classList.toggle('collapsed');
-            // Flip arrow direction: › when open, ‹ when collapsed
-            toggle.textContent = panel.classList.contains('collapsed') ? '‹' : '›';
+            if (isMobile()) {
+                syncMobileToggles();
+                updateBackdrop();
+            } else {
+                const toggle = document.getElementById('right-toggle');
+                toggle.textContent = panel.classList.contains('collapsed') ? '‹' : '›';
+            }
         }
 
         function toggleRightPanelView() {

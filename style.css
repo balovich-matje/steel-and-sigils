@@ -1185,7 +1185,7 @@ body {
         min-width: 170px;
         padding: 10px;
     }
-    
+
     #left-panel:not(.collapsed) ~ #left-toggle,
     #left-panel:not(.hidden) ~ #left-toggle {
         left: 170px;
@@ -1195,7 +1195,7 @@ body {
     #right-panel:not(.hidden) ~ #right-toggle {
         right: 170px;
     }
-    
+
     #left-panel.collapsed ~ #left-toggle {
         left: 0;
     }
@@ -1203,58 +1203,301 @@ body {
     #right-panel.collapsed ~ #right-toggle {
         right: 0;
     }
-    
+
     .spell-button {
         padding: 8px 12px;
         font-size: 12px;
     }
 }
 
+/* ============================================
+   CANVAS INPUT BLOCKING
+   Disables pointer events on canvas when any UI overlay is open
+   ============================================ */
+
+#game-container.input-blocked canvas {
+    pointer-events: none;
+}
+
+/* ============================================
+   MOBILE PANEL BACKDROP
+   ============================================ */
+
+#panel-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 190;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#panel-backdrop.visible {
+    display: block;
+}
+
+/* ============================================
+   MOBILE — IN-GAME LAYOUT (≤ 768px)
+   Panels become fixed side-drawers; canvas fills viewport.
+   ============================================ */
+
 @media (max-width: 768px) {
+
+    /* --- Game layout: canvas is full screen --- */
     #game-layout {
-        flex-direction: column;
+        flex-direction: row;
     }
-    
+
+    #game-container {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100vh;
+        flex: none;
+    }
+
+    /* --- Panels: fixed side drawers --- */
     #left-panel,
     #right-panel {
-        width: 100%;
-        min-width: auto;
-        max-height: 120px;
-        flex-direction: row;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 10px;
-        border: none;
-        border-top: 2px solid #A68966;
-        transform: translateY(0) !important;
+        position: fixed;
+        top: 0;
+        height: 100%;
+        width: 260px;
+        min-width: 260px;
+        max-height: none;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 14px 12px;
+        border: 2px solid #A68966;
+        z-index: 200;
+        transform: translateX(0);
     }
-    
-    #left-panel.collapsed,
-    #right-panel.collapsed {
-        transform: translateY(-100%) !important;
-    }
-    
+
     #left-panel {
-        order: 2;
-        border-bottom: 2px solid #A68966;
+        left: 0;
+        border-left: none;
+        border-top: none;
+        border-bottom: none;
     }
-    
+
     #right-panel {
-        order: 3;
+        right: 0;
+        border-right: none;
+        border-top: none;
+        border-bottom: none;
     }
-    
-    #game-container {
-        order: 1;
-        flex: 1;
+
+    #left-panel.collapsed {
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
     }
-    
+
+    #right-panel.collapsed {
+        transform: translateX(100%);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* --- Panel toggles: show on mobile, larger touch target --- */
+    .panel-toggle {
+        display: flex;
+        position: fixed;
+        width: 40px;
+        height: 56px;
+        font-size: 20px;
+        z-index: 210;
+    }
+
+    /* Override sibling-selector positions for 260px drawer width */
+    #left-panel:not(.collapsed) ~ #left-toggle,
+    #left-panel:not(.hidden) ~ #left-toggle {
+        left: 260px;
+    }
+
+    #right-panel:not(.collapsed) ~ #right-toggle,
+    #right-panel:not(.hidden) ~ #right-toggle {
+        right: 260px;
+    }
+
+    #left-panel.collapsed ~ #left-toggle {
+        left: 0;
+    }
+
+    #right-panel.collapsed ~ #right-toggle {
+        right: 0;
+    }
+
+    #left-panel.hidden ~ #left-toggle,
+    #right-panel.hidden ~ #right-toggle {
+        display: none;
+    }
+
+    /* Panel section spacing */
     .panel-section.flex-grow {
         flex: 0 0 auto;
-        min-width: 150px;
     }
-    
-    .panel-toggle {
-        display: none;
+
+    /* --- Pregame screens: allow scroll, smaller cards --- */
+    #pregame-screen {
+        overflow-y: auto;
+        padding: 15px;
+    }
+
+    .pregame-step {
+        height: auto;
+        min-height: 100%;
+        justify-content: flex-start;
+        padding-top: 64px;  /* clear the lang toggle */
+        padding-bottom: 30px;
+    }
+
+    .map-select-btn,
+    .faction-select-btn {
+        width: calc(50% - 15px);
+        min-width: 140px;
+        padding: 15px;
+    }
+
+    .faction-preview {
+        width: 90px;
+        height: 90px;
+    }
+
+    .map-preview {
+        font-size: 48px;
+    }
+
+    .faction-name,
+    .map-name {
+        font-size: 17px;
+    }
+
+    .faction-description {
+        font-size: 13px;
+    }
+
+    /* Army grid already switches to 2 cols at 768px via earlier rule */
+
+    /* --- Victory / Reward screen --- */
+    .victory-screen {
+        overflow-y: auto;
+        padding: 10px 12px 6px;
+    }
+
+    .victory-screen h2 {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+
+    #rewards-container {
+        gap: 8px !important;
+    }
+
+    /* Reward cards: tighter on mobile */
+    .reward-card {
+        min-width: 110px !important;
+        padding: 8px !important;
+    }
+
+    /* --- Spellbook modal --- */
+    .spellbook-content {
+        width: 96vw;
+        max-width: none;
+        max-height: 88vh;
+        padding: 15px;
+    }
+
+    .spell-grid {
+        grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    }
+
+    /* --- Placement bar --- */
+    #placement-bar {
+        padding: 10px 15px;
+        gap: 10px;
+        font-size: 14px;
+        bottom: 12px;
+    }
+
+    /* --- Touch-friendly buttons --- */
+    .spell-button {
+        min-height: 40px;
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    .spellbook-close {
+        padding: 12px 28px;
+        font-size: 14px;
+    }
+
+    /* Lang toggle stays top-right */
+    #lang-toggle-container {
+        top: 14px;
+        right: 14px;
+    }
+}
+
+/* ============================================
+   SMALL PHONES (≤ 480px)
+   ============================================ */
+
+@media (max-width: 480px) {
+
+    #left-panel,
+    #right-panel {
+        width: 230px;
+        min-width: 230px;
+    }
+
+    #left-panel:not(.collapsed) ~ #left-toggle,
+    #left-panel:not(.hidden) ~ #left-toggle {
+        left: 230px;
+    }
+
+    #right-panel:not(.collapsed) ~ #right-toggle,
+    #right-panel:not(.hidden) ~ #right-toggle {
+        right: 230px;
+    }
+
+    .map-select-btn,
+    .faction-select-btn {
+        width: 100%;
+    }
+
+    .compact-unit-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 0 4px;
+    }
+
+    .reward-card {
+        min-width: 88px !important;
+        font-size: 11px;
+    }
+
+    .spell-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .victory-screen h2 {
+        font-size: 20px;
+    }
+
+    .map-preview {
+        font-size: 36px;
+    }
+
+    .faction-preview {
+        width: 70px;
+        height: 70px;
+    }
+
+    .faction-name,
+    .map-name {
+        font-size: 15px;
     }
 }
 
