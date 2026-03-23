@@ -2159,7 +2159,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Show special Loot Goblin reward - 4 choices of 3 buffs each (2x2 grid)
-    showLootGoblinReward() {
+    showLootGoblinReward(remainingPicks = 4) {
         const rewardsContainer = document.getElementById('rewards-container');
 
         // Clear existing content and show loot goblin reward UI
@@ -2168,6 +2168,9 @@ export class BattleScene extends Phaser.Scene {
         // Create loot goblin reward section
         const lootSection = document.createElement('div');
         lootSection.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 20px;';
+        const picksLabel = remainingPicks === 1
+            ? '1 buff choice remaining'
+            : `${remainingPicks} buff choices remaining`;
         lootSection.innerHTML = `
             <div style="font-size: 48px; margin-bottom: 10px;">💰</div>
             <div style="color: #FFD700; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">
@@ -2177,41 +2180,40 @@ export class BattleScene extends Phaser.Scene {
                 ${t('loot_goblin.subtitle')}
             </div>
             <div style="margin-top: 20px; color: #4CAF50;">
-                ${t('loot_goblin.buff_sets')}
+                ${picksLabel}
             </div>
         `;
         rewardsContainer.appendChild(lootSection);
 
-        // Track used legendary/mythic buffs to prevent duplicates
+        // Track used legendary/mythic buffs to prevent duplicates within this screen
         const usedLegendaryBuffs = new Set();
         const usedMythicBuffs = new Set();
 
-        // Create 4 choice slots in a 2x2 grid
+        // Create choice slots in a 2x2 grid (only show remaining picks)
+        const cols = remainingPicks === 1 ? '1fr' : '1fr 1fr';
         const choicesContainer = document.createElement('div');
-        choicesContainer.style.cssText = 'grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 20px;';
+        choicesContainer.style.cssText = `grid-column: 1 / -1; display: grid; grid-template-columns: ${cols}; gap: 30px; padding: 20px;`;
         rewardsContainer.appendChild(choicesContainer);
 
-        // Generate 4 choice slots
-        for (let choiceIndex = 0; choiceIndex < 4; choiceIndex++) {
+        for (let choiceIndex = 0; choiceIndex < remainingPicks; choiceIndex++) {
             const choiceSlot = document.createElement('div');
             choiceSlot.style.cssText = 'background: rgba(45, 36, 30, 0.6); border: 2px solid #5D4E3E; border-radius: 8px; padding: 15px;';
             choiceSlot.innerHTML = `<div style="color: #A68966; text-align: center; margin-bottom: 10px; font-weight: bold;">Choice ${choiceIndex + 1}</div>`;
-            
+
             const buffsContainer = document.createElement('div');
             buffsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
-            
-            // Generate buff options for this choice (3 buffs like regular rewards)
+
             const buffOptions = this.generateLootGoblinBuffChoice(usedLegendaryBuffs, usedMythicBuffs);
-            
+
             buffOptions.forEach(buff => {
                 const isMythic = buff.rarity === 'mythic';
                 const isLegendary = buff.rarity === 'legendary' || buff.id.startsWith('legendary_');
                 const isEpic = buff.rarity === 'epic';
                 const rarity = isMythic ? 'mythic' : (isLegendary ? 'legendary' : (isEpic ? 'epic' : 'common'));
-                
+
                 const nameColor = rarity === 'mythic' ? '#ff3333' : (rarity === 'legendary' ? '#ff8c00' : (rarity === 'epic' ? '#9B6BAB' : '#6B8B5B'));
                 const textShadow = rarity === 'mythic' ? ' text-shadow: 0 0 8px rgba(255, 26, 26, 0.6);' : (rarity === 'legendary' ? ' text-shadow: 0 0 8px rgba(255, 140, 0, 0.6);' : (rarity === 'epic' ? ' text-shadow: 0 0 6px rgba(139, 91, 155, 0.5);' : ''));
-                
+
                 let rarityLabel = '';
                 if (rarity === 'mythic') {
                     rarityLabel = '<div style="font-size: 10px; color: #ff3333; margin-top: 2px; text-shadow: 0 0 5px rgba(255, 26, 26, 0.5);">🔥 Mythic</div>';
@@ -2220,7 +2222,7 @@ export class BattleScene extends Phaser.Scene {
                 } else if (rarity === 'epic') {
                     rarityLabel = '<div style="font-size: 10px; color: #9B6BAB; margin-top: 2px; text-shadow: 0 0 4px rgba(139, 91, 155, 0.4);">⚡ Epic</div>';
                 }
-                
+
                 const card = this.uiManager.createRewardCard(rarity === 'mythic' ? 'mythic' : (rarity === 'legendary' ? 'legendary' : (rarity === 'epic' ? 'epic' : 'buff')), buff.id, `
                     <div style="font-size: 24px; margin-bottom: 3px;">${buff.icon}</div>
                     <div style="color: ${nameColor}; font-weight: bold; font-size: 13px;${textShadow}">${buff.name}</div>
@@ -2229,18 +2231,17 @@ export class BattleScene extends Phaser.Scene {
                 `, buff, rarity);
 
                 card.onclick = () => {
-                    // Show unit selection for this buff
-                    this.showBuffTargetSelectionForLootGoblin(buff, card);
+                    this.showBuffTargetSelectionForLootGoblin(buff, card, remainingPicks);
                 };
 
                 buffsContainer.appendChild(card);
             });
-            
+
             choiceSlot.appendChild(buffsContainer);
             choicesContainer.appendChild(choiceSlot);
         }
 
-        // Skip button
+        // Skip button — skips ALL remaining picks
         const skipBtn = document.createElement('button');
         skipBtn.className = 'spellbook-close';
         skipBtn.style.cssText = 'grid-column: 1 / -1; margin-top: 20px;';
@@ -2480,7 +2481,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Show unit selection for Loot Goblin buff
-    showBuffTargetSelectionForLootGoblin(buffData, buffCard) {
+    showBuffTargetSelectionForLootGoblin(buffData, buffCard, remainingPicks = 1) {
         const playerUnits = this.unitManager.getPlayerUnits();
         if (playerUnits.length === 0) return;
 
@@ -2522,10 +2523,15 @@ export class BattleScene extends Phaser.Scene {
                 buffData.effect(unit);
                 this.uiManager.showFloatingText(`${buffData.name} Applied!`, 400, 300, '#FFD700');
 
-                // Mark loot goblin reward as handled and show normal rewards
-                this.lootGoblinReward = false;
-                this.restoreRewardContainerStructure();
-                this.generateRewardChoices();
+                if (remainingPicks > 1) {
+                    // Still more picks left — return to Loot Goblin screen with one fewer slot
+                    this.showLootGoblinReward(remainingPicks - 1);
+                } else {
+                    // All picks used — move on to normal rewards
+                    this.lootGoblinReward = false;
+                    this.restoreRewardContainerStructure();
+                    this.generateRewardChoices();
+                }
             };
 
             grid.appendChild(card);
