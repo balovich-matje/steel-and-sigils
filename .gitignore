@@ -8,4 +8,5 @@
 
 # Utils folder - image generation outputs and temp files
 utils/*
+!utils/AGENTS.md
 
