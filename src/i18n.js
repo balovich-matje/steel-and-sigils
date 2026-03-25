@@ -84,6 +84,7 @@ const TRANSLATIONS = {
         'unit.cultist_neophyte': 'Cultist Neophyte',
         'unit.gibbering_horror': 'Gibbering Horror',
         'unit.flesh_warped_stalker': 'Flesh-warped Stalker',
+        'unit.banshee_sovereign': 'Banshee Sovereign',
 
         // Unit Stats
         'stat.hp': 'HP',
@@ -443,6 +444,7 @@ const TRANSLATIONS = {
         'unit.cultist_neophyte': 'Неофит Культиста',
         'unit.gibbering_horror': 'Бормочущий Ужас',
         'unit.flesh_warped_stalker': 'Потрошитель Плоти',
+        'unit.banshee_sovereign': 'Владычица Банши',
 
         // Unit Stats
         'stat.hp': 'ЗДОР',

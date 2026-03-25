@@ -117,9 +117,16 @@ export class Unit {
     }
 
     takeDamage(amount, isRanged = false, attacker = null) {
-        // Lost Spirit: -75% physical damage
+        // Lost Spirit: -75% all damage (Ethereal passive)
         if (this.type === 'LOST_SPIRIT') {
             amount = Math.floor(amount * 0.25);
+        }
+
+        // Banshee Sovereign: Ethereal (-75% physical) + Arcane Weakness (+50% ranged/spells)
+        if (this.type === 'BANSHEE_SOVEREIGN') {
+            amount = isRanged
+                ? Math.floor(amount * 1.5)   // +50% from ranged & spells
+                : Math.floor(amount * 0.25); // -75% from physical melee
         }
 
         // Apply shield if active (including permanent with rounds = -1)
@@ -1011,6 +1018,12 @@ export class TurnSystem {
             return;
         }
 
+        // Banshee Sovereign: apply Wailing Screech at the start of every turn,
+        // then fall through to default move+attack AI
+        if (unit.type === 'BANSHEE_SOVEREIGN') {
+            this.executeBansheeWail(playerUnits);
+        }
+
         // Default AI for all other units
         this.executeDefaultAITurn(playerUnits);
     }
@@ -1246,6 +1259,29 @@ export class TurnSystem {
     }
 
     // Void Herald AI: Mass slow at start, casts voidball each turn targeting grouped enemies
+    executeBansheeWail(playerUnits) {
+        const unit = this.currentUnit;
+        const scene = this.scene;
+        const WAIL_RANGE = 4;
+
+        const affected = playerUnits.filter(p => {
+            const dist = Math.max(Math.abs(p.gridX - unit.gridX), Math.abs(p.gridY - unit.gridY));
+            return dist <= WAIL_RANGE;
+        });
+
+        if (affected.length > 0) {
+            scene.uiManager.showFloatingText('👻 WAILING SCREECH!', 400, 200, '#8B8BCC');
+            for (const p of affected) {
+                p.isWailed = true;
+                scene.uiManager.showBuffText(p, 'WAILED!', '#8B8BCC');
+            }
+            scene.addCombatLog(
+                `Banshee Sovereign wails! ${affected.length} unit(s) silenced — next attack deals no damage.`,
+                'debuff'
+            );
+        }
+    }
+
     executeVoidHeraldTurn(playerUnits) {
         const unit = this.currentUnit;
         const scene = this.scene;

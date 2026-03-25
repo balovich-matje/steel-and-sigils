@@ -306,6 +306,20 @@ const UNIT_TYPES = {
         isBoss: true, bossSize: 2,
         passives: [{ name: 'Summon Undead', description: 'Summons 1 undead ally per turn (2 on first turn).' }]
     },
+    BANSHEE_SOVEREIGN: {
+        name: 'Banshee Sovereign',
+        emoji: '👻',
+        image: 'images/enemy/dungeon/banshee_sovereign.png',
+        health: 450, maxHealth: 450,
+        damage: 60, moveRange: 4, initiative: 13,
+        isPlayer: false, cost: 2000,
+        isBoss: true, bossSize: 2,
+        passives: [
+            { name: 'Ethereal', description: 'Takes 75% less damage from physical attacks.' },
+            { name: 'Arcane Weakness', description: 'Takes 50% more damage from ranged attacks and spells.' },
+            { name: "Wailing Screech", description: 'At the start of her turn, silences all player units within 4 tiles — their next attack deals no damage.' }
+        ]
+    },
     OCTOTH_HROARATH: {
         name: "Octo'th Hroa'rath",
         emoji: '🦑',

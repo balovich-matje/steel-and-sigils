@@ -65,7 +65,7 @@ export class BattleScene extends Phaser.Scene {
         const enemyUnits = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER',
             'OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN',
             // Dungeon Dwellers
-            'ANIMATED_ARMOR', 'SKELETON_ARCHER', 'SKELETON_SOLDIER', 'LOST_SPIRIT', 'SUMMONER_LICH',
+            'ANIMATED_ARMOR', 'SKELETON_ARCHER', 'SKELETON_SOLDIER', 'LOST_SPIRIT', 'SUMMONER_LICH', 'BANSHEE_SOVEREIGN',
             // Old God Worshippers
             'CULTIST_ACOLYTE', 'CULTIST_NEOPHYTE', 'GIBBERING_HORROR', 'FLESH_WARPED_STALKER', "OCTOTH_HROARATH",
             'THE_SILENCE', 'VOID_HERALD'
@@ -659,8 +659,12 @@ export class BattleScene extends Phaser.Scene {
     createBossWave() {
         let selectedBoss;
         if (this.currentEnemyFaction === 'DUNGEON_DWELLERS') {
-            // Only one dungeon boss - always Summoner Lich
-            selectedBoss = 'SUMMONER_LICH';
+            const dungeonBosses = ['SUMMONER_LICH', 'BANSHEE_SOVEREIGN'];
+            selectedBoss = dungeonBosses[Math.floor(Math.random() * dungeonBosses.length)];
+            if (selectedBoss === this.lastBossSpawned) {
+                const others = dungeonBosses.filter(b => b !== this.lastBossSpawned);
+                selectedBoss = others[Math.floor(Math.random() * others.length)];
+            }
         } else if (this.currentEnemyFaction === 'OLD_GOD_WORSHIPPERS') {
             const cultistBosses = ['OCTOTH_HROARATH', 'THE_SILENCE', 'VOID_HERALD'];
             selectedBoss = cultistBosses[Math.floor(Math.random() * cultistBosses.length)];
@@ -734,6 +738,13 @@ export class BattleScene extends Phaser.Scene {
             // Mark this battle as having a loot goblin for special reward
             this.hasLootGoblin = (selectedBoss === 'LOOT_GOBLIN');
 
+            // Spawn adds: 1 per boss encounter (wave 5→1, 10→2, …), capped at 4
+            // Loot Goblin and Summoner Lich have their own special spawn mechanics
+            const addsCount = Math.min(Math.floor(this.battleNumber / 5), 4);
+            if (addsCount > 0 && selectedBoss !== 'LOOT_GOBLIN' && selectedBoss !== 'SUMMONER_LICH') {
+                this.spawnBossAdds(addsCount);
+            }
+
             // Show boss announcement
             const bossName = t('unit.' + selectedBoss.toLowerCase());
             const bossEmoji = UNIT_TYPES[selectedBoss].emoji;
@@ -745,6 +756,41 @@ export class BattleScene extends Phaser.Scene {
             this.uiManager.showFloatingText(
                 t('combat.boss_appears', bossEmoji, bossName),
                 320, 120, '#ff4444'
+            );
+        }
+    }
+
+    // Spawn adds alongside a boss — count scales with encounter number
+    spawnBossAdds(count) {
+        const addPools = {
+            'DUNGEON_DWELLERS':    ['ANIMATED_ARMOR', 'SKELETON_SOLDIER', 'SKELETON_ARCHER', 'LOST_SPIRIT'],
+            'GREENSKIN_HORDE':     ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER'],
+            'OLD_GOD_WORSHIPPERS': ['CULTIST_ACOLYTE', 'CULTIST_NEOPHYTE', 'GIBBERING_HORROR', 'FLESH_WARPED_STALKER']
+        };
+        const pool = addPools[this.currentEnemyFaction] || addPools['DUNGEON_DWELLERS'];
+        const statMultiplier = 1 + (this.battleNumber - 1) * 0.1;
+
+        const positions = this.getEnemySpawnPositions()
+            .filter(pos => !this.unitManager.getUnitAt(pos.x, pos.y))
+            .sort(() => Math.random() - 0.5);
+
+        let spawned = 0;
+        for (const pos of positions) {
+            if (spawned >= count) break;
+            const unitType = pool[Math.floor(Math.random() * pool.length)];
+            const unit = this.unitManager.addUnit(unitType, pos.x, pos.y);
+            if (unit) {
+                unit.maxHealth = Math.floor(unit.maxHealth * statMultiplier);
+                unit.health = unit.maxHealth;
+                unit.damage = Math.floor(unit.damage * statMultiplier);
+                unit.updateHealthBar();
+                spawned++;
+            }
+        }
+
+        if (spawned > 0) {
+            this.addCombatLog(
+                `${spawned} reinforcement${spawned > 1 ? 's' : ''} arrive to aid the boss!`, 'enemy'
             );
         }
     }
@@ -1220,6 +1266,15 @@ export class BattleScene extends Phaser.Scene {
             duration: 100,
             yoyo: true,
             onComplete: () => {
+                // Banshee Wail: wailed unit deals 0 damage on this attack
+                if (attacker.isWailed) {
+                    attacker.isWailed = false;
+                    this.uiManager.showBuffText(attacker, 'WAILED!', '#8B8BCC');
+                    this.addCombatLog(`${attacker.name}'s attack was silenced by the Wailing Screech!`, 'debuff');
+                    this.checkVictoryCondition();
+                    return;
+                }
+
                 let damage = Math.floor(attacker.damage * attacker.blessValue);
 
                 // Rogue legendary perk: Backstab (4x damage if attacking from behind)
@@ -1458,6 +1513,15 @@ export class BattleScene extends Phaser.Scene {
             ease: 'Power2',
             onComplete: () => {
                 projectile.destroy();
+
+                // Banshee Wail: wailed unit deals 0 damage on this attack
+                if (attacker.isWailed) {
+                    attacker.isWailed = false;
+                    this.uiManager.showBuffText(attacker, 'WAILED!', '#8B8BCC');
+                    this.addCombatLog(`${attacker.name}'s attack was silenced by the Wailing Screech!`, 'debuff');
+                    this.checkVictoryCondition();
+                    return;
+                }
 
                 // Wizard Piercing: Shot goes through all enemies in line
                 if (attacker.hasPiercing) {
