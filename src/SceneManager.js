@@ -38,7 +38,7 @@ export class BattleScene extends Phaser.Scene {
         this.victoryShown = false;
         this.magicBuffs = [];
         this.selectedUnit = null;
-        this.selectedRewards = { unit: null, buff: null, magic: null };
+        this.selectedRewards = { unit: null, buff: null, magic: null, bonusBuff: null };
         this.hasLootGoblin = false;
         this.lootGoblinReward = false;
         this.spellHotkeyListeners = [];
@@ -2161,7 +2161,8 @@ export class BattleScene extends Phaser.Scene {
             this.selectedRewards = {
                 unit: canGetNewUnit ? null : { id: 'skipped', effectData: null },
                 buff: null,
-                magic: null
+                magic: null,
+                bonusBuff: null
             };
 
             // Always rebuild the rewards container structure to get correct DOM elements
@@ -2954,6 +2955,12 @@ export class BattleScene extends Phaser.Scene {
         if (bonusSection && bonusContainer) {
             bonusSection.style.display = 'block';
             this.renderBuffCards(bonusBuffOptions, bonusContainer);
+            // Override onclick so bonus picks go to their own slot, never overwriting row 1
+            Array.from(bonusContainer.children).forEach((card, idx) => {
+                const buff = bonusBuffOptions[idx];
+                if (!buff) return;
+                card.onclick = () => this.showBonusBuffTargetSelection(buff.id, card, buff);
+            });
         }
 
         this.updateConfirmButton();
@@ -3189,6 +3196,74 @@ export class BattleScene extends Phaser.Scene {
         }
         this.selectedRewards.buff = null;
         this.selectedRewards.legendary = null;
+    }
+
+    clearBonusBuffSelection() {
+        const bonusContainer = document.getElementById('reward-buffs-bonus');
+        if (bonusContainer) {
+            bonusContainer.querySelectorAll('.reward-card').forEach(c => {
+                c.style.borderColor = '#555';
+                c.style.transform = 'scale(1)';
+                c.style.boxShadow = 'none';
+            });
+        }
+        this.selectedRewards.bonusBuff = null;
+    }
+
+    // Target selection for the bonus buff row — stores in selectedRewards.bonusBuff
+    // Supports regular, epic, legendary and mythic buff objects (uses buffData.unitType if present)
+    showBonusBuffTargetSelection(buffId, buffCard, buffData) {
+        let playerUnits = this.unitManager.getPlayerUnits();
+        if (buffData.unitType) {
+            playerUnits = playerUnits.filter(u => u.type === buffData.unitType && !u[buffData.buffProperty]);
+        }
+        if (playerUnits.length === 0) return;
+
+        const isMythic = buffId.startsWith('mythic_');
+        const isLegendary = buffId.startsWith('legendary_');
+        const highlightColor = isMythic ? '#e50000' : isLegendary ? '#ff8c00' : '#A68966';
+        const glowColor = isMythic ? 'rgba(255,51,51,0.5)' : isLegendary ? 'rgba(255,140,0,0.5)' : 'rgba(255,215,0,0.3)';
+
+        const modal = document.createElement('div');
+        modal.id = 'bonus-buff-target-modal';
+        modal.className = 'spellbook-modal';
+        modal.style.cssText = 'display: flex; z-index: 2000;';
+        modal.innerHTML = `
+            <div class="spellbook-content" style="max-width: 500px;">
+                <div class="spellbook-header">
+                    <h2>${t('loot_goblin.select_unit')}</h2>
+                    <p style="color: #6B8B5B;">${buffData.icon} ${buffData.name}</p>
+                    <p style="color: #8B7355; font-size: 12px;">${buffData.desc}</p>
+                </div>
+                <div class="spell-grid" id="bonus-buff-target-grid"></div>
+                <button class="spellbook-close" onclick="this.closest('.spellbook-modal').remove()">${t('loot_goblin.cancel')}</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const grid = document.getElementById('bonus-buff-target-grid');
+        playerUnits.forEach(unit => {
+            const card = document.createElement('div');
+            card.className = 'unit-select-card';
+            card.innerHTML = `
+                <div style="font-size: 28px; margin-bottom: 5px;">${unit.emoji}</div>
+                <div style="color: #A68966; font-weight: bold; font-size: 14px;">${unit.name}</div>
+                <div style="font-size: 11px; color: #B8A896; margin-top: 4px; line-height: 1.4;">
+                    HP: ${unit.health}/${unit.maxHealth} | DMG: ${unit.damage}<br>
+                    MOV: ${unit.moveRange} | INIT: ${unit.initiative}
+                </div>
+            `;
+            card.onclick = () => {
+                modal.remove();
+                this.clearBonusBuffSelection();
+                buffCard.style.borderColor = highlightColor;
+                buffCard.style.transform = 'scale(1.05)';
+                buffCard.style.boxShadow = `0 0 20px ${glowColor}`;
+                this.selectedRewards.bonusBuff = { id: buffId, effectData: buffData, targetUnit: unit };
+                this.updateConfirmButton();
+            };
+            grid.appendChild(card);
+        });
     }
 
     showBuffTargetSelection(buffId, buffCard, buffData) {
@@ -3433,6 +3508,15 @@ export class BattleScene extends Phaser.Scene {
             }
         }
 
+        // Apply bonus buff from discard row (if selected)
+        if (this.selectedRewards.bonusBuff) {
+            const bonusEffect = this.selectedRewards.bonusBuff.effectData;
+            const bonusTarget = this.selectedRewards.bonusBuff.targetUnit;
+            if (bonusEffect && bonusTarget) {
+                bonusEffect.effect(bonusTarget);
+            }
+        }
+
         // Apply legendary buff (if selected)
         if (this.selectedRewards.legendary) {
             const legendaryEffect = this.selectedRewards.legendary.effectData;
@@ -3501,7 +3585,9 @@ export class BattleScene extends Phaser.Scene {
             // Persist active buffs
             buffs: {
                 hasteRounds: u.hasteRounds,
-                hasteValue: u.hasteRounds > 0 || u.hasteRounds === -1 ? u.moveRange - UNIT_TYPES[u.type].moveRange : 0,
+                hasteValue: u.hasteRounds > 0 || u.hasteRounds === -1
+                    ? u.moveRange - UNIT_TYPES[u.type].moveRange - (u.statModifiers?.moveRange || 0)
+                    : 0,
                 shieldRounds: u.shieldRounds,
                 shieldValue: u.shieldValue,
                 blessRounds: u.blessRounds,
