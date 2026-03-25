@@ -2135,14 +2135,14 @@ export class BattleScene extends Phaser.Scene {
                     <div id="reward-units" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;"></div>
                     <div id="discard-units-wrapper" style="display: none;">
                         <button id="discard-units-btn" style="background: rgba(45,36,30,0.9); border: 2px solid #5D4E3E; color: #8B7355; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1.4; max-width: 120px; text-align: center;">
-                            🔄 Discard units<br>for bonus buff
+                            🔄 ${t('reward.discard_units')}
                         </button>
                     </div>
                 </div>
             </div>
 
             <div id="reward-buffs-bonus-section" style="display: none; width: 100%;">
-                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 6px; font-size: 15px;">💪 Bonus Buff</h3>
+                <h3 style="color: #8B9A6B; text-align: center; margin-bottom: 6px; font-size: 15px;">${t('reward.bonus_buff')}</h3>
                 <div id="reward-buffs-bonus" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;"></div>
             </div>
 
@@ -2169,8 +2169,8 @@ export class BattleScene extends Phaser.Scene {
         const lootSection = document.createElement('div');
         lootSection.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 20px;';
         const picksLabel = remainingPicks === 1
-            ? '1 buff choice remaining'
-            : `${remainingPicks} buff choices remaining`;
+            ? t('reward.picks_remaining_one')
+            : t('reward.picks_remaining', remainingPicks);
         lootSection.innerHTML = `
             <div style="font-size: 48px; margin-bottom: 10px;">💰</div>
             <div style="color: #FFD700; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">
@@ -2303,9 +2303,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'BERSERKER') && !hasBuff('BERSERKER', 'hasDoubleStrike') && !usedBuffs.has('legendary_frenzy')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_frenzy',
-                name: 'Blood Frenzy',
+                name: t('buff.frenzy'),
                 icon: '🩸',
-                desc: 'Berserker: Strikes 2 times per attack',
+                desc: t('buff.frenzy.desc'),
                 unitType: 'BERSERKER',
                 rarity: 'legendary',
                 effect: (unit) => {
@@ -2319,9 +2319,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'PALADIN') && !hasBuff('PALADIN', 'hasCleave') && !usedBuffs.has('legendary_cleave')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_cleave',
-                name: 'Divine Wrath',
+                name: t('buff.cleave'),
                 icon: '⚡',
-                desc: 'Paladin: 3x3 cleave attack, +40 damage',
+                desc: t('buff.cleave.desc'),
                 unitType: 'PALADIN',
                 rarity: 'legendary',
                 effect: (unit) => {
@@ -2337,9 +2337,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'RANGER') && !hasBuff('RANGER', 'hasRicochet') && !usedBuffs.has('legendary_ricochet')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_ricochet',
-                name: 'Ricochet Shot',
+                name: t('buff.ricochet'),
                 icon: '🏹',
-                desc: 'Ranger: Arrows bounce to nearby targets (2 range, 50% dmg), +40 damage',
+                desc: t('buff.ricochet.desc'),
                 unitType: 'RANGER',
                 rarity: 'legendary',
                 effect: (unit) => {
@@ -2355,9 +2355,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'SORCERER') && !hasBuff('SORCERER', 'hasPiercing') && !usedBuffs.has('legendary_piercing')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_piercing',
-                name: 'Arcane Pierce',
+                name: t('buff.piercing'),
                 icon: '🔮',
-                desc: 'Sorcerer: Infinite range, shots pierce all units in path',
+                desc: t('buff.piercing.desc'),
                 unitType: 'SORCERER',
                 rarity: 'legendary',
                 effect: (unit) => {
@@ -2373,9 +2373,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'ROGUE') && !hasBuff('ROGUE', 'hasBackstab') && !usedBuffs.has('legendary_backstab')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_backstab',
-                name: 'Shadow Strike',
+                name: t('buff.backstab'),
                 icon: '🗡️',
-                desc: 'Rogue: 4x damage when attacking from behind (or side)',
+                desc: t('buff.backstab.desc'),
                 unitType: 'ROGUE',
                 rarity: 'legendary',
                 effect: (unit) => {
@@ -2405,9 +2405,9 @@ export class BattleScene extends Phaser.Scene {
         if (hasProperty('PALADIN', 'hasCleave') && !hasProperty('PALADIN', 'hasDivineRetribution') && !usedBuffs.has('mythic_divine_retribution')) {
             availableMythicBuffs.push({
                 id: 'mythic_divine_retribution',
-                name: 'Divine Retribution',
+                name: t('buff.divine_retribution'),
                 icon: '✨',
-                desc: 'Paladin: Removes passive debuffs. Unlimited retaliation vs melee (x2 DMG).',
+                desc: t('buff.divine_retribution.desc'),
                 unitType: 'PALADIN',
                 rarity: 'mythic',
                 effect: (unit) => {
@@ -2427,9 +2427,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'SORCERER') && hasProperty('SORCERER', 'hasPiercing') && !hasProperty('SORCERER', 'hasUnstableArcana') && !usedBuffs.has('mythic_unstable_arcana')) {
             availableMythicBuffs.push({
                 id: 'mythic_unstable_arcana',
-                name: 'Unstable Arcana',
+                name: t('buff.unstable_arcana'),
                 icon: '🔥',
-                desc: 'Sorcerer Fireball: 25% 2x dmg, 5% 4x dmg, 50% lingering DoT (50% dmg for 2 turns), 20% 0.1x dmg.',
+                desc: t('buff.unstable_arcana.desc'),
                 unitType: 'SORCERER',
                 rarity: 'mythic',
                 effect: (unit) => {
@@ -2443,9 +2443,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !hasProperty('RANGER', 'hasSilverArrows') && !usedBuffs.has('mythic_silver_arrows')) {
             availableMythicBuffs.push({
                 id: 'mythic_silver_arrows',
-                name: 'Silver Arrows',
+                name: t('buff.silver_arrows'),
                 icon: '🏹',
-                desc: 'Ranger: Each hit deals +25% of target\'s max HP as bonus damage (5% vs bosses). Works with Ricochet.',
+                desc: t('buff.silver_arrows.desc'),
                 unitType: 'RANGER',
                 rarity: 'mythic',
                 effect: (unit) => {
@@ -2460,9 +2460,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'BERSERKER') && hasProperty('BERSERKER', 'hasDoubleStrike') && !hasProperty('BERSERKER', 'hasWarlust') && !usedBuffs.has('mythic_warlust')) {
             availableMythicBuffs.push({
                 id: 'mythic_warlust',
-                name: 'Warlust',
+                name: t('buff.warlust'),
                 icon: '💀',
-                desc: 'Berserker: Each kill also grants +5 permanent Max HP (on top of Bloodlust\'s +15 DMG).',
+                desc: t('buff.warlust.desc'),
                 unitType: 'BERSERKER',
                 rarity: 'mythic',
                 effect: (unit) => {
@@ -2542,7 +2542,7 @@ export class BattleScene extends Phaser.Scene {
     getRandomBuffs(count) {
         const commonBuffs = [
             {
-                id: 'veteran', name: 'Veteran Training', icon: '⚔️', desc: '+10 Damage', rarity: 'common',
+                id: 'veteran', name: t('buff.veteran'), icon: '⚔️', desc: t('buff.veteran.desc'), rarity: 'common',
                 effect: (unit) => {
                     unit.damage += 10;
                     unit.statModifiers = unit.statModifiers || {};
@@ -2550,7 +2550,7 @@ export class BattleScene extends Phaser.Scene {
                 }
             },
             {
-                id: 'toughness', name: 'Enhanced Toughness', icon: '💪', desc: '+30 Max HP', rarity: 'common',
+                id: 'toughness', name: t('buff.toughness'), icon: '💪', desc: t('buff.toughness.desc'), rarity: 'common',
                 effect: (unit) => {
                     unit.maxHealth += 30; unit.health += 30;
                     unit.statModifiers = unit.statModifiers || {};
@@ -2559,7 +2559,7 @@ export class BattleScene extends Phaser.Scene {
                 }
             },
             {
-                id: 'agility', name: 'Greater Agility', icon: '💨', desc: '+1 Movement', rarity: 'common',
+                id: 'agility', name: t('buff.agility'), icon: '💨', desc: t('buff.agility.desc'), rarity: 'common',
                 effect: (unit) => {
                     unit.moveRange += 1;
                     unit.statModifiers = unit.statModifiers || {};
@@ -2567,7 +2567,7 @@ export class BattleScene extends Phaser.Scene {
                 }
             },
             {
-                id: 'precision', name: 'Precision Strikes', icon: '🎯', desc: '+5 Initiative & +5 Damage', rarity: 'common',
+                id: 'precision', name: t('buff.precision'), icon: '🎯', desc: t('buff.precision.desc'), rarity: 'common',
                 effect: (unit) => {
                     unit.initiative += 5; unit.damage += 5;
                     unit.statModifiers = unit.statModifiers || {};
@@ -2576,7 +2576,7 @@ export class BattleScene extends Phaser.Scene {
                 }
             },
             {
-                id: 'ranged', name: 'Ranged Training', icon: '🏹', desc: 'Gain Ranged Attack (Range 3)', rarity: 'common',
+                id: 'ranged', name: t('buff.ranged'), icon: '🏹', desc: t('buff.ranged.desc'), rarity: 'common',
                 effect: (unit) => {
                     if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
                     unit.statModifiers = unit.statModifiers || {};
@@ -2587,7 +2587,7 @@ export class BattleScene extends Phaser.Scene {
 
         const epicBuffs = [
             {
-                id: 'champion_favor', name: "Champion's Favor", icon: '⭐', desc: '+20 HP, +5 DMG, +1 MOV', rarity: 'epic',
+                id: 'champion_favor', name: t('buff.champion'), icon: '⭐', desc: t('buff.champion.desc'), rarity: 'epic',
                 effect: (unit) => {
                     unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
                     unit.statModifiers = unit.statModifiers || {};
@@ -2598,7 +2598,7 @@ export class BattleScene extends Phaser.Scene {
                 }
             },
             {
-                id: 'obsidian_armor', name: 'Obsidian Armor', icon: '⬛', desc: 'Max HP x2, Movement -2', rarity: 'epic',
+                id: 'obsidian_armor', name: t('buff.obsidian'), icon: '⬛', desc: t('buff.obsidian.desc'), rarity: 'epic',
                 effect: (unit) => {
                     const hpDiff = unit.maxHealth;
                     unit.maxHealth += hpDiff;
@@ -2614,7 +2614,7 @@ export class BattleScene extends Phaser.Scene {
                 }
             },
             {
-                id: 'glass_cannon', name: 'Glass Cannon', icon: '💥', desc: 'Damage x2, Max HP x0.5', rarity: 'epic',
+                id: 'glass_cannon', name: t('buff.glass_cannon'), icon: '💥', desc: t('buff.glass_cannon.desc'), rarity: 'epic',
                 effect: (unit) => {
                     const dmgDiff = unit.damage;
                     const hpDiff = -Math.floor(unit.maxHealth * 0.5);
@@ -2628,7 +2628,7 @@ export class BattleScene extends Phaser.Scene {
                 }
             },
             {
-                id: 'temporal_shift', name: 'Temporal Shift', icon: '⏳', desc: '2 turns per round. Damage x0.5', rarity: 'epic',
+                id: 'temporal_shift', name: t('buff.temporal'), icon: '⏳', desc: t('buff.temporal.desc'), rarity: 'epic',
                 effect: (unit) => {
                     unit.hasTemporalShift = true;
                     const dmgDiff = -Math.floor(unit.damage * 0.5);
@@ -2702,7 +2702,7 @@ export class BattleScene extends Phaser.Scene {
                 discardBtn.onclick = () => {
                     if (!confirmPending) {
                         confirmPending = true;
-                        discardBtn.textContent = '⚠️ Confirm? This cannot be undone.';
+                        discardBtn.innerHTML = t('reward.discard_confirm');
                         discardBtn.style.color = '#d94a4a';
                         discardBtn.style.borderColor = '#d94a4a';
                     } else {
@@ -2742,27 +2742,27 @@ export class BattleScene extends Phaser.Scene {
         const ownedBuffTypes = new Set(this.magicBuffs.map(b => b.type));
         const allMagicOptions = [
             {
-                id: 'mana_max', name: 'Expanded Mana Pool', icon: '💧', desc: '+50 Max Mana',
+                id: 'mana_max', name: t('magic.mana_max'), icon: '💧', desc: t('magic.mana_max.desc'),
                 buffType: 'maxMana', buffValue: 50,
                 effect: () => { this.uiManager.updateManaDisplay(); }
             },
             {
-                id: 'mana_regen', name: 'Mana Flow', icon: '🌊', desc: '+2 Base Mana Regen per round',
+                id: 'mana_regen', name: t('magic.mana_regen'), icon: '🌊', desc: t('magic.mana_regen.desc'),
                 buffType: 'manaRegen', buffValue: 2,
                 effect: () => { this.baseManaRegen = (this.baseManaRegen || 1) + 2; }
             },
             {
-                id: 'spell_power', name: 'Arcane Power', icon: '🔮', desc: '+25% Spell Damage',
+                id: 'spell_power', name: t('magic.spell_power'), icon: '🔮', desc: t('magic.spell_power.desc'),
                 buffType: 'spellPower', buffValue: 0.25,
                 effect: () => { this.spellPowerMultiplier = (this.spellPowerMultiplier || 1) + 0.25; }
             },
             {
-                id: 'healing_surge', name: 'Healing Surge', icon: '💖', desc: '+35% Healing Spell Power',
+                id: 'healing_surge', name: t('magic.healing_surge'), icon: '💖', desc: t('magic.healing_surge.desc'),
                 buffType: 'healingPower', buffValue: 0.35,
                 effect: () => { this.healingPowerMultiplier = (this.healingPowerMultiplier || 1) + 0.35; }
             },
             {
-                id: 'spell_efficiency', name: 'Efficient Casting', icon: '⚡', desc: '-20% Mana Cost for all spells',
+                id: 'spell_efficiency', name: t('magic.spell_efficiency'), icon: '⚡', desc: t('magic.spell_efficiency.desc'),
                 buffType: 'manaCost', buffValue: 0.2,
                 effect: () => {
                     // Flat -20% from base, capped at 80% reduction (0.2 multiplier minimum)
@@ -2771,23 +2771,23 @@ export class BattleScene extends Phaser.Scene {
                 maxStacks: 4
             },
             {
-                id: 'mana_restore', name: 'Mana Surge', icon: '✨', desc: 'Fully restore all missing mana instantly',
+                id: 'mana_restore', name: t('magic.mana_restore'), icon: '✨', desc: t('magic.mana_restore.desc'),
                 buffType: 'manaRestore', buffValue: 1,
                 effect: () => { this.mana = this.maxMana; this.uiManager.updateManaDisplay(); }
             },
             {
-                id: 'double_cast', name: 'Twin Cast', icon: '🔄', desc: '+1 spell per round',
+                id: 'double_cast', name: t('magic.double_cast'), icon: '🔄', desc: t('magic.double_cast.desc'),
                 buffType: 'spellsPerRound', buffValue: 1,
                 effect: () => { this.spellsPerRound = (this.spellsPerRound || 1) + 1; }
             },
             {
-                id: 'permanent_buffs', name: 'Eternal Magic', icon: '♾️', desc: 'Spell buffs no longer expire',
+                id: 'permanent_buffs', name: t('magic.permanent_buffs'), icon: '♾️', desc: t('magic.permanent_buffs.desc'),
                 buffType: 'permanentBuffs', buffValue: 1,
                 effect: () => { this.permanentBuffs = true; },
                 unique: true
             },
             {
-                id: 'army_buffs', name: 'Mass Enchantment', icon: '🌟', desc: 'Spells target whole army',
+                id: 'army_buffs', name: t('magic.army_buffs'), icon: '🌟', desc: t('magic.army_buffs.desc'),
                 buffType: 'armyBuffs', buffValue: 1,
                 effect: () => { this.armyBuffs = true; },
                 unique: true
@@ -2910,9 +2910,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'BERSERKER') && !hasBuff('BERSERKER', 'hasDoubleStrike')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_frenzy',
-                name: 'Blood Frenzy',
+                name: t('buff.frenzy'),
                 icon: '🩸',
-                desc: 'Berserker: Strikes 2 times per attack',
+                desc: t('buff.frenzy.desc'),
                 unitType: 'BERSERKER',
                 effect: (unit) => {
                     unit.hasDoubleStrike = true;
@@ -2925,9 +2925,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'PALADIN') && !hasBuff('PALADIN', 'hasCleave')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_cleave',
-                name: 'Divine Wrath',
+                name: t('buff.cleave'),
                 icon: '⚡',
-                desc: 'Paladin: 3x3 cleave attack, +40 damage',
+                desc: t('buff.cleave.desc'),
                 unitType: 'PALADIN',
                 effect: (unit) => {
                     unit.hasCleave = true;
@@ -2942,9 +2942,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'RANGER') && !hasBuff('RANGER', 'hasRicochet')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_ricochet',
-                name: 'Ricochet Shot',
+                name: t('buff.ricochet'),
                 icon: '🏹',
-                desc: 'Ranger: Arrows bounce to nearby targets (2 range, 50% dmg), +40 damage',
+                desc: t('buff.ricochet.desc'),
                 unitType: 'RANGER',
                 effect: (unit) => {
                     unit.hasRicochet = true;
@@ -2959,9 +2959,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'SORCERER') && !hasBuff('SORCERER', 'hasPiercing')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_piercing',
-                name: 'Arcane Pierce',
+                name: t('buff.piercing'),
                 icon: '🔮',
-                desc: 'Sorcerer: Infinite range, shots pierce all units in path',
+                desc: t('buff.piercing.desc'),
                 unitType: 'SORCERER',
                 effect: (unit) => {
                     unit.hasPiercing = true;
@@ -2976,9 +2976,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'ROGUE') && !hasBuff('ROGUE', 'hasBackstab')) {
             availableLegendaryBuffs.push({
                 id: 'legendary_backstab',
-                name: 'Shadow Strike',
+                name: t('buff.backstab'),
                 icon: '🗡️',
-                desc: 'Rogue: 4x damage when attacking from behind (or side)',
+                desc: t('buff.backstab.desc'),
                 unitType: 'ROGUE',
                 effect: (unit) => {
                     unit.hasBackstab = true;
@@ -3009,9 +3009,9 @@ export class BattleScene extends Phaser.Scene {
         if (hasProperty('PALADIN', 'hasCleave') && !hasProperty('PALADIN', 'hasDivineRetribution')) {
             availableMythicBuffs.push({
                 id: 'mythic_divine_retribution',
-                name: 'Divine Retribution',
+                name: t('buff.divine_retribution'),
                 icon: '✨',
-                desc: 'Paladin: Removes passive debuffs. Unlimited retaliation vs melee (x2 DMG).',
+                desc: t('buff.divine_retribution.desc'),
                 unitType: 'PALADIN',
                 rarity: 'mythic',
                 effect: (unit) => {
@@ -3034,9 +3034,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'SORCERER') && hasProperty('SORCERER', 'hasPiercing') && !hasProperty('SORCERER', 'hasUnstableArcana')) {
             availableMythicBuffs.push({
                 id: 'mythic_unstable_arcana',
-                name: 'Unstable Arcana',
+                name: t('buff.unstable_arcana'),
                 icon: '🔥',
-                desc: 'Sorcerer Fireball: 25% 2x dmg, 5% 4x dmg, 50% lingering DoT (50% dmg for 2 turns), 20% 0.1x dmg.',
+                desc: t('buff.unstable_arcana.desc'),
                 unitType: 'SORCERER',
                 rarity: 'mythic',
                 effect: (unit) => {
@@ -3051,9 +3051,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !hasProperty('RANGER', 'hasSilverArrows')) {
             availableMythicBuffs.push({
                 id: 'mythic_silver_arrows',
-                name: 'Silver Arrows',
+                name: t('buff.silver_arrows'),
                 icon: '🏹',
-                desc: 'Ranger: Each hit deals +25% of target\'s max HP as bonus damage (5% vs bosses). Works with Ricochet.',
+                desc: t('buff.silver_arrows.desc'),
                 unitType: 'RANGER',
                 rarity: 'mythic',
                 effect: (unit) => {
@@ -3068,9 +3068,9 @@ export class BattleScene extends Phaser.Scene {
         if (playerUnits.some(u => u.type === 'BERSERKER') && hasProperty('BERSERKER', 'hasDoubleStrike') && !hasProperty('BERSERKER', 'hasWarlust')) {
             availableMythicBuffs.push({
                 id: 'mythic_warlust',
-                name: 'Warlust',
+                name: t('buff.warlust'),
                 icon: '💀',
-                desc: 'Berserker: Each kill also grants +5 permanent Max HP (on top of Bloodlust\'s +15 DMG).',
+                desc: t('buff.warlust.desc'),
                 unitType: 'BERSERKER',
                 rarity: 'mythic',
                 effect: (unit) => {

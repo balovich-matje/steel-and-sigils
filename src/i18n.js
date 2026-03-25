@@ -208,6 +208,11 @@ const TRANSLATIONS = {
         'reward.no_unit_later': 'Victory! New unit available in round {0}.',
         'reward.new_unit_every2': '(New units every 2 rounds)',
         'reward.confirm': 'Confirm Choices ({0}/3)',
+        'reward.discard_units': 'Discard units<br>for bonus buff',
+        'reward.discard_confirm': '⚠️ Confirm?<br>Cannot be undone.',
+        'reward.bonus_buff': '💪 Bonus Buff',
+        'reward.picks_remaining_one': '1 buff choice remaining',
+        'reward.picks_remaining': '{0} buff choices remaining',
 
         // Loot Goblin Reward
         'loot_goblin.title': 'Loot Goblin Defeated!',
@@ -255,6 +260,10 @@ const TRANSLATIONS = {
         'buff.divine_retribution.desc': 'Paladin: Removes passive debuffs. Unlimited retaliation vs melee (x2 DMG).',
         'buff.unstable_arcana': 'Unstable Arcana',
         'buff.unstable_arcana.desc': 'Sorcerer Fireball: 25% 2x dmg, 5% 4x dmg, 50% lingering DoT (50% dmg for 2 turns), 20% 0.1x dmg.',
+        'buff.silver_arrows': 'Silver Arrows',
+        'buff.silver_arrows.desc': "Ranger: Each hit deals +25% of target's max HP as bonus damage (5% vs bosses). Works with Ricochet.",
+        'buff.warlust': 'Warlust',
+        'buff.warlust.desc': "Berserker: Each kill also grants +5 permanent Max HP (on top of Bloodlust's +15 DMG).",
 
         // Magic Buffs
         'magic.mana_max': 'Expanded Mana Pool',
@@ -541,7 +550,7 @@ const TRANSLATIONS = {
         'victory.title': '🎉 Победа! 🎉',
         'victory.subtitle': 'Выберите награды для следующего боя:',
         'defeat.title': 'Поражение...',
-        'defeat.message': 'Ваша армия палла...',
+        'defeat.message': 'Ваша армия пала...',
         'defeat.submessage': 'Повезёт в следующий раз, командир.',
         'defeat.retry': '⚔️ Попробовать Снова',
 
@@ -558,6 +567,11 @@ const TRANSLATIONS = {
         'reward.no_unit_later': 'Победа! Новый юнит доступен в раунде {0}.',
         'reward.new_unit_every2': '(Новые юниты каждые 2 раунда)',
         'reward.confirm': 'Подтвердить Выбор ({0}/3)',
+        'reward.discard_units': 'Отказаться<br>от юнитов',
+        'reward.discard_confirm': '⚠️ Подтвердить?<br>Отменить нельзя.',
+        'reward.bonus_buff': '💪 Бонусный Бафф',
+        'reward.picks_remaining_one': 'Остался 1 выбор баффа',
+        'reward.picks_remaining': 'Осталось {0} выборов баффов',
 
         // Loot Goblin Reward
         'loot_goblin.title': 'Гоблин-Грабитель Повержен!',
@@ -605,6 +619,10 @@ const TRANSLATIONS = {
         'buff.divine_retribution.desc': 'Паладин: Убирает пассивные дебаффы. Неограниченное возмездие в ближнем бою (×2 УРОН).',
         'buff.unstable_arcana': 'Нестабильная Аркана',
         'buff.unstable_arcana.desc': 'Огненный Шар Чародея: 25% 2× урон, 5% 4× урон, 50% горение (50% урона 2 хода), 20% 0.1× урон.',
+        'buff.silver_arrows': 'Серебряные Стрелы',
+        'buff.silver_arrows.desc': 'Следопыт: Каждое попадание наносит +25% от макс. ЗДОР цели (5% по боссам). Работает с рикошетом.',
+        'buff.warlust': 'Жажда Войны',
+        'buff.warlust.desc': 'Берсерк: Каждое убийство также даёт +5 к макс. ЗДОР (помимо +15 УРОН от Жажды Крови).',
 
         // Magic Buffs
         'magic.mana_max': 'Расширенный Запас Маны',
@@ -622,7 +640,7 @@ const TRANSLATIONS = {
         'magic.double_cast': 'Двойное Колдовство',
         'magic.double_cast.desc': '+1 заклинание за раунд',
         'magic.permanent_buffs': 'Вечная Магия',
-        'magic.permanent_buffs.desc': 'Заклинания-бuffs больше не истекают',
+        'magic.permanent_buffs.desc': 'Заклинания-баффы больше не истекают',
         'magic.army_buffs': 'Массовое Зачарование',
         'magic.army_buffs.desc': 'Заклинания действуют на всю армию',
 
@@ -692,8 +710,8 @@ const TRANSLATIONS = {
         'log.void_herald_death': 'Вестник Пустоты повержен! Скорость передвижения восстановлена!',
         'log.burning': '{0} получает {1} урона от горения от Нестабильной Арканы.',
         'log.burning_turns': '{0} горит и получает {1} урона в течение 2 ходов!',
-        'log.mutation_speed': "{0}'s нестабильная форма даёт +2 к Передвижению!",
-        'log.mutation_power': "{0}'s нестабильная форма даёт +10 к Урону!",
+        'log.mutation_speed': 'Нестабильная форма {0} даёт +2 к Передвижению!',
+        'log.mutation_power': 'Нестабильная форма {0} даёт +10 к Урону!',
         'log.unstable_double': 'Двойной Урон',
         'log.unstable_quad': 'ЧЕТВЕРНОЙ УРОН',
         'log.unstable_dot': 'Длительное Горение',
