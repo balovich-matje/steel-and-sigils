@@ -85,6 +85,8 @@ const TRANSLATIONS = {
         'unit.gibbering_horror': 'Gibbering Horror',
         'unit.flesh_warped_stalker': 'Flesh-warped Stalker',
         'unit.banshee_sovereign': 'Banshee Sovereign',
+        'unit.dread_knight': 'Dread Knight',
+        'unit.iron_colossus': 'Iron Colossus',
 
         // Unit Stats
         'stat.hp': 'HP',
@@ -445,6 +447,8 @@ const TRANSLATIONS = {
         'unit.gibbering_horror': 'Бормочущий Ужас',
         'unit.flesh_warped_stalker': 'Потрошитель Плоти',
         'unit.banshee_sovereign': 'Владычица Банши',
+        'unit.dread_knight': 'Рыцарь Ужаса',
+        'unit.iron_colossus': 'Железный Колосс',
 
         // Unit Stats
         'stat.hp': 'ЗДОР',

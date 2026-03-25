@@ -68,6 +68,13 @@ export class Unit {
         // Void Herald slow tracking
         this.voidSlowRounds = 0;
 
+        // Dread Knight Bleed DoT
+        this.bleedRounds = 0;
+        this.bleedAmount = 0;
+
+        // Iron Colossus Stun (set by Seismic Slam; consumed at turn start)
+        this.isStunned = false;
+
         // Permanent stat modifiers from rewards
         this.statModifiers = null;
 
@@ -160,6 +167,24 @@ export class Unit {
             amount = Math.floor(amount * 1.5);
         }
 
+        // Iron Colossus: Iron Reflection — reflects 50% of melee damage back to attacker
+        if (this.type === 'IRON_COLOSSUS' && !isRanged && attacker && attacker !== this) {
+            const reflected = Math.floor(amount * 0.5);
+            if (reflected > 0 && attacker.health > 0) {
+                attacker.health = Math.max(0, attacker.health - reflected);
+                attacker.updateHealthBar();
+                if (this.scene && this.scene.uiManager) {
+                    this.scene.uiManager.showFloatingText(`↩ ${reflected}`, attacker.sprite.x, attacker.sprite.y - 50, '#BBBBBB');
+                    this.scene.addCombatLog(`Iron Colossus reflects ${reflected} damage back to ${attacker.name}!`, 'debuff');
+                }
+                if (attacker.health <= 0) {
+                    attacker.killedBy = this;
+                    attacker.die(this.scene);
+                    if (this.scene) this.scene.checkVictoryCondition();
+                }
+            }
+        }
+
         const actualDamage = Math.min(amount, this.health); // Can't deal more damage than remaining health
         this.health = Math.max(0, this.health - amount);
         this.updateHealthBar();
@@ -198,6 +223,11 @@ export class Unit {
         // Lost Spirit: +50% spell damage
         if (this.type === 'LOST_SPIRIT') {
             amount = Math.floor(amount * 1.5);
+        }
+
+        // Iron Colossus: Magic Resonance — takes double spell damage
+        if (this.type === 'IRON_COLOSSUS') {
+            amount = amount * 2;
         }
 
         // Cultist Void-Burned Skin: 25% magic damage resistance
@@ -409,6 +439,47 @@ export class Unit {
             }
         }
 
+        // Iron Colossus: Seismic Slam — knock back and stun all player units within 2 tiles
+        if (this.type === 'IRON_COLOSSUS' && !this.isDead) {
+            const scene = this.scene;
+            const SLAM_RANGE = 2;
+            const myPositions = this.getOccupiedPositions();
+            const nearby = scene.unitManager.getPlayerUnits().filter(p => {
+                const minDist = Math.min(...myPositions.map(pos =>
+                    Math.max(Math.abs(p.gridX - pos.x), Math.abs(p.gridY - pos.y))
+                ));
+                return minDist <= SLAM_RANGE;
+            });
+            if (nearby.length > 0) {
+                scene.uiManager.showFloatingText('💥 SEISMIC SLAM!', 400, 200, '#BBBBBB');
+                for (const p of nearby) {
+                    const cxCenter = this.gridX + 0.5;
+                    const cyCenter = this.gridY + 0.5;
+                    const dx = p.gridX - cxCenter;
+                    const dy = p.gridY - cyCenter;
+                    const dirX = dx === 0 ? 0 : (dx > 0 ? 1 : -1);
+                    const dirY = dy === 0 ? 0 : (dy > 0 ? 1 : -1);
+                    for (let dist = 2; dist >= 1; dist--) {
+                        const nx = p.gridX + dirX * dist;
+                        const ny = p.gridY + dirY * dist;
+                        if (nx >= 0 && nx < scene.gridSystem.width &&
+                            ny >= 0 && ny < scene.gridSystem.height &&
+                            !scene.unitManager.getUnitAt(nx, ny) &&
+                            !scene.gridSystem.isObstacle(nx, ny)) {
+                            scene.unitManager.updateUnitPosition(p, nx, ny);
+                            break;
+                        }
+                    }
+                    p.isStunned = true;
+                    scene.uiManager.showBuffText(p, 'STUNNED!', '#BBBBBB');
+                }
+                scene.addCombatLog(
+                    `Iron Colossus shakes the ground! ${nearby.length} unit(s) knocked back and stunned for 1 turn!`,
+                    'debuff'
+                );
+            }
+        }
+
         // Handle regenerate healing at start of turn (permanent buffs have rounds = -1)
         if (this.regenerateRounds > 0 || this.regenerateRounds === -1) {
             this.heal(this.regenerateAmount);
@@ -417,6 +488,27 @@ export class Unit {
                 if (this.regenerateRounds === 0) {
                     this.regenerateAmount = 0;
                 }
+            }
+        }
+
+        // Bleed DoT (inflicted by Dread Knight)
+        if (this.bleedRounds > 0) {
+            const bleedDmg = this.bleedAmount;
+            this.health = Math.max(0, this.health - bleedDmg);
+            if (this.scene && this.scene.uiManager) {
+                this.scene.uiManager.showDamageText(this, bleedDmg);
+                this.scene.uiManager.showBuffText(this, 'BLEEDING!', '#CC2200');
+            }
+            if (this.scene) {
+                this.scene.addCombatLog(`${this.name} takes ${bleedDmg} bleed damage.`, 'damage');
+            }
+            this.updateHealthBar();
+            this.bleedRounds--;
+            if (this.bleedRounds === 0) this.bleedAmount = 0;
+            if (this.health <= 0) {
+                this.die();
+                if (this.scene) this.scene.checkVictoryCondition();
+                return;
             }
         }
 
@@ -957,6 +1049,15 @@ export class TurnSystem {
         this.currentUnit.resetTurn();
         this.updateTurnDisplay();
 
+        // Iron Colossus Stun: unit loses its turn
+        if (this.currentUnit.isStunned) {
+            this.currentUnit.isStunned = false;
+            this.scene.uiManager.showBuffText(this.currentUnit, 'STUNNED!', '#BBBBBB');
+            this.scene.addCombatLog(`${this.currentUnit.name} is stunned and loses their turn!`, 'debuff');
+            this.scene.time.delayedCall(400, () => this.nextTurn());
+            return;
+        }
+
         if (!this.currentUnit.isPlayer) {
             this.scene.time.delayedCall(500, () => this.executeAITurn());
         } else {
@@ -1023,6 +1124,8 @@ export class TurnSystem {
         if (unit.type === 'BANSHEE_SOVEREIGN') {
             this.executeBansheeWail(playerUnits);
         }
+
+        // Dread Knight: falls through to default AI — cleave + bleed are handled inside performAttack
 
         // Default AI for all other units
         this.executeDefaultAITurn(playerUnits);

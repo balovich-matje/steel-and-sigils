@@ -65,7 +65,7 @@ export class BattleScene extends Phaser.Scene {
         const enemyUnits = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER',
             'OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN',
             // Dungeon Dwellers
-            'ANIMATED_ARMOR', 'SKELETON_ARCHER', 'SKELETON_SOLDIER', 'LOST_SPIRIT', 'SUMMONER_LICH', 'BANSHEE_SOVEREIGN',
+            'ANIMATED_ARMOR', 'SKELETON_ARCHER', 'SKELETON_SOLDIER', 'LOST_SPIRIT', 'SUMMONER_LICH', 'BANSHEE_SOVEREIGN', 'DREAD_KNIGHT', 'IRON_COLOSSUS',
             // Old God Worshippers
             'CULTIST_ACOLYTE', 'CULTIST_NEOPHYTE', 'GIBBERING_HORROR', 'FLESH_WARPED_STALKER', "OCTOTH_HROARATH",
             'THE_SILENCE', 'VOID_HERALD'
@@ -659,7 +659,7 @@ export class BattleScene extends Phaser.Scene {
     createBossWave() {
         let selectedBoss;
         if (this.currentEnemyFaction === 'DUNGEON_DWELLERS') {
-            const dungeonBosses = ['SUMMONER_LICH', 'BANSHEE_SOVEREIGN'];
+            const dungeonBosses = ['SUMMONER_LICH', 'BANSHEE_SOVEREIGN', 'DREAD_KNIGHT', 'IRON_COLOSSUS'];
             selectedBoss = dungeonBosses[Math.floor(Math.random() * dungeonBosses.length)];
             if (selectedBoss === this.lastBossSpawned) {
                 const others = dungeonBosses.filter(b => b !== this.lastBossSpawned);
@@ -1240,6 +1240,18 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Combat
+    // Returns 0.5 if the unit is within Dread Knight's Aura of Dread (2 tiles from any occupied tile), else 1.0
+    getDreadKnightAuraMultiplier(unit) {
+        const dreadKnights = this.unitManager.units.filter(u => u.type === 'DREAD_KNIGHT' && !u.isDead);
+        for (const dk of dreadKnights) {
+            const minDist = Math.min(...dk.getOccupiedPositions().map(pos =>
+                Math.max(Math.abs(unit.gridX - pos.x), Math.abs(unit.gridY - pos.y))
+            ));
+            if (minDist <= 2) return 0.5;
+        }
+        return 1.0;
+    }
+
     performAttack(attacker, defender, isSecondStrike = false) {
         if (!isSecondStrike && !attacker.canAttack()) return;
 
@@ -1277,6 +1289,15 @@ export class BattleScene extends Phaser.Scene {
 
                 let damage = Math.floor(attacker.damage * attacker.blessValue);
 
+                // Dread Knight Aura of Dread: player units within 2 tiles deal ×0.5 damage
+                if (attacker.isPlayer) {
+                    const auraMult = this.getDreadKnightAuraMultiplier(attacker);
+                    if (auraMult < 1) {
+                        damage = Math.floor(damage * auraMult);
+                        this.uiManager.showBuffText(attacker, 'AURA!', '#8B0000');
+                    }
+                }
+
                 // Rogue legendary perk: Backstab (4x damage if attacking from behind)
                 if (attacker.type === 'ROGUE' && attacker.hasBackstab) {
                     // Check if attacking from behind (same X but behind in Y relative to center of board, or same Y but behind in X)
@@ -1310,6 +1331,30 @@ export class BattleScene extends Phaser.Scene {
                         yoyo: true,
                         repeat: 2
                     });
+
+                    // Dread Knight: Bleed on main target + Cleave up to 2 adjacent player units
+                    if (attacker.type === 'DREAD_KNIGHT') {
+                        const bleedAmount = Math.floor(attacker.damage * 0.33);
+                        if (!defender.isDead) {
+                            defender.bleedRounds = 3;
+                            defender.bleedAmount = bleedAmount;
+                            this.uiManager.showBuffText(defender, 'BLEEDING!', '#CC2200');
+                            this.addCombatLog(`${defender.name} is bleeding! (${bleedAmount} dmg/turn for 3 turns)`, 'debuff');
+                        }
+                        // Cleave: hit up to 2 adjacent player units
+                        const cleaveTargets = this.unitManager.getPlayerUnits()
+                            .filter(u => u !== defender && !u.isDead)
+                            .filter(u => Math.max(Math.abs(u.gridX - defender.gridX), Math.abs(u.gridY - defender.gridY)) === 1)
+                            .slice(0, 2);
+                        for (const adj of cleaveTargets) {
+                            const cleaveDmg = adj.takeDamage(damage, false, attacker);
+                            this.uiManager.showDamageText(adj, cleaveDmg);
+                            adj.bleedRounds = 3;
+                            adj.bleedAmount = bleedAmount;
+                            this.uiManager.showBuffText(adj, 'BLEEDING!', '#CC2200');
+                            this.addCombatLog(`Dread Knight cleaves ${adj.name} for ${cleaveDmg} damage and causes bleeding!`, 'damage');
+                        }
+                    }
 
                     // Flesh-warped Stalker: Feast of Flesh - refresh turn on kill
                     if (attacker.type === 'FLESH_WARPED_STALKER' && defender.isDead && !attacker.isDead) {
@@ -1532,7 +1577,15 @@ export class BattleScene extends Phaser.Scene {
                     this.performRicochetAttack(attacker, defender);
                 }
                 else {
-                    const damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
+                    let damage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
+                    // Dread Knight Aura of Dread: ranged attacker within 2 tiles deals ×0.5 damage
+                    if (attacker.isPlayer) {
+                        const auraMult = this.getDreadKnightAuraMultiplier(attacker);
+                        if (auraMult < 1) {
+                            damage = Math.floor(damage * auraMult);
+                            this.uiManager.showBuffText(attacker, 'AURA!', '#8B0000');
+                        }
+                    }
                     const silverBonus = attacker.hasSilverArrows
                         ? Math.floor(defender.maxHealth * (UNIT_TYPES[defender.type]?.isBoss ? 0.05 : 0.25))
                         : 0;

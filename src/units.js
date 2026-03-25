@@ -320,6 +320,34 @@ const UNIT_TYPES = {
             { name: "Wailing Screech", description: 'At the start of her turn, silences all player units within 4 tiles — their next attack deals no damage.' }
         ]
     },
+    DREAD_KNIGHT: {
+        name: 'Dread Knight',
+        emoji: '🗡️',
+        image: 'images/enemy/dungeon/dread_knight.png',
+        health: 520, maxHealth: 520,
+        damage: 75, moveRange: 3, initiative: 7,
+        isPlayer: false, cost: 2000,
+        isBoss: true, bossSize: 2,
+        passives: [
+            { name: 'Aura of Dread', description: 'All player units within 2 tiles of the Dread Knight deal ×0.5 damage (melee, ranged and spells).' },
+            { name: 'Cleave', description: 'Each attack also strikes up to 2 units adjacent to the main target.' },
+            { name: 'Bleed', description: 'Every hit inflicts Bleed — 33% of attack damage per turn for 3 turns.' }
+        ]
+    },
+    IRON_COLOSSUS: {
+        name: 'Iron Colossus',
+        emoji: '🤖',
+        image: 'images/enemy/dungeon/iron_colossus.png',
+        health: 650, maxHealth: 650,
+        damage: 70, moveRange: 2, initiative: 5,
+        isPlayer: false, cost: 2000,
+        isBoss: true, bossSize: 2,
+        passives: [
+            { name: 'Iron Reflection', description: 'Reflects 50% of received melee damage back to the attacker.' },
+            { name: 'Magic Resonance', description: 'Takes double damage from all spells.' },
+            { name: 'Seismic Slam', description: 'At the start of its turn, knocks back all player units within 2 tiles and stuns them for 1 turn.' }
+        ]
+    },
     OCTOTH_HROARATH: {
         name: "Octo'th Hroa'rath",
         emoji: '🦑',

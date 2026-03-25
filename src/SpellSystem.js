@@ -136,7 +136,18 @@ export class SpellSystem {
             multiplier += sorcererCount * 0.5;
         }
 
-        return Math.floor(basePower * multiplier);
+        let damage = Math.floor(basePower * multiplier);
+
+        // Dread Knight Aura of Dread: the currently acting player unit deals ×0.5 spell damage if within 2 tiles
+        const currentUnit = this.scene.turnSystem ? this.scene.turnSystem.currentUnit : null;
+        if (currentUnit && currentUnit.isPlayer && this.scene.getDreadKnightAuraMultiplier) {
+            const auraMult = this.scene.getDreadKnightAuraMultiplier(currentUnit);
+            if (auraMult < 1) {
+                damage = Math.floor(damage * auraMult);
+            }
+        }
+
+        return damage;
     }
 
     executeTileSpell(spell, centerX, centerY) {
