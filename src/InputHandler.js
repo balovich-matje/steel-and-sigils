@@ -120,19 +120,10 @@ export class GridSystem {
             borderTile.setDepth(-1); // behind playfield tiles
         }
 
-        // Permanent subtle grid lines — always visible, depth above tiles
-        this.permanentGridLines = this.scene.add.graphics();
-        this.permanentGridLines.lineStyle(1, 0x000000, 0.22);
-        for (let x = 0; x <= this.width; x++) {
-            this.permanentGridLines.moveTo(x * tileSize, 0);
-            this.permanentGridLines.lineTo(x * tileSize, this.height * tileSize);
-        }
-        for (let y = 0; y <= this.height; y++) {
-            this.permanentGridLines.moveTo(0, y * tileSize);
-            this.permanentGridLines.lineTo(this.width * tileSize, y * tileSize);
-        }
-        this.permanentGridLines.strokePath();
-        this.permanentGridLines.setDepth(1);
+        // Grid lines — visible by default, toggled via setGridVisible()
+        this.gridGraphics = this.scene.add.graphics();
+        this.gridGraphics.setDepth(1);
+        this._drawGridLines();
 
         this.highlightGraphics = this.scene.add.graphics();
         this.aoePreviewGraphics = this.scene.add.graphics();
@@ -565,47 +556,28 @@ export class GridSystem {
         return this.obstacles.has(`${x},${y}`);
     }
 
-    setGridVisible(visible) {
-        // Toggle grid lines
-        if (this.gridGraphics) {
-            this.gridGraphics.clear();
+    _drawGridLines() {
+        this.gridGraphics.clear();
+        const tileSize = this.tileSize;
+        const width = this.width * tileSize;
+        const height = this.height * tileSize;
+        this.gridGraphics.lineStyle(2, 0x000000, 0.22);
+        for (let x = 0; x <= this.width; x++) {
+            this.gridGraphics.moveTo(x * tileSize, 0);
+            this.gridGraphics.lineTo(x * tileSize, height);
         }
-        
+        for (let y = 0; y <= this.height; y++) {
+            this.gridGraphics.moveTo(0, y * tileSize);
+            this.gridGraphics.lineTo(width, y * tileSize);
+        }
+        this.gridGraphics.strokePath();
+    }
+
+    setGridVisible(visible) {
         if (visible) {
-            // Draw darker, more visible grid lines
-            if (!this.gridGraphics) {
-                this.gridGraphics = this.scene.add.graphics();
-            }
-            
-            const tileSize = this.tileSize;
-            const width = this.width * tileSize;
-            const height = this.height * tileSize;
-            
-            // Darker, more visible grid color
-            const gridColor = 0x3a3028; 
-            
-            // Draw outer border
-            this.gridGraphics.lineStyle(2, gridColor, 1.0);
-            this.gridGraphics.strokeRect(0, 0, width, height);
-            
-            // Draw inner grid lines
-            this.gridGraphics.lineStyle(1, gridColor, 0.8);
-            
-            // Vertical lines
-            for (let x = 1; x < this.width; x++) {
-                const xPos = x * tileSize;
-                this.gridGraphics.moveTo(xPos, 0);
-                this.gridGraphics.lineTo(xPos, height);
-            }
-            
-            // Horizontal lines
-            for (let y = 1; y < this.height; y++) {
-                const yPos = y * tileSize;
-                this.gridGraphics.moveTo(0, yPos);
-                this.gridGraphics.lineTo(width, yPos);
-            }
-            
-            this.gridGraphics.strokePath();
+            this._drawGridLines();
+        } else {
+            this.gridGraphics.clear();
         }
     }
 }

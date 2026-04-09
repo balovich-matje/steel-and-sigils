@@ -100,7 +100,7 @@
                 <button id="view-toggle-btn" class="spell-button" onclick="toggleRightPanelView()" style="flex: 1;" data-i18n="panel.show_battle_log">
                     📜 Show Battle Log
                 </button>
-                <button id="grid-toggle-btn" class="spell-button" onclick="toggleGrid()" title="Toggle Grid" style="opacity: 0.5;">
+                <button id="grid-toggle-btn" class="spell-button" onclick="toggleGrid()" title="Toggle Grid" style="opacity: 1.0;">
                     ⬜
                 </button>
             </div>
@@ -728,7 +728,7 @@
         }
 
         // Grid toggle state
-        let gridVisible = false;
+        let gridVisible = true;
 
         // Local army state — works independently of Phaser initialization
         const _ARMY_UNIT_KEYS = ['KNIGHT','ARCHER','WIZARD','CLERIC','ROGUE','PALADIN','RANGER','BERSERKER','SORCERER'];
