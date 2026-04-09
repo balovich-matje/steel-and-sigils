@@ -250,19 +250,18 @@
 
         <!-- Step 3: Army Selection (Hidden initially) -->
         <div id="step-3-army" class="pregame-step hidden">
-            <h2 style="color: #A68966; margin-bottom: 10px;" data-i18n="army.title">⚔️ Build Your Army ⚔️</h2>
-            <p style="color: #E3D5B8; margin-bottom: 10px; font-size: 16px;" data-i18n="army.subtitle">Spend your points wisely!</p>
-            <div class="mana-display" style="margin-bottom: 15px;">
+            <h2 style="color: #A68966; margin-bottom: 6px;" data-i18n="army.title">⚔️ Build Your Army ⚔️</h2>
+            <p style="color: #E3D5B8; margin-bottom: 6px; font-size: 14px;" data-i18n="army.subtitle">Spend your points wisely!</p>
+            <div class="mana-display" style="margin-bottom: 10px;">
                 <span data-i18n="army.points">💰 Points:</span> <span id="points-remaining">1000</span>/<span id="points-total">1000</span>
             </div>
 
             <!-- Compact Unit Grid -->
             <div class="compact-unit-grid">
-                <!-- Row 1: Common & Specialist -->
-                <!-- Common Units Row -->
-                <div class="unit-card compact" data-type="KNIGHT">
+                <!-- Row 1: Common -->
+                <div class="unit-card compact common" data-type="KNIGHT">
                     <div class="unit-header">
-                        <span class="unit-emoji">⚔️</span>
+                        <img class="unit-card-img" src="images/player/knight.png" alt="">
                         <span class="unit-name" data-i18n="unit.knight">Knight</span>
                         <span class="unit-cost" data-i18n="stat.cost">💰</span>200
                     </div>
@@ -277,11 +276,11 @@
                     </div>
                 </div>
 
-                <div class="unit-card compact" data-type="ARCHER">
+                <div class="unit-card compact common" data-type="ARCHER">
                     <div class="unit-header">
-                        <span class="unit-emoji">🏹</span>
+                        <img class="unit-card-img" src="images/player/archer.png" alt="">
                         <span class="unit-name" data-i18n="unit.archer">Archer</span>
-                        <span class="unit-cost" data-i18n="stat.cost">💰</span>300
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>250
                     </div>
                     <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:60 | <span data-i18n="stat.dmg">DMG</span>:35 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:6</div>
                     <div class="unit-skills">
@@ -294,12 +293,12 @@
                     </div>
                 </div>
 
-                <!-- Specialist Units Row -->
-                <div class="unit-card compact specialist" data-type="WIZARD">
+                <!-- Uncommon Units Row -->
+                <div class="unit-card compact uncommon" data-type="WIZARD">
                     <div class="unit-header">
-                        <span class="unit-emoji">🧙</span>
+                        <img class="unit-card-img" src="images/player/wizard.png" alt="">
                         <span class="unit-name" data-i18n="unit.wizard">Wizard</span>
-                        <span class="unit-cost" data-i18n="stat.cost">💰</span>500
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>400
                     </div>
                     <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:40 | <span data-i18n="stat.dmg">DMG</span>:45 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:4</div>
                     <div class="unit-skills">
@@ -312,11 +311,11 @@
                     </div>
                 </div>
 
-                <div class="unit-card compact specialist" data-type="CLERIC">
+                <div class="unit-card compact uncommon" data-type="CLERIC">
                     <div class="unit-header">
-                        <span class="unit-emoji">✝️</span>
+                        <img class="unit-card-img" src="images/player/cleric.png" alt="">
                         <span class="unit-name" data-i18n="unit.cleric">Cleric</span>
-                        <span class="unit-cost" data-i18n="stat.cost">💰</span>500
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>400
                     </div>
                     <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:80 | <span data-i18n="stat.dmg">DMG</span>:15 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:4</div>
                     <div class="unit-skills">
@@ -330,11 +329,11 @@
                     </div>
                 </div>
 
-                <div class="unit-card compact specialist" data-type="ROGUE">
+                <div class="unit-card compact uncommon" data-type="ROGUE">
                     <div class="unit-header">
-                        <span class="unit-emoji">🗡️</span>
+                        <img class="unit-card-img" src="images/player/rogue.png" alt="">
                         <span class="unit-name" data-i18n="unit.rogue">Rogue</span>
-                        <span class="unit-cost" data-i18n="stat.cost">💰</span>500
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>450
                     </div>
                     <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:55 | <span data-i18n="stat.dmg">DMG</span>:40 | <span data-i18n="stat.mov">MOV</span>:8 | <span data-i18n="stat.init">INIT</span>:16</div>
                     <div class="unit-skills">
@@ -347,12 +346,12 @@
                     </div>
                 </div>
 
-                <!-- Legendary Units Row -->
-                <div class="unit-card compact legendary" data-type="PALADIN">
+                <!-- Rare Units Row -->
+                <div class="unit-card compact rare" data-type="PALADIN">
                     <div class="unit-header">
-                        <span class="unit-emoji">🛡️</span>
+                        <img class="unit-card-img" src="images/player/paladin.png" alt="">
                         <span class="unit-name" data-i18n="unit.paladin">Paladin</span>
-                        <span class="unit-cost" data-i18n="stat.cost">💰</span>800
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>750
                     </div>
                     <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:150 | <span data-i18n="stat.dmg">DMG</span>:50 | <span data-i18n="stat.mov">MOV</span>:4 | <span data-i18n="stat.init">INIT</span>:9</div>
                     <div class="unit-skills">
@@ -366,11 +365,11 @@
                     </div>
                 </div>
 
-                <div class="unit-card compact legendary" data-type="RANGER">
+                <div class="unit-card compact rare" data-type="RANGER">
                     <div class="unit-header">
-                        <span class="unit-emoji">🎯</span>
+                        <img class="unit-card-img" src="images/player/ranger.png" alt="">
                         <span class="unit-name" data-i18n="unit.ranger">Ranger</span>
-                        <span class="unit-cost" data-i18n="stat.cost">💰</span>800
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>700
                     </div>
                     <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:70 | <span data-i18n="stat.dmg">DMG</span>:50 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:10</div>
                     <div class="unit-skills">
@@ -383,11 +382,11 @@
                     </div>
                 </div>
 
-                <div class="unit-card compact legendary" data-type="BERSERKER">
+                <div class="unit-card compact rare" data-type="BERSERKER">
                     <div class="unit-header">
-                        <span class="unit-emoji">🪓</span>
+                        <img class="unit-card-img" src="images/player/berserker.png" alt="">
                         <span class="unit-name" data-i18n="unit.berserker">Berserker</span>
-                        <span class="unit-cost" data-i18n="stat.cost">💰</span>800
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>650
                     </div>
                     <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:90 | <span data-i18n="stat.dmg">DMG</span>:50 | <span data-i18n="stat.mov">MOV</span>:4 | <span data-i18n="stat.init">INIT</span>:11</div>
                     <div class="unit-skills">
@@ -401,11 +400,11 @@
                     </div>
                 </div>
 
-                <div class="unit-card compact legendary" data-type="SORCERER">
+                <div class="unit-card compact rare" data-type="SORCERER">
                     <div class="unit-header">
-                        <span class="unit-emoji">🔮</span>
+                        <img class="unit-card-img" src="images/player/sorcerer.png" alt="">
                         <span class="unit-name" data-i18n="unit.sorcerer">Sorcerer</span>
-                        <span class="unit-cost" data-i18n="stat.cost">💰</span>800
+                        <span class="unit-cost" data-i18n="stat.cost">💰</span>750
                     </div>
                     <div class="unit-stats"><span data-i18n="stat.hp">HP</span>:50 | <span data-i18n="stat.dmg">DMG</span>:55 | <span data-i18n="stat.mov">MOV</span>:2 | <span data-i18n="stat.rng">RNG</span>:4</div>
                     <div class="unit-skills">
@@ -420,11 +419,11 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px;">
                 <button class="spell-button" onclick="goBackToFactionSelection()" style="background: #5D4E3E;" data-i18n="army.back">
                     ← Back to Faction
                 </button>
-                <button id="confirm-army" class="spellbook-close" onclick="confirmArmySelection()" disabled data-i18n="army.confirm.units">
+                <button id="confirm-army" class="spellbook-close" onclick="confirmArmySelection()" disabled>
                     Confirm Army (0 units)
                 </button>
             </div>
@@ -551,11 +550,59 @@
         }
 
         function updateUnitCount(type, delta) {
-            return safeGameSceneCall('updateUnitCount', type, delta);
+            const unitDef = (typeof UNIT_TYPES !== 'undefined') ? UNIT_TYPES[type] : null;
+            if (!unitDef) return;
+            const cost = unitDef.cost;
+            const newCount = (armyCounts[type] || 0) + delta;
+            if (newCount < 0) return;
+            if (delta > 0 && armyRemainingPoints < cost) return;
+            armyCounts[type] = newCount;
+            armyRemainingPoints -= delta * cost;
+            const countEl = document.getElementById('count-' + type);
+            if (countEl) countEl.textContent = newCount;
+            updateArmyDisplay();
+            // Keep Phaser in sync if it's already initialized
+            if (window.gameScene && window.gameScene.unitCounts) {
+                window.gameScene.unitCounts[type] = newCount;
+                window.gameScene.remainingPoints = armyRemainingPoints;
+            }
         }
 
         function confirmArmySelection() {
-            return safeGameSceneCall('confirmArmySelection');
+            if (!window.gameScene || !window.gameScene.confirmArmySelection) {
+                // Phaser not ready yet — poll until it is (up to 5s)
+                let attempts = 0;
+                const poll = setInterval(() => {
+                    attempts++;
+                    if (window.gameScene && window.gameScene.confirmArmySelection) {
+                        clearInterval(poll);
+                        _doConfirmArmySelection();
+                    } else if (attempts > 50) {
+                        clearInterval(poll);
+                        console.error('Phaser scene did not initialize in time');
+                    }
+                }, 100);
+                return;
+            }
+            _doConfirmArmySelection();
+        }
+
+        function _doConfirmArmySelection() {
+            console.log('[Army] unitCounts to sync:', JSON.stringify(armyCounts));
+            console.log('[Army] gameScene:', window.gameScene);
+            if (window.gameScene.unitCounts) {
+                _ARMY_UNIT_KEYS.forEach(t => { window.gameScene.unitCounts[t] = armyCounts[t]; });
+            }
+            if (typeof window.gameScene.remainingPoints !== 'undefined') {
+                window.gameScene.remainingPoints = armyRemainingPoints;
+            }
+            console.log('[Army] calling gameScene.confirmArmySelection');
+            try {
+                window.gameScene.confirmArmySelection();
+            } catch (e) {
+                console.error('[Army] confirmArmySelection threw:', e);
+                alert('Error starting game: ' + e.message);
+            }
         }
 
         function randomizePlacement() {
@@ -691,6 +738,36 @@
         // Grid toggle state
         let gridVisible = false;
 
+        // Local army state — works independently of Phaser initialization
+        const _ARMY_UNIT_KEYS = ['KNIGHT','ARCHER','WIZARD','CLERIC','ROGUE','PALADIN','RANGER','BERSERKER','SORCERER'];
+        const armyCounts = {};
+        _ARMY_UNIT_KEYS.forEach(t => armyCounts[t] = 0);
+        let armyTotalPoints = 1000;
+        let armyRemainingPoints = 1000;
+
+        function resetArmyCounts() {
+            _ARMY_UNIT_KEYS.forEach(t => {
+                armyCounts[t] = 0;
+                const el = document.getElementById('count-' + t);
+                if (el) el.textContent = '0';
+            });
+            armyRemainingPoints = armyTotalPoints;
+            updateArmyDisplay();
+        }
+
+        function updateArmyDisplay() {
+            document.getElementById('points-remaining').textContent = armyRemainingPoints;
+            document.getElementById('points-total').textContent = armyTotalPoints;
+            const totalUnits = _ARMY_UNIT_KEYS.reduce((s, t) => s + armyCounts[t], 0);
+            const btn = document.getElementById('confirm-army');
+            if (btn) {
+                btn.textContent = (typeof i18n !== 'undefined')
+                    ? i18n.t('army.confirm.units', totalUnits)
+                    : 'Confirm Army (' + totalUnits + ' units)';
+                btn.disabled = totalUnits === 0;
+            }
+        }
+
         function toggleGrid() {
             gridVisible = !gridVisible;
             const btn = document.getElementById('grid-toggle-btn');
@@ -717,10 +794,9 @@
                 }
             });
 
-            // Update points display based on map
-            const pointsTotal = mapId === 'ruins' ? 1700 : 1000;
-            document.getElementById('points-total').textContent = pointsTotal;
-            document.getElementById('points-remaining').textContent = pointsTotal;
+            // Update points based on map
+            armyTotalPoints = mapId === 'ruins' ? 1700 : mapId === 'mountain' ? 1300 : 1000;
+            resetArmyCounts();
 
             // Pass selection to gameScene
             if (window.gameScene && window.gameScene.selectStage) {
@@ -765,6 +841,9 @@
             // Go to army selection
             document.getElementById('step-2-faction').classList.add('hidden');
             document.getElementById('step-3-army').classList.remove('hidden');
+
+            // Reset counts and refresh display when entering army screen
+            resetArmyCounts();
         }
 
         // Function to hide language toggle when game starts

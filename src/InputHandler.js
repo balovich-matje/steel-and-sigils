@@ -89,6 +89,37 @@ export class GridSystem {
             }
         }
 
+        // Border tiles — same texture ring (half-tile wide) around the grid.
+        // Camera zoom in centerCameraOnMap() reveals exactly this border area.
+        const isRuins = this.scene.currentStage?.id === 'ruins';
+        const borderCoords = [];
+        for (let x = -1; x <= this.width; x++) {
+            borderCoords.push([x, -1]);
+            borderCoords.push([x, this.height]);
+        }
+        for (let y = 0; y < this.height; y++) {
+            borderCoords.push([-1, y]);
+            borderCoords.push([this.width, y]);
+        }
+        for (const [bx, by] of borderCoords) {
+            const wx = bx * tileSize + tileSize / 2;
+            const wy = by * tileSize + tileSize / 2;
+            let borderTile;
+            if (hasTileImage) {
+                const key = isForest
+                    ? grassTileKeys[Math.floor(Math.random() * grassTileKeys.length)]
+                    : tileImageKey;
+                borderTile = this.scene.add.image(wx, wy, key);
+                borderTile.setDisplaySize(tileSize, tileSize);
+            } else {
+                const cA = isRuins ? CONFIG.COLORS.DIRT : CONFIG.COLORS.GRASS;
+                const cB = isRuins ? CONFIG.COLORS.DIRT_DARK : CONFIG.COLORS.GRASS_DARK;
+                borderTile = this.scene.add.rectangle(wx, wy, tileSize - 2, tileSize - 2,
+                    (bx + by) % 2 === 0 ? cA : cB);
+            }
+            borderTile.setDepth(-1); // behind playfield tiles
+        }
+
         this.highlightGraphics = this.scene.add.graphics();
         this.aoePreviewGraphics = this.scene.add.graphics();
 

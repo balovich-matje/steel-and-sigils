@@ -546,7 +546,7 @@ body {
 /* Pre-game screen styles */
 #pregame-screen {
     background: rgba(26, 28, 30, 0.98);
-    padding: 20px;
+    padding: 12px 20px;
 }
 
 #pregame-screen h2 {
@@ -616,10 +616,10 @@ body {
 .compact-unit-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    max-width: 1200px;
+    gap: 8px;
+    max-width: 1100px;
     width: 100%;
-    padding: 0 20px;
+    padding: 0 10px;
 }
 
 @media (max-width: 1200px) {
@@ -638,20 +638,41 @@ body {
     background: #2D241E;
     border: 2px solid #5D4E3E;
     border-radius: 8px;
-    padding: 10px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
+    transition: box-shadow 0.2s, border-color 0.2s;
 }
 
-.unit-card.compact.specialist {
-    border-color: #8B5B9B;
-    background: linear-gradient(135deg, #2D241E 0%, #302438 100%);
+.unit-card.compact.common:hover {
+    box-shadow: 0 0 8px rgba(192, 196, 216, 0.4);
+    border-color: #B0B4CC;
 }
 
-.unit-card.compact.legendary {
-    border-color: #ff8c00;
-    background: linear-gradient(135deg, #2D241E 0%, #3D2814 100%);
+.unit-card.compact.uncommon:hover {
+    box-shadow: 0 0 10px rgba(77, 160, 100, 0.45);
+    border-color: #6DB87A;
+}
+
+.unit-card.compact.rare:hover {
+    box-shadow: 0 0 12px rgba(74, 130, 220, 0.55);
+    border-color: #5A8BE0;
+}
+
+.unit-card.compact.common {
+    border-color: #8A8FA8;
+    background: linear-gradient(135deg, #2D241E 0%, #2A2A35 100%);
+}
+
+.unit-card.compact.uncommon {
+    border-color: #4B8B5B;
+    background: linear-gradient(135deg, #2D241E 0%, #1E3028 100%);
+}
+
+.unit-card.compact.rare {
+    border-color: #3A6BC4;
+    background: linear-gradient(135deg, #2D241E 0%, #1A2238 100%);
 }
 
 .unit-header {
@@ -661,8 +682,12 @@ body {
     justify-content: space-between;
 }
 
-.unit-emoji {
-    font-size: 24px;
+.unit-card-img {
+    width: 36px;
+    height: 36px;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+    object-fit: contain;
 }
 
 .unit-name {
@@ -672,12 +697,16 @@ body {
     flex: 1;
 }
 
-.unit-card.compact.specialist .unit-name {
-    color: #9B6BAB;
+.unit-card.compact.common .unit-name {
+    color: #C0C4D8;
 }
 
-.unit-card.compact.legendary .unit-name {
-    color: #ff8c00;
+.unit-card.compact.uncommon .unit-name {
+    color: #6DB87A;
+}
+
+.unit-card.compact.rare .unit-name {
+    color: #6B9FE8;
 }
 
 .unit-cost {
@@ -713,16 +742,16 @@ body {
     font-weight: bold;
 }
 
-.unit-card.compact.specialist .unit-skills .passive {
-    color: #9B6BAB;
+.unit-card.compact.uncommon .unit-skills .passive {
+    color: #5B9E6B;
 }
 
-.unit-card.compact.legendary .unit-skills .passive {
-    color: #D4A574;
+.unit-card.compact.rare .unit-skills .passive {
+    color: #4A7AB8;
 }
 
-.unit-card.compact.legendary .unit-skills .active {
-    color: #FFA500;
+.unit-card.compact.rare .unit-skills .active {
+    color: #89BCFF;
 }
 
 .unit-controls {
