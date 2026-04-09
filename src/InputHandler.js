@@ -120,6 +120,20 @@ export class GridSystem {
             borderTile.setDepth(-1); // behind playfield tiles
         }
 
+        // Permanent subtle grid lines — always visible, depth above tiles
+        this.permanentGridLines = this.scene.add.graphics();
+        this.permanentGridLines.lineStyle(1, 0x000000, 0.22);
+        for (let x = 0; x <= this.width; x++) {
+            this.permanentGridLines.moveTo(x * tileSize, 0);
+            this.permanentGridLines.lineTo(x * tileSize, this.height * tileSize);
+        }
+        for (let y = 0; y <= this.height; y++) {
+            this.permanentGridLines.moveTo(0, y * tileSize);
+            this.permanentGridLines.lineTo(this.width * tileSize, y * tileSize);
+        }
+        this.permanentGridLines.strokePath();
+        this.permanentGridLines.setDepth(1);
+
         this.highlightGraphics = this.scene.add.graphics();
         this.aoePreviewGraphics = this.scene.add.graphics();
 

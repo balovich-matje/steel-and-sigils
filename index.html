@@ -588,21 +588,13 @@
         }
 
         function _doConfirmArmySelection() {
-            console.log('[Army] unitCounts to sync:', JSON.stringify(armyCounts));
-            console.log('[Army] gameScene:', window.gameScene);
             if (window.gameScene.unitCounts) {
                 _ARMY_UNIT_KEYS.forEach(t => { window.gameScene.unitCounts[t] = armyCounts[t]; });
             }
             if (typeof window.gameScene.remainingPoints !== 'undefined') {
                 window.gameScene.remainingPoints = armyRemainingPoints;
             }
-            console.log('[Army] calling gameScene.confirmArmySelection');
-            try {
-                window.gameScene.confirmArmySelection();
-            } catch (e) {
-                console.error('[Army] confirmArmySelection threw:', e);
-                alert('Error starting game: ' + e.message);
-            }
+            window.gameScene.confirmArmySelection();
         }
 
         function randomizePlacement() {

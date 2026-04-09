@@ -332,6 +332,9 @@ export class Unit {
             this.sprite.removeInteractive();
         }
 
+        if (this.shadow) {
+            this.shadow.setAlpha(0);
+        }
         if (this.healthBar) {
             this.healthBar.clear();
         }
@@ -843,6 +846,11 @@ export class UnitManager {
         const imageKey = template.image ? type.toLowerCase() + '_img' : null;
         const hasImage = imageKey && this.scene.textures.exists(imageKey);
 
+        // Shadow ellipse at the unit's feet, depth 9 (below sprite at 10)
+        const shadowSize = this.scene.tileSize * (bossSize > 1 ? bossSize * 0.55 : 0.5);
+        unit.shadow = this.scene.add.ellipse(spriteX, yBottom, shadowSize, shadowSize * 0.28, 0x000000, 0.32);
+        unit.shadow.setDepth(9);
+
         if (hasImage) {
             unit.sprite = this.scene.add.image(spriteX, yBottom, imageKey);
             // Scale image to fit within tile size (64px) while preserving aspect ratio
@@ -983,18 +991,19 @@ export class UnitManager {
         const imageKey = template.image ? unit.type.toLowerCase() + '_img' : null;
         const hasImage = imageKey && this.scene.textures.exists(imageKey);
 
+        const newSpriteX = newX * this.scene.tileSize + (bossSize * this.scene.tileSize) / 2;
+        const newYBottom = (newY + bossSize) * this.scene.tileSize - 5;
+
         if (hasImage) {
-            // Images: position at bottom of tile block with 5px gap
-            unit.sprite.setPosition(
-                newX * this.scene.tileSize + (bossSize * this.scene.tileSize) / 2,
-                (newY + bossSize) * this.scene.tileSize - 5
-            );
+            unit.sprite.setPosition(newSpriteX, newYBottom);
         } else {
-            // Emoji: position at center of tile block
             unit.sprite.setPosition(
-                newX * this.scene.tileSize + (bossSize * this.scene.tileSize) / 2,
+                newSpriteX,
                 newY * this.scene.tileSize + (bossSize * this.scene.tileSize) / 2
             );
+        }
+        if (unit.shadow) {
+            unit.shadow.setPosition(newSpriteX, newYBottom);
         }
         unit.updateHealthBar();
     }
