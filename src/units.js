@@ -14,6 +14,7 @@ const UNIT_TYPES = {
         moveRange: 4,
         initiative: 12,
         isPlayer: true,
+        rarity: 'common',
         cost: 200,
         passives: [
             {
@@ -35,7 +36,8 @@ const UNIT_TYPES = {
         rangedRange: 6,
         initiative: 15,
         isPlayer: true,
-        cost: 300
+        rarity: 'common',
+        cost: 250
     },
     WIZARD: {
         name: 'Wizard',
@@ -48,7 +50,8 @@ const UNIT_TYPES = {
         rangedRange: 4,
         initiative: 10,
         isPlayer: true,
-        cost: 500,
+        rarity: 'uncommon',
+        cost: 400,
         passives: [
             {
                 name: 'Arcane Channeling',
@@ -68,7 +71,8 @@ const UNIT_TYPES = {
         moveRange: 4,
         initiative: 9,
         isPlayer: true,
-        cost: 800,
+        rarity: 'rare',
+        cost: 750,
         passives: [
             {
                 name: 'Divine Protection',
@@ -89,7 +93,8 @@ const UNIT_TYPES = {
         rangedRange: 10,
         initiative: 13,
         isPlayer: true,
-        cost: 800,
+        rarity: 'rare',
+        cost: 700,
         passives: [
             {
                 name: 'Eagle Eye',
@@ -107,7 +112,8 @@ const UNIT_TYPES = {
         moveRange: 4,
         initiative: 11,
         isPlayer: true,
-        cost: 800,
+        rarity: 'rare',
+        cost: 650,
         passives: [
             {
                 name: 'Reckless',
@@ -130,7 +136,8 @@ const UNIT_TYPES = {
         rangedRange: 4,
         initiative: 10,
         isPlayer: true,
-        cost: 500,
+        rarity: 'uncommon',
+        cost: 400,
         passives: [
             {
                 name: 'Blessed Touch',
@@ -148,7 +155,8 @@ const UNIT_TYPES = {
         moveRange: 8,
         initiative: 16,
         isPlayer: true,
-        cost: 500,
+        rarity: 'uncommon',
+        cost: 450,
         passives: [
             {
                 name: 'Shadow Step',
@@ -167,7 +175,8 @@ const UNIT_TYPES = {
         rangedRange: 4,
         initiative: 14,
         isPlayer: true,
-        cost: 800,
+        rarity: 'rare',
+        cost: 750,
         passives: [
             {
                 name: 'Arcane Mastery',

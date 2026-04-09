@@ -3717,6 +3717,9 @@ export class PreGameScene extends Phaser.Scene {
     }
 
     create(data) {
+        // Expose immediately so HTML buttons work as soon as Phaser starts this scene
+        window.gameScene = this;
+
         // Use selected stage or default
         if (data && data.stageId) {
             this.selectedStageId = data.stageId;
@@ -3728,15 +3731,12 @@ export class PreGameScene extends Phaser.Scene {
         // Calculate dynamic tile size to fit map in canvas
         this.tileSize = CONFIG.getTileSize(this.currentStage.width, this.currentStage.height);
 
-
-
         this.setupStageSelection();
         this.resetUnitCounts();
         this.showArmySelection();
-        
+
         this.gridGraphics = this.add.graphics();
         this.drawGrid();
-        window.gameScene = this;
     }
 
     setupStageSelection() {
