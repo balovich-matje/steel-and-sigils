@@ -368,11 +368,17 @@ export class BattleScene extends Phaser.Scene {
     }
 
     centerCameraOnMap() {
-        // Calculate the actual world bounds based on the grid
         const mapWidth = this.currentStage.width * this.tileSize;
         const mapHeight = this.currentStage.height * this.tileSize;
-        
-        // Center the camera on the map
+
+        // Zoom out just enough to show the half-tile border ring on all sides.
+        // The border tiles drawn by GridSystem are at grid coords -1 and width/height,
+        // so the full visible area needed is (mapWidth + tileSize) x (mapHeight + tileSize).
+        const zoomX = CONFIG.CANVAS_WIDTH / (mapWidth + this.tileSize);
+        const zoomY = CONFIG.CANVAS_HEIGHT / (mapHeight + this.tileSize);
+        this.cameras.main.setZoom(Math.min(zoomX, zoomY));
+
+        // Center on the grid (zoom handles border visibility symmetrically)
         this.cameras.main.centerOn(mapWidth / 2, mapHeight / 2);
     }
 
@@ -3817,7 +3823,10 @@ export class PreGameScene extends Phaser.Scene {
 
     showArmySelection() {
         document.getElementById('pregame-screen').classList.remove('hidden');
-        this.updatePointsDisplay();
+        // Display is managed by the HTML inline script (updateArmyDisplay).
+        // Calling updatePointsDisplay here would reset the confirm button to
+        // disabled using Phaser's zero-initialized unitCounts, potentially
+        // overriding units the user already added before Phaser finished loading.
     }
 
     resetUnitCounts() {
