@@ -1324,19 +1324,23 @@ export class BattleScene extends Phaser.Scene {
                 if (attacker.hasCleave && !isSecondStrike) {
                     this.performCleaveAttack(attacker, defender, damage);
                 } else if (!attacker.hasCleave) {
-                    const actualDmg = defender.takeDamage(damage, false, attacker);
+                    let actualDmg;
+                    if (attacker.hasArcaneBlade) {
+                        // Arcane Blades mythic: magic damage scaled by spell power + Sorcerer passive
+                        let magicDmg = damage;
+                        const sorcCount = this.unitManager.getPlayerUnits().filter(u => u.type === 'SORCERER' && u.health > 0).length;
+                        if (sorcCount > 0) magicDmg = Math.floor(magicDmg * (1 + sorcCount * 0.5));
+                        magicDmg = Math.floor(magicDmg * (this.spellPowerMultiplier || 1));
+                        actualDmg = defender.takeSpellDamage(magicDmg, attacker);
+                        this.uiManager.showDamageText(defender, actualDmg);
+                        const suffix = attacker.hasBackstab && damage > attacker.damage ? ' (Backstab!)' : '';
+                        this.addCombatLog(`${attacker.name} struck ${defender.name} with arcane energy for ${actualDmg} damage.${suffix}`, 'damage');
+                    } else {
+                    actualDmg = defender.takeDamage(damage, false, attacker);
                     this.uiManager.showDamageText(defender, actualDmg);
                     if (!(attacker.type === 'ROGUE' && attacker.hasBackstab)) {
                         this.addCombatLog(`${attacker.name} dealt melee attack to ${defender.name} dealing ${actualDmg} damage.`, 'damage');
                     }
-
-                    this.tweens.add({
-                        targets: defender.sprite,
-                        alpha: 0.3,
-                        duration: 50,
-                        yoyo: true,
-                        repeat: 2
-                    });
 
                     // Dread Knight: Bleed on main target + Cleave up to 2 adjacent player units
                     if (attacker.type === 'DREAD_KNIGHT') {
@@ -1368,19 +1372,29 @@ export class BattleScene extends Phaser.Scene {
                         attacker.hasAttacked = false;
                         this.uiManager.showBuffText(attacker, 'FEAST!', '#8B0000');
                         this.addCombatLog(`${attacker.name} feasts on ${defender.name}'s flesh and gains another turn!`, 'buff');
-                        
+
                         // Re-insert the Stalker at the front of the turn queue for an immediate extra turn
                         // Only do this for AI units (player units are handled by the input system)
                         if (!attacker.isPlayer && this.turnSystem.currentUnit === attacker) {
                             // Insert at the front of the queue
                             this.turnSystem.turnQueue.unshift({ unit: attacker, isTemporalShift: false });
                         }
-                        
+
                         // Update UI to show the unit can act again
                         if (this.turnSystem.currentUnit === attacker) {
                             this.gridSystem.highlightValidMoves(attacker);
                         }
                     }
+                    } // end else (non-arcane path)
+
+                    // Shared: hit flash for both paths
+                    this.tweens.add({
+                        targets: defender.sprite,
+                        alpha: 0.3,
+                        duration: 50,
+                        yoyo: true,
+                        repeat: 2
+                    });
                 }
 
                 // Paladin Mythic: Divine Retribution (Melee Retaliation)
@@ -2597,6 +2611,22 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
+        if (playerUnits.some(u => u.type === 'ROGUE') && !hasProperty('ROGUE', 'hasArcaneBlade') && !usedBuffs.has('mythic_arcane_blades')) {
+            availableMythicBuffs.push({
+                id: 'mythic_arcane_blades',
+                name: t('buff.arcane_blades'),
+                icon: '🔮',
+                desc: t('buff.arcane_blades.desc'),
+                unitType: 'ROGUE',
+                rarity: 'mythic',
+                effect: (unit) => {
+                    unit.hasArcaneBlade = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasArcaneBlade = true;
+                }
+            });
+        }
+
         if (availableMythicBuffs.length === 0) {
             return null;
         }
@@ -3207,6 +3237,22 @@ export class BattleScene extends Phaser.Scene {
                     unit.hasWarlust = true;
                     unit.statModifiers = unit.statModifiers || {};
                     unit.statModifiers.hasWarlust = true;
+                }
+            });
+        }
+
+        if (playerUnits.some(u => u.type === 'ROGUE') && !hasProperty('ROGUE', 'hasArcaneBlade')) {
+            availableMythicBuffs.push({
+                id: 'mythic_arcane_blades',
+                name: t('buff.arcane_blades'),
+                icon: '🔮',
+                desc: t('buff.arcane_blades.desc'),
+                unitType: 'ROGUE',
+                rarity: 'mythic',
+                effect: (unit) => {
+                    unit.hasArcaneBlade = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasArcaneBlade = true;
                 }
             });
         }

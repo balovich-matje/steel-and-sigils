@@ -257,6 +257,8 @@ const TRANSLATIONS = {
         'buff.piercing.desc': 'Sorcerer: Infinite range, shots pierce all units in path',
         'buff.backstab': 'Shadow Strike',
         'buff.backstab.desc': 'Rogue: 4x damage when attacking from behind (or side)',
+        'buff.arcane_blades': 'Arcane Blades',
+        'buff.arcane_blades.desc': 'Rogue: Attacks deal magic damage, scaled by spell power and Sorcerer aura. Triggers magic resistances and weaknesses.',
 
         // Mythic Buffs
         'buff.divine_retribution': 'Divine Retribution',
@@ -619,6 +621,8 @@ const TRANSLATIONS = {
         'buff.piercing.desc': 'Чародей: Бесконечная дальность, выстрелы пронзают всех на пути',
         'buff.backstab': 'Теневой Удар',
         'buff.backstab.desc': 'Разбойник: 4× урон при атаке сзади (или сбоку)',
+        'buff.arcane_blades': 'Арканные Клинки',
+        'buff.arcane_blades.desc': 'Разбойник: Атаки наносят магический урон, усиленный силой заклинаний и аурой Чародея. Учитывает сопротивления и уязвимости к магии.',
 
         // Mythic Buffs
         'buff.divine_retribution': 'Божественное Возмездие',
