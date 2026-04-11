@@ -181,6 +181,10 @@ export class BattleScene extends Phaser.Scene {
         // Update magic buffs display
         this.uiManager.updateMagicBuffsDisplay();
 
+        // Apply meta-progression bonuses (loaded fresh each battle from localStorage)
+        this._metaUpgrades = SaveManager.getUpgrades();
+        this.spellPowerMultiplier += (this._metaUpgrades.spellDmg || 0) * 0.025;
+
         // Reset victory flag
         this.victoryShown = false;
 
@@ -241,6 +245,15 @@ export class BattleScene extends Phaser.Scene {
                         unit.maxHealth += hpBonus;
                         unit.health = Math.min(unit.health + hpBonus, unit.maxHealth);
                         unit.updateHealthBar();
+                    }
+                }
+
+                // Apply meta-progression HP and movespeed bonuses (applied fresh each battle)
+                if (this._metaUpgrades) {
+                    if ((this._metaUpgrades.movespeed || 0) > 0) unit.moveRange += this._metaUpgrades.movespeed;
+                    if ((this._metaUpgrades.meleeHp || 0) > 0 && MELEE_META_TYPES.includes(unit.type)) {
+                        const _metaHpBonus = Math.round(UNIT_TYPES[unit.type].maxHealth * this._metaUpgrades.meleeHp * 0.1);
+                        unit.maxHealth += _metaHpBonus;
                     }
                 }
 
@@ -2227,6 +2240,10 @@ export class BattleScene extends Phaser.Scene {
         }
 
         if (playerWon) {
+            // Award meta-progression currency immediately (persists even if tab is closed after this wave)
+            const _waveReward = 10 + Math.floor((this.battleNumber - 1) / 10) * 5;
+            SaveManager.addCurrency(_waveReward);
+
             // Check for Loot Goblin special reward
             this.lootGoblinReward = this.wasLootGoblinKilled();
 
@@ -3691,7 +3708,7 @@ export class BattleScene extends Phaser.Scene {
             buffs: {
                 hasteRounds: u.hasteRounds,
                 hasteValue: u.hasteRounds > 0 || u.hasteRounds === -1
-                    ? u.moveRange - UNIT_TYPES[u.type].moveRange - (u.statModifiers?.moveRange || 0)
+                    ? u.moveRange - UNIT_TYPES[u.type].moveRange - (u.statModifiers?.moveRange || 0) - (this._metaUpgrades?.movespeed || 0)
                     : 0,
                 shieldRounds: u.shieldRounds,
                 shieldValue: u.shieldValue,

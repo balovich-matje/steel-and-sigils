@@ -12,6 +12,8 @@
     <script src="src/units.js"></script>
     <!-- i18n.js provides internationalization -->
     <script src="src/i18n.js"></script>
+    <!-- SaveManager.js provides persistent meta-progression storage -->
+    <script src="src/SaveManager.js"></script>
 </head>
 
 <body>
@@ -419,9 +421,12 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px;">
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
                 <button class="spell-button" onclick="goBackToFactionSelection()" style="background: #5D4E3E;" data-i18n="army.back">
                     ← Back to Faction
+                </button>
+                <button class="spell-button" onclick="openMetaShop()" style="background: #3D2B52; border-color: #7B5A9E;">
+                    ⭐ Power-Ups
                 </button>
                 <button id="confirm-army" class="spellbook-close" onclick="confirmArmySelection()" disabled>
                     Confirm Army (0 units)
@@ -432,6 +437,28 @@
 
 
 
+
+    <!-- Meta Shop Modal -->
+    <div id="meta-shop-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);
+        z-index:3000;align-items:center;justify-content:center;">
+        <div style="background:#1A120E;border:2px solid #A68966;border-radius:8px;padding:24px;
+            max-width:480px;width:90%;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:16px;
+            box-shadow:0 0 40px rgba(166,137,102,0.3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <h2 style="color:#A68966;margin:0;font-size:20px;">⭐ Power-Ups</h2>
+                <div style="color:#E3D5B8;font-size:14px;">
+                    Currency: <span id="meta-shop-currency" style="color:#FFD700;font-weight:bold;">0</span> ⭐
+                </div>
+            </div>
+            <div style="color:#8B7355;font-size:12px;font-style:italic;border-bottom:1px solid #3D2E1E;padding-bottom:10px;">
+                Upgrades persist across all runs. Currency is earned by completing waves.
+            </div>
+            <div id="meta-shop-upgrades" style="display:flex;flex-direction:column;gap:10px;"></div>
+            <button onclick="closeMetaShop()" class="spell-button" style="align-self:flex-end;margin-top:4px;">
+                ✕ Close
+            </button>
+        </div>
+    </div>
 
     <!-- Victory Screen -->
     <div id="victory-screen" class="victory-screen hidden">
@@ -849,6 +876,76 @@
         function goBackToFactionSelection() {
             document.getElementById('step-3-army').classList.add('hidden');
             document.getElementById('step-2-faction').classList.remove('hidden');
+        }
+
+        // ============================================
+        // META SHOP
+        // ============================================
+
+        function openMetaShop() {
+            renderMetaShop();
+            document.getElementById('meta-shop-modal').style.display = 'flex';
+        }
+
+        function closeMetaShop() {
+            document.getElementById('meta-shop-modal').style.display = 'none';
+        }
+
+        function renderMetaShop() {
+            const currency = SaveManager.getCurrency();
+            document.getElementById('meta-shop-currency').textContent = currency;
+
+            const upgrades = SaveManager.getUpgrades();
+            const list = document.getElementById('meta-shop-upgrades');
+            list.innerHTML = '';
+
+            for (const upg of META_UPGRADES) {
+                const level = upgrades[upg.id] || 0;
+                const maxed = level >= upg.maxLevel;
+                const nextCost = maxed ? 0 : upg.costFn(level + 1);
+                const canAfford = !maxed && currency >= nextCost;
+
+                const card = document.createElement('div');
+                card.style.cssText = 'display:flex;align-items:center;gap:12px;background:rgba(45,36,30,0.8);' +
+                    'border:2px solid #5D4E3E;border-radius:6px;padding:12px 14px;';
+
+                const progress = maxed
+                    ? `<span style="color:#6B8B5B;font-size:11px;font-weight:bold;letter-spacing:1px;">MAXED</span>`
+                    : `<span style="color:${canAfford ? '#FFD700' : '#666'};font-size:12px;">⭐ ${nextCost}</span>`;
+
+                const buyBtn = maxed ? '' :
+                    `<button onclick="buyUpgrade('${upg.id}')"
+                        style="background:${canAfford ? '#3A5C2E' : '#2A2A2A'};border:1px solid ${canAfford ? '#6B8B5B' : '#444'};
+                        color:${canAfford ? '#E3D5B8' : '#555'};padding:6px 14px;border-radius:4px;
+                        cursor:${canAfford ? 'pointer' : 'not-allowed'};font-size:13px;white-space:nowrap;flex-shrink:0;"
+                        ${canAfford ? '' : 'disabled'}>Buy</button>`;
+
+                card.innerHTML = `
+                    <div style="font-size:26px;flex-shrink:0;">${upg.icon}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="color:#A68966;font-weight:bold;font-size:14px;">${upg.name}</div>
+                        <div style="color:#8B7355;font-size:12px;">${upg.desc}</div>
+                        <div style="margin-top:4px;">${progress}</div>
+                    </div>
+                    <div style="text-align:right;flex-shrink:0;">
+                        <div style="color:#E3D5B8;font-size:13px;margin-bottom:4px;">${level} / ${upg.maxLevel}</div>
+                        ${buyBtn}
+                    </div>
+                `;
+                list.appendChild(card);
+            }
+        }
+
+        function buyUpgrade(id) {
+            const upgrades = SaveManager.getUpgrades();
+            const upg = META_UPGRADES.find(u => u.id === id);
+            if (!upg) return;
+            const level = upgrades[id] || 0;
+            if (level >= upg.maxLevel) return;
+            const cost = upg.costFn(level + 1);
+            if (SaveManager.purchaseUpgrade(id, level, cost)) {
+                renderMetaShop();
+            }
         }
     </script>
 
