@@ -232,16 +232,6 @@ export class GridSystem {
         }
 
         if (!activeSpell && !activeAbility) {
-            const currentUnit = this.scene.turnSystem.currentUnit;
-            // Check piercing hover if no spell is active
-            if (currentUnit && currentUnit.isPlayer && currentUnit.hasPiercing && currentUnit.canAttack()) {
-                // Determine if hovering over enemy or empty cell
-                const hoveredUnit = this.scene.unitManager.getUnitAt(gridX, gridY);
-                if (!hoveredUnit || !hoveredUnit.isPlayer) {
-                    this.drawPiercingPreview(currentUnit, gridX, gridY);
-                    return;
-                }
-            }
             this.clearAoePreview();
             return;
         }
@@ -258,7 +248,7 @@ export class GridSystem {
         this.drawAoePreview(gridX, gridY, radius);
     }
 
-    drawPiercingPreview(unit, targetX, targetY) {
+    _drawPiercingPreview_UNUSED(unit, targetX, targetY) {
         this.clearAoePreview();
 
         const dx = targetX - unit.gridX;

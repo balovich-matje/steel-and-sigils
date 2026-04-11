@@ -12,7 +12,7 @@ const SaveManager = {
         return {
             version: _SMS_VERSION,
             currency: 0,
-            upgrades: { meleeHp: 0, spellDmg: 0, movespeed: 0 }
+            upgrades: { meleeHp: 0, spellDmg: 0, movespeed: 0, startingBalance: 0, unitDamage: 0 }
         };
     },
 
@@ -23,7 +23,7 @@ const SaveManager = {
             const data = JSON.parse(raw);
             if (!data || data.version !== _SMS_VERSION) return this._defaults();
             // Ensure all upgrade keys exist (forward-compat for future upgrades)
-            data.upgrades = Object.assign({ meleeHp: 0, spellDmg: 0, movespeed: 0 }, data.upgrades || {});
+            data.upgrades = Object.assign({ meleeHp: 0, spellDmg: 0, movespeed: 0, startingBalance: 0, unitDamage: 0 }, data.upgrades || {});
             return data;
         } catch (e) {
             return this._defaults();
@@ -92,6 +92,22 @@ const META_UPGRADES = [
         desc: '+1 movement for all units',
         maxLevel: 2,
         costFn: (lvl) => lvl === 1 ? 1000 : 2500
+    },
+    {
+        id: 'startingBalance',
+        name: 'War Chest',
+        icon: '💰',
+        desc: '+50 starting army recruitment points',
+        maxLevel: 20,
+        costFn: (lvl) => Math.round(75 * Math.pow(1.35, lvl - 1))
+    },
+    {
+        id: 'unitDamage',
+        name: 'Battle-Hardened',
+        icon: '⚔️',
+        desc: '+5% base damage for all units',
+        maxLevel: 20,
+        costFn: (lvl) => Math.round(60 * Math.pow(1.35, lvl - 1))
     }
 ];
 

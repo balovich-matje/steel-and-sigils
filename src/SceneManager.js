@@ -222,15 +222,15 @@ export class BattleScene extends Phaser.Scene {
                     if (unitData.statModifiers.hasDoubleStrike) unit.hasDoubleStrike = true;
                     if (unitData.statModifiers.hasCleave) unit.hasCleave = true;
                     if (unitData.statModifiers.hasRicochet) unit.hasRicochet = true;
-                    if (unitData.statModifiers.hasPiercing) unit.hasPiercing = true;
                     if (unitData.statModifiers.hasBackstab) unit.hasBackstab = true;
+                    if (unitData.statModifiers.hasUnstableArcana) unit.hasUnstableArcana = true;
 
                     // Restore mythic buffs
                     if (unitData.statModifiers.hasDivineRetribution) unit.hasDivineRetribution = true;
-                    if (unitData.statModifiers.hasUnstableArcana) unit.hasUnstableArcana = true;
                     if (unitData.statModifiers.hasTemporalShift) unit.hasTemporalShift = true;
                     if (unitData.statModifiers.hasSilverArrows) unit.hasSilverArrows = true;
                     if (unitData.statModifiers.hasWarlust) unit.hasWarlust = true;
+                    if (unitData.statModifiers.hasArcaneBlade) unit.hasArcaneBlade = true;
 
                     unit.updateHealthBar();
                 }
@@ -248,12 +248,15 @@ export class BattleScene extends Phaser.Scene {
                     }
                 }
 
-                // Apply meta-progression HP and movespeed bonuses (applied fresh each battle)
+                // Apply meta-progression HP, movespeed, and damage bonuses (applied fresh each battle)
                 if (this._metaUpgrades) {
                     if ((this._metaUpgrades.movespeed || 0) > 0) unit.moveRange += this._metaUpgrades.movespeed;
                     if ((this._metaUpgrades.meleeHp || 0) > 0 && MELEE_META_TYPES.includes(unit.type)) {
                         const _metaHpBonus = Math.round(UNIT_TYPES[unit.type].maxHealth * this._metaUpgrades.meleeHp * 0.1);
                         unit.maxHealth += _metaHpBonus;
+                    }
+                    if ((this._metaUpgrades.unitDamage || 0) > 0) {
+                        unit.damage += Math.round(UNIT_TYPES[unit.type].damage * this._metaUpgrades.unitDamage * 0.05);
                     }
                 }
 
@@ -1601,12 +1604,8 @@ export class BattleScene extends Phaser.Scene {
                     return;
                 }
 
-                // Wizard Piercing: Shot goes through all enemies in line
-                if (attacker.hasPiercing) {
-                    this.performPiercingAttack(attacker, defender);
-                }
                 // Ranger Ricochet: Bounce to nearby targets
-                else if (attacker.hasRicochet) {
+                if (attacker.hasRicochet) {
                     this.performRicochetAttack(attacker, defender);
                 }
                 else {
@@ -1702,14 +1701,7 @@ export class BattleScene extends Phaser.Scene {
         });
     }
 
-    /**
-     * Create a piercing purple ray animation for sorcerer with piercing perk
-     * @param {Unit} caster - The unit casting
-     * @param {number} targetGridX - Target grid X coordinate
-     * @param {number} targetGridY - Target grid Y coordinate
-     * @param {Function} onComplete - Callback when animation completes
-     */
-    createPiercingRay(caster, targetGridX, targetGridY, onComplete) {
+    _createPiercingRay_UNUSED(caster, targetGridX, targetGridY, onComplete) {
         const startX = caster.sprite.x;
         const startY = caster.sprite.y - 20;
         const targetX = targetGridX * this.tileSize + this.tileSize / 2;
@@ -1924,7 +1916,7 @@ export class BattleScene extends Phaser.Scene {
         bounceToNext(mainTarget, 200);
     }
 
-    performPiercingAttack(attacker, target) {
+    _performPiercingAttack_UNUSED(attacker, target) {
         const baseDamage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
 
         this.uiManager.showBuffText(attacker, 'PIERCE!', '#6B7A9A');
@@ -2507,20 +2499,18 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (playerUnits.some(u => u.type === 'SORCERER') && !hasBuff('SORCERER', 'hasPiercing') && !usedBuffs.has('legendary_piercing')) {
+        if (playerUnits.some(u => u.type === 'SORCERER') && !hasBuff('SORCERER', 'hasUnstableArcana') && !usedBuffs.has('legendary_unstable_arcana')) {
             availableLegendaryBuffs.push({
-                id: 'legendary_piercing',
-                name: t('buff.piercing'),
-                icon: '🔮',
-                desc: t('buff.piercing.desc'),
+                id: 'legendary_unstable_arcana',
+                name: t('buff.unstable_arcana'),
+                icon: '🔥',
+                desc: t('buff.unstable_arcana.desc'),
                 unitType: 'SORCERER',
                 rarity: 'legendary',
                 effect: (unit) => {
-                    unit.hasPiercing = true;
-                    unit.rangedRange = 999;
+                    unit.hasUnstableArcana = true;
                     unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasPiercing = true;
-                    unit.statModifiers.rangedRange = 999;
+                    unit.statModifiers.hasUnstableArcana = true;
                 }
             });
         }
@@ -2579,22 +2569,6 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (playerUnits.some(u => u.type === 'SORCERER') && hasProperty('SORCERER', 'hasPiercing') && !hasProperty('SORCERER', 'hasUnstableArcana') && !usedBuffs.has('mythic_unstable_arcana')) {
-            availableMythicBuffs.push({
-                id: 'mythic_unstable_arcana',
-                name: t('buff.unstable_arcana'),
-                icon: '🔥',
-                desc: t('buff.unstable_arcana.desc'),
-                unitType: 'SORCERER',
-                rarity: 'mythic',
-                effect: (unit) => {
-                    unit.hasUnstableArcana = true;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasUnstableArcana = true;
-                }
-            });
-        }
-
         if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !hasProperty('RANGER', 'hasSilverArrows') && !usedBuffs.has('mythic_silver_arrows')) {
             availableMythicBuffs.push({
                 id: 'mythic_silver_arrows',
@@ -2628,7 +2602,7 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (playerUnits.some(u => u.type === 'ROGUE') && !hasProperty('ROGUE', 'hasArcaneBlade') && !usedBuffs.has('mythic_arcane_blades')) {
+        if (playerUnits.some(u => u.type === 'ROGUE') && hasProperty('ROGUE', 'hasBackstab') && !hasProperty('ROGUE', 'hasArcaneBlade') && !usedBuffs.has('mythic_arcane_blades')) {
             availableMythicBuffs.push({
                 id: 'mythic_arcane_blades',
                 name: t('buff.arcane_blades'),
@@ -3133,19 +3107,17 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (playerUnits.some(u => u.type === 'SORCERER') && !hasBuff('SORCERER', 'hasPiercing')) {
+        if (playerUnits.some(u => u.type === 'SORCERER') && !hasBuff('SORCERER', 'hasUnstableArcana')) {
             availableLegendaryBuffs.push({
-                id: 'legendary_piercing',
-                name: t('buff.piercing'),
-                icon: '🔮',
-                desc: t('buff.piercing.desc'),
+                id: 'legendary_unstable_arcana',
+                name: t('buff.unstable_arcana'),
+                icon: '🔥',
+                desc: t('buff.unstable_arcana.desc'),
                 unitType: 'SORCERER',
                 effect: (unit) => {
-                    unit.hasPiercing = true;
-                    unit.rangedRange = 999;
+                    unit.hasUnstableArcana = true;
                     unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasPiercing = true;
-                    unit.statModifiers.rangedRange = 999;
+                    unit.statModifiers.hasUnstableArcana = true;
                 }
             });
         }
@@ -3207,23 +3179,6 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        // Sorcerer mythic requires the unit to have Sorcerer Legendary `hasPiercing`
-        if (playerUnits.some(u => u.type === 'SORCERER') && hasProperty('SORCERER', 'hasPiercing') && !hasProperty('SORCERER', 'hasUnstableArcana')) {
-            availableMythicBuffs.push({
-                id: 'mythic_unstable_arcana',
-                name: t('buff.unstable_arcana'),
-                icon: '🔥',
-                desc: t('buff.unstable_arcana.desc'),
-                unitType: 'SORCERER',
-                rarity: 'mythic',
-                effect: (unit) => {
-                    unit.hasUnstableArcana = true;
-                    unit.statModifiers = unit.statModifiers || {};
-                    unit.statModifiers.hasUnstableArcana = true;
-                }
-            });
-        }
-
         // Ranger mythic requires the unit to have Ranger Legendary `hasRicochet`
         if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !hasProperty('RANGER', 'hasSilverArrows')) {
             availableMythicBuffs.push({
@@ -3258,7 +3213,7 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (playerUnits.some(u => u.type === 'ROGUE') && !hasProperty('ROGUE', 'hasArcaneBlade')) {
+        if (playerUnits.some(u => u.type === 'ROGUE') && hasProperty('ROGUE', 'hasBackstab') && !hasProperty('ROGUE', 'hasArcaneBlade')) {
             availableMythicBuffs.push({
                 id: 'mythic_arcane_blades',
                 name: t('buff.arcane_blades'),
@@ -3446,12 +3401,12 @@ export class BattleScene extends Phaser.Scene {
             'legendary_frenzy': 'hasDoubleStrike',
             'legendary_cleave': 'hasCleave',
             'legendary_ricochet': 'hasRicochet',
-            'legendary_piercing': 'hasPiercing',
             'legendary_backstab': 'hasBackstab',
+            'legendary_unstable_arcana': 'hasUnstableArcana',
             'mythic_divine_retribution': 'hasDivineRetribution',
-            'mythic_unstable_arcana': 'hasUnstableArcana',
             'mythic_silver_arrows': 'hasSilverArrows',
-            'mythic_warlust': 'hasWarlust'
+            'mythic_warlust': 'hasWarlust',
+            'mythic_arcane_blades': 'hasArcaneBlade'
         };
         const buffProperty = buffIdToProperty[buffId];
 
@@ -3782,7 +3737,9 @@ export class PreGameScene extends Phaser.Scene {
     }
 
     getStartingPoints() {
-        return this.currentStage.startingPoints || 1000;
+        const base = this.currentStage.startingPoints || 1000;
+        const metaBonus = (SaveManager.getUpgrades().startingBalance || 0) * 50;
+        return base + metaBonus;
     }
 
     create(data) {

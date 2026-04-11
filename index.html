@@ -761,8 +761,9 @@
         const _ARMY_UNIT_KEYS = ['KNIGHT','ARCHER','WIZARD','CLERIC','ROGUE','PALADIN','RANGER','BERSERKER','SORCERER'];
         const armyCounts = {};
         _ARMY_UNIT_KEYS.forEach(t => armyCounts[t] = 0);
-        let armyTotalPoints = 1000;
-        let armyRemainingPoints = 1000;
+        const _metaStartBonus = () => (typeof SaveManager !== 'undefined' ? (SaveManager.getUpgrades().startingBalance || 0) * 50 : 0);
+        let armyTotalPoints = 1000 + _metaStartBonus();
+        let armyRemainingPoints = armyTotalPoints;
 
         function resetArmyCounts() {
             _ARMY_UNIT_KEYS.forEach(t => {
@@ -813,8 +814,9 @@
                 }
             });
 
-            // Update points based on map
-            armyTotalPoints = mapId === 'ruins' ? 1700 : mapId === 'mountain' ? 1300 : 1000;
+            // Update points based on map (+ meta starting balance bonus)
+            const _basePoints = mapId === 'ruins' ? 1700 : mapId === 'mountain' ? 1300 : 1000;
+            armyTotalPoints = _basePoints + _metaStartBonus();
             resetArmyCounts();
 
             // Pass selection to gameScene
