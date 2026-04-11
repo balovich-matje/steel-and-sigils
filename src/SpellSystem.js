@@ -312,6 +312,7 @@ export class SpellSystem {
     }
 
     executeIceStorm(spell, centerX, centerY) {
+        this.scene.playSfx('sfx_ice_storm', 0.2);
         const targets = [];
 
         for (let dy = -1; dy <= 1; dy++) {
@@ -342,6 +343,7 @@ export class SpellSystem {
 
     executeSingleDamage(spell, unit) {
         // Use enhanced hero lightning animation
+        this.scene.playSfx('sfx_chain_zap', 0.2);
         this.createHeroLightningBolt(unit, () => {
             const damage = this.getSpellDamage(spell.power);
             const actualSingleDmg = unit.takeSpellDamage(damage);
@@ -365,6 +367,7 @@ export class SpellSystem {
         healAmount = Math.floor(healAmount * healingMult);
 
         unit.heal(healAmount);
+        this.scene.playSfx('sfx_heal', 0.2);
         this.createHealEffect(unit);
         this.scene.uiManager.showHealText(unit, healAmount);
         this.scene.addCombatLog(`${unit.name} was healed for ${healAmount} HP.`, 'heal');
@@ -378,6 +381,7 @@ export class SpellSystem {
         }
         // If permanentBuffs is enabled, duration is -1 (permanent), otherwise use spell duration
         unit.hasteRounds = this.scene.permanentBuffs ? -1 : spell.duration;
+        this.scene.playSfx('sfx_haste', 0.2);
         this.scene.uiManager.showBuffText(unit, 'HASTE!', '#ffff00');
         this.scene.addCombatLog(`${unit.name} gained HASTE! (+${spell.power} Move).`, 'buff');
     }
@@ -385,6 +389,7 @@ export class SpellSystem {
     executeShield(spell, unit) {
         unit.shieldValue = spell.power;
         unit.shieldRounds = this.scene.permanentBuffs ? -1 : spell.duration;
+        this.scene.playSfx('sfx_shield', 0.2);
         this.scene.uiManager.showBuffText(unit, 'SHIELD!', '#4A5E7E');
         this.scene.addCombatLog(`${unit.name} gained SHIELD! (-${Math.floor(spell.power * 100)}% damage taken).`, 'buff');
     }
@@ -392,6 +397,7 @@ export class SpellSystem {
     executeBless(spell, unit) {
         unit.blessValue = spell.power;
         unit.blessRounds = this.scene.permanentBuffs ? -1 : spell.duration;
+        this.scene.playSfx('sfx_bless', 0.2);
         this.scene.uiManager.showBuffText(unit, 'BLESSED!', '#A68966');
         this.scene.addCombatLog(`${unit.name} gained BLESS! (+${Math.floor((spell.power - 1) * 100)}% DMG).`, 'buff');
     }
@@ -399,6 +405,7 @@ export class SpellSystem {
     executeRegenerate(spell, unit) {
         unit.regenerateAmount = spell.power;
         unit.regenerateRounds = this.scene.permanentBuffs ? -1 : spell.duration;
+        this.scene.playSfx('sfx_regenerate', 0.2);
         this.scene.uiManager.showBuffText(unit, 'REGENERATE!', '#00ff00');
         this.scene.addCombatLog(`${unit.name} gained REGENERATE! (${spell.power} HP/turn).`, 'buff');
     }
@@ -409,6 +416,7 @@ export class SpellSystem {
         this.scene.spendMana(actualCost);
         this.scene.spellsCastThisRound++;
 
+        this.scene.playSfx('sfx_teleport', 0.2);
         this.createTeleportEffect(unit);
         this.scene.unitManager.updateUnitPosition(unit, newX, newY);
         this.scene.uiManager.showBuffText(unit, 'TELEPORT!', '#6B5B8B');
@@ -560,16 +568,99 @@ export class SpellSystem {
         const x = gridX * tileSize + tileSize / 2;
         const y = gridY * tileSize + tileSize / 2;
 
-        const meteor = this.scene.add.circle(x, y - 200, 30, 0xff3300);
-        meteor.setDepth(15);
+        // Start position: top-left of screen, angled descent
+        const startX = x - 180;
+        const startY = -80;
+
+        // Flaming meteor core
+        const meteor = this.scene.add.circle(startX, startY, 20, 0xff3300);
+        meteor.setDepth(22);
+        const meteorCore = this.scene.add.circle(startX, startY, 12, 0xffaa00);
+        meteorCore.setDepth(23);
+
+        // Trail particles during flight
+        const trail = [];
         this.scene.tweens.add({
-            targets: meteor,
+            targets: [meteor, meteorCore],
+            x: x,
             y: y,
-            duration: 600,
+            duration: 700,
             ease: 'Power2',
+            onUpdate: () => {
+                if (Math.random() < 0.5) {
+                    const t = this.scene.add.circle(
+                        meteor.x + (Math.random() - 0.5) * 15,
+                        meteor.y + (Math.random() - 0.5) * 15,
+                        4 + Math.random() * 8, 0xff6600
+                    );
+                    t.setDepth(21);
+                    t.setAlpha(0.8);
+                    trail.push(t);
+                    this.scene.tweens.add({
+                        targets: t,
+                        alpha: 0, scale: 0.3,
+                        duration: 250,
+                        onComplete: () => { t.destroy(); trail.splice(trail.indexOf(t), 1); }
+                    });
+                }
+            },
             onComplete: () => {
                 meteor.destroy();
-                this.createExplosionEffect(gridX, gridY, 2);
+                meteorCore.destroy();
+                trail.forEach(t => t.destroy());
+
+                // Sound: meteor impact
+                this.scene.playSfx('sfx_meteor', 0.25);
+
+                // Screen shake — big
+                this.scene.cameras.main.shake(200, 0.015);
+
+                // Massive explosion core
+                const core = this.scene.add.circle(x, y, 20, 0xffffaa);
+                core.setDepth(18);
+                this.scene.tweens.add({
+                    targets: core, scale: 6, alpha: 0, duration: 350,
+                    onComplete: () => core.destroy()
+                });
+
+                // Fire blast
+                const blast = this.scene.add.circle(x, y, 30, 0xff4400);
+                blast.setDepth(17);
+                this.scene.tweens.add({
+                    targets: blast, scale: 5, alpha: 0, duration: 500,
+                    onComplete: () => blast.destroy()
+                });
+
+                // Shatter debris — pieces flying outward
+                for (let i = 0; i < 16; i++) {
+                    const angle = (i / 16) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+                    const dist = 50 + Math.random() * 80;
+                    const size = 3 + Math.random() * 6;
+                    const color = [0xff3300, 0xff6600, 0xffaa00, 0x884400][Math.floor(Math.random() * 4)];
+                    const shard = this.scene.add.rectangle(x, y, size, size * 0.7, color);
+                    shard.setDepth(19);
+                    shard.setAngle(Math.random() * 360);
+                    this.scene.tweens.add({
+                        targets: shard,
+                        x: x + Math.cos(angle) * dist,
+                        y: y + Math.sin(angle) * dist,
+                        angle: shard.angle + 360 + Math.random() * 360,
+                        alpha: 0,
+                        scale: 0.3,
+                        duration: 400 + Math.random() * 300,
+                        ease: 'Power2',
+                        onComplete: () => shard.destroy()
+                    });
+                }
+
+                // Ground scorch ring
+                const scorch = this.scene.add.circle(x, y, 10, 0x331100);
+                scorch.setDepth(2);
+                scorch.setAlpha(0.6);
+                this.scene.tweens.add({
+                    targets: scorch, scale: 5, alpha: 0, duration: 2000,
+                    onComplete: () => scorch.destroy()
+                });
             }
         });
     }
@@ -937,19 +1028,20 @@ export class SpellSystem {
         const damage = this.getSpellDamage(spell.power);
         
         // Strike first target from sky
+        this.scene.playSfx('sfx_chain_zap', 0.2);
         this.createHeroLightningBolt(targets[0], () => {
             const actualChainDmg = targets[0].takeSpellDamage(damage);
             this.scene.uiManager.showDamageText(targets[0], actualChainDmg);
             this.scene.addCombatLog(`Chain Lightning hit ${targets[0].name} dealing ${actualChainDmg} damage.`, 'damage');
             this.scene.checkVictoryCondition();
-            
-            // Chain to subsequent targets with arc animation
+
+            // Chain to subsequent targets with arc animation + per-hit sound
             for (let i = 1; i < targets.length; i++) {
                 const prevTarget = targets[i - 1];
                 const currentTarget = targets[i];
-                
-                this.scene.time.delayedCall(i * 300, () => {
-                    // Create lightning arc between targets
+
+                this.scene.time.delayedCall(i * 400, () => {
+                    this.scene.playSfx('sfx_chain_zap', 0.2);
                     this.createLightningArc(prevTarget, currentTarget, () => {
                         const actualChainDmg = currentTarget.takeSpellDamage(damage);
                         this.scene.uiManager.showDamageText(currentTarget, actualChainDmg);

@@ -148,7 +148,7 @@ export const SPELLS = {
         name: 'Meteor',
         icon: '☄️',
         type: 'Heavy AoE',
-        manaCost: 50,
+        manaCost: 100,
         description: 'Devastating 5x5 area attack dealing 60 damage',
         targetType: 'enemy',
         effect: 'meteor',

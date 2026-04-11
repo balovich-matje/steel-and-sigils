@@ -199,6 +199,11 @@ export class GridSystem {
                     this.scene.performAttack(currentUnit, clickedUnit);
                     return;
                 }
+                // Debug: attack blocked — distance out of range
+                console.warn(`[click] Attack blocked: ${currentUnit.type} at (${currentUnit.gridX},${currentUnit.gridY}) → ${clickedUnit.type} at (${clickedUnit.gridX},${clickedUnit.gridY}), dist=${dist}, range=${currentUnit.rangedRange || 1}`);
+            } else if (currentUnit) {
+                // Debug: can't attack
+                console.warn(`[click] Can't attack: isPlayer=${currentUnit.isPlayer}, canAttack=${currentUnit.canAttack()}, hasMoved=${currentUnit.hasMoved}, hasAttacked=${currentUnit.hasAttacked}`);
             }
             this.scene.selectUnit(clickedUnit);
             return;
