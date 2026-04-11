@@ -9,5 +9,9 @@
 # Utils folder - image generation outputs and temp files
 utils/*
 !utils/AGENTS.md
-!utils/generate_banshee.py
+!utils/pollinations.md
+!utils/audiogen_setup.md
+!utils/generate_sprite.js
+!utils/generate_sfx.py
+!utils/remove_bg.py
 
