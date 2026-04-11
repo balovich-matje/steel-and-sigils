@@ -3662,15 +3662,10 @@ export class BattleScene extends Phaser.Scene {
         if (magicEffect) {
             this.uiManager.showFloatingText(`${magicEffect.name} Acquired!`, 400, 200, '#A68966');
 
-            // Fire the effect immediately for one-time effects like Mana Surge
-            if (magicEffect.effect) {
-                magicEffect.effect();
-            }
-
             if (magicEffect.buffType) {
-                // Don't store one-time effects in the persistent buff list
+                // One-time effects: fire immediately, don't persist
                 if (magicEffect.buffType === 'manaRestore') {
-                    // Already fired effect() above, don't persist
+                    if (magicEffect.effect) magicEffect.effect();
                 } else {
                     const existingBuff = this.magicBuffs.find(b => b.type === magicEffect.buffType);
                     if (existingBuff && magicEffect.buffType === 'manaCost') {
