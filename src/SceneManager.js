@@ -117,9 +117,9 @@ export class BattleScene extends Phaser.Scene {
         const skeletonTypes = ['SKELETON_ARCHER', 'SKELETON_SOLDIER', 'SUMMONER_LICH', 'BONE_BEHEMOTH'];
         const armoredTypes = ['KNIGHT', 'PALADIN', 'ANIMATED_ARMOR', 'DREAD_KNIGHT', 'IRON_COLOSSUS'];
         if (skeletonTypes.includes(defender.type)) {
-            this.playSfx('sfx_skeleton_hit', 0.4);
+            this.playSfx('sfx_skeleton_hit', 0.2);
         } else if (armoredTypes.includes(defender.type)) {
-            this.playSfx('sfx_armor_hit', 0.4);
+            this.playSfx('sfx_armor_hit', 0.2);
         }
     }
 
@@ -1326,6 +1326,10 @@ export class BattleScene extends Phaser.Scene {
             y: lungeY,
             duration: 100,
             yoyo: true,
+            onYoyo: () => {
+                // Play hit sound at moment of impact (midpoint of lunge)
+                this.playHitSfx(defender);
+            },
             onComplete: () => {
                 // Banshee Wail: wailed unit deals 0 damage on this attack
                 if (attacker.isWailed) {
@@ -1376,13 +1380,11 @@ export class BattleScene extends Phaser.Scene {
                         magicDmg = Math.floor(magicDmg * (this.spellPowerMultiplier || 1));
                         actualDmg = defender.takeSpellDamage(magicDmg, attacker);
                         this.uiManager.showDamageText(defender, actualDmg);
-                        this.playHitSfx(defender);
                         const suffix = attacker.hasBackstab && damage > attacker.damage ? ' (Backstab!)' : '';
                         this.addCombatLog(`${attacker.name} struck ${defender.name} with arcane energy for ${actualDmg} damage.${suffix}`, 'damage');
                     } else {
                     actualDmg = defender.takeDamage(damage, false, attacker);
                     this.uiManager.showDamageText(defender, actualDmg);
-                    this.playHitSfx(defender);
                     if (!(attacker.type === 'ROGUE' && attacker.hasBackstab)) {
                         this.addCombatLog(`${attacker.name} dealt melee attack to ${defender.name} dealing ${actualDmg} damage.`, 'damage');
                     }
@@ -1693,7 +1695,7 @@ export class BattleScene extends Phaser.Scene {
         const targetY = targetGridY * this.tileSize + this.tileSize / 2;
 
         // Sound: fireball cast
-        this.playSfx('sfx_fireball_cast', 0.4);
+        this.playSfx('sfx_fireball_cast', 0.2);
 
         // Face the target
         this.faceTarget(caster, { gridX: targetGridX, gridY: targetGridY });

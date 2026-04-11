@@ -467,7 +467,7 @@ export class SpellSystem {
         const scale = radius === 2 ? 5 : 3;
 
         // Sound: explosion
-        this.scene.playSfx('sfx_fireball_explode', 0.5);
+        this.scene.playSfx('sfx_fireball_explode', 0.25);
 
         // Core explosion - bright white/yellow center
         const core = this.scene.add.circle(x, y, 15, 0xffffaa);
@@ -659,7 +659,7 @@ export class SpellSystem {
         const startY = -50;
 
         // Sound: fireball cast
-        this.scene.playSfx('sfx_fireball_cast', 0.4);
+        this.scene.playSfx('sfx_fireball_cast', 0.2);
 
         // Create the falling fireball with trail effect
         const fireball = this.scene.add.circle(startX, startY, 15, 0xff4500);
