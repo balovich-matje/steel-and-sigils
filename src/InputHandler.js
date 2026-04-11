@@ -189,8 +189,7 @@ export class GridSystem {
         if (clickedUnit && !clickedUnit.isDead && !clickedUnit.isPlayer) {
             const currentUnit = this.scene.turnSystem.currentUnit;
             if (currentUnit && currentUnit.isPlayer && currentUnit.canAttack()) {
-                const dist = Math.abs(clickedUnit.gridX - currentUnit.gridX) +
-                    Math.abs(clickedUnit.gridY - currentUnit.gridY);
+                const dist = this.getDistanceBetweenUnits(currentUnit, clickedUnit);
 
                 if (dist > 1 && dist <= currentUnit.rangedRange && currentUnit.rangedRange > 0) {
                     this.scene.performRangedAttack(currentUnit, clickedUnit);
