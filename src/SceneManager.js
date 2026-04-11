@@ -188,6 +188,19 @@ export class BattleScene extends Phaser.Scene {
             this.currentEnemyFaction = 'GREENSKIN_HORDE';
         }
 
+        // Reset magic-buff-affected values to defaults before re-applying
+        // (Phaser reuses the scene object on restart — constructor doesn't re-run)
+        this.maxMana = 100;
+        this.mana = 100;
+        this.baseManaRegen = 1;
+        this.manaRegen = 1;
+        this.manaCostMultiplier = 1;
+        this.spellPowerMultiplier = 1;
+        this.healingPowerMultiplier = 1;
+        this.spellsPerRound = 1;
+        this.permanentBuffs = false;
+        this.armyBuffs = false;
+
         // Restore magic buffs from previous battle
         if (data && data.magicBuffs) {
             this.magicBuffs = data.magicBuffs;
