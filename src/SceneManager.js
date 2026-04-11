@@ -65,7 +65,7 @@ export class BattleScene extends Phaser.Scene {
         const enemyUnits = ['ORC_WARRIOR', 'ORC_BRUTE', 'ORC_ROGUE', 'GOBLIN_STONE_THROWER',
             'OGRE_CHIEFTAIN', 'ORC_SHAMAN_KING', 'LOOT_GOBLIN',
             // Dungeon Dwellers
-            'ANIMATED_ARMOR', 'SKELETON_ARCHER', 'SKELETON_SOLDIER', 'LOST_SPIRIT', 'SUMMONER_LICH', 'BANSHEE_SOVEREIGN', 'DREAD_KNIGHT', 'IRON_COLOSSUS',
+            'ANIMATED_ARMOR', 'SKELETON_ARCHER', 'SKELETON_SOLDIER', 'LOST_SPIRIT', 'SUMMONER_LICH', 'BANSHEE_SOVEREIGN', 'DREAD_KNIGHT', 'IRON_COLOSSUS', 'BONE_BEHEMOTH',
             // Old God Worshippers
             'CULTIST_ACOLYTE', 'CULTIST_NEOPHYTE', 'GIBBERING_HORROR', 'FLESH_WARPED_STALKER', "OCTOTH_HROARATH",
             'THE_SILENCE', 'VOID_HERALD'
@@ -682,7 +682,7 @@ export class BattleScene extends Phaser.Scene {
     createBossWave() {
         let selectedBoss;
         if (this.currentEnemyFaction === 'DUNGEON_DWELLERS') {
-            const dungeonBosses = ['SUMMONER_LICH', 'BANSHEE_SOVEREIGN', 'DREAD_KNIGHT', 'IRON_COLOSSUS'];
+            const dungeonBosses = ['SUMMONER_LICH', 'BANSHEE_SOVEREIGN', 'DREAD_KNIGHT', 'IRON_COLOSSUS', 'BONE_BEHEMOTH'];
             selectedBoss = dungeonBosses[Math.floor(Math.random() * dungeonBosses.length)];
             if (selectedBoss === this.lastBossSpawned) {
                 const others = dungeonBosses.filter(b => b !== this.lastBossSpawned);

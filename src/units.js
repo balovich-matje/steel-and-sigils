@@ -357,6 +357,18 @@ const UNIT_TYPES = {
             { name: 'Seismic Slam', description: 'At the start of its turn, knocks back all player units within 2 tiles and stuns them for 1 turn.' }
         ]
     },
+    BONE_BEHEMOTH: {
+        name: 'Bone Behemoth',
+        emoji: '💀',
+        image: 'images/enemy/dungeon/bone_behemoth.png',
+        health: 280, maxHealth: 280,
+        damage: 45, moveRange: 2, initiative: 9,
+        isPlayer: false, cost: 2000,
+        isBoss: true, bossSize: 2,
+        passives: [
+            { name: 'Bone Absorption', description: 'When any unit dies, absorbs their bones: gains full Max HP and heals, plus 50% of their damage and +1 movement.' }
+        ]
+    },
     OCTOTH_HROARATH: {
         name: "Octo'th Hroa'rath",
         emoji: '🦑',

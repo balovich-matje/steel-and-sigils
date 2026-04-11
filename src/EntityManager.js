@@ -299,23 +299,101 @@ export class Unit {
             }
         }
 
-        if (this.sprite) {
-            // Adjust origin to center so it rotates in-place instead of swinging out of the cell
+        // Bone Behemoth: Bone Absorption passive
+        let boneBehemothAbsorption = false;
+        let absorptionBoss = null;
+        if (scene && scene.unitManager && this.type !== 'BONE_BEHEMOTH') {
+            absorptionBoss = scene.unitManager.units.find(
+                u => u.type === 'BONE_BEHEMOTH' && !u.isDead
+            );
+            if (absorptionBoss) boneBehemothAbsorption = true;
+        }
+
+        if (boneBehemothAbsorption) {
+            const hpGain = this.maxHealth;
+            const dmgGain = Math.floor(this.damage * 0.5);
+            absorptionBoss.maxHealth += hpGain;
+            absorptionBoss.health = Math.min(absorptionBoss.health + hpGain, absorptionBoss.maxHealth);
+            absorptionBoss.damage += dmgGain;
+            absorptionBoss.moveRange += 1;
+            absorptionBoss.updateHealthBar();
+            if (scene.addCombatLog) {
+                scene.addCombatLog(`Bone Behemoth absorbed ${this.name}: +${hpGain} HP, +${dmgGain} DMG, +1 MOV!`, 'buff');
+            }
+        }
+
+        if (this.sprite && boneBehemothAbsorption && scene) {
+            // Bone-fly animation: sprite shrinks, bones fly to boss
+            const deadX = this.sprite.x;
+            const deadY = this.sprite.y;
+            const bossX = absorptionBoss.sprite ? absorptionBoss.sprite.x : deadX;
+            const bossY = absorptionBoss.sprite ? absorptionBoss.sprite.y : deadY;
+
+            // Shrink and fade the dying unit
+            scene.tweens.add({
+                targets: this.sprite,
+                scaleX: 0, scaleY: 0,
+                alpha: 0,
+                duration: 200,
+                ease: 'Power2'
+            });
+
+            // Spawn bone particles that fly to the boss
+            const boneCount = 7;
+            const bones = [];
+            for (let i = 0; i < boneCount; i++) {
+                const ox = (Math.random() - 0.5) * 30;
+                const oy = (Math.random() - 0.5) * 30;
+                const size = 4 + Math.random() * 6;
+                const bone = scene.add.rectangle(deadX + ox, deadY + oy, size, size * 0.5, 0xE8D5B7);
+                bone.setAngle(Math.random() * 360);
+                bone.setDepth(100);
+                bones.push(bone);
+
+                const isLast = i === boneCount - 1;
+                scene.tweens.add({
+                    targets: bone,
+                    x: bossX + (Math.random() - 0.5) * 20,
+                    y: bossY + (Math.random() - 0.5) * 20,
+                    angle: bone.angle + 360 + Math.random() * 360,
+                    scaleX: 0.5,
+                    scaleY: 0.5,
+                    duration: 400 + Math.random() * 200,
+                    delay: 150 + i * 60,
+                    ease: 'Power2',
+                    onComplete: isLast ? () => {
+                        bones.forEach(b => b.destroy());
+                        if (scene.uiManager) {
+                            scene.uiManager.showBuffText(absorptionBoss, 'BONE ABSORPTION!', '#E8D5B7');
+                            scene.uiManager.showFloatingText(
+                                `+${hpGain} HP +${dmgGain} DMG +1 MOV`,
+                                bossX, bossY - 80, '#E8D5B7'
+                            );
+                        }
+                    } : undefined
+                });
+            }
+
+            // Immediate cleanup on dying sprite
+            if (!this.sprite.setText) {
+                this.sprite.setTint(0x666666);
+            }
+            this.sprite.removeInteractive();
+        } else if (this.sprite) {
+            // Normal death animation: fall over
             if (this.sprite.setOrigin) {
                 const hOffset = this.sprite.displayHeight ? this.sprite.displayHeight / 2 : 32;
                 this.sprite.setOrigin(0.5, 0.5);
                 this.sprite.y -= hOffset;
             }
 
-            // Fall backwards depending on side
             const fallAngle = this.isPlayer ? -90 : 90;
 
             if (scene) {
-                // Add a falling animation (rotate 90 degrees)
                 scene.tweens.add({
                     targets: this.sprite,
                     angle: fallAngle,
-                    y: '+=20', // drop slightly to lie on the floor
+                    y: '+=20',
                     alpha: 0.5,
                     duration: 500,
                     ease: 'Power2'
