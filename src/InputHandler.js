@@ -163,7 +163,18 @@ export class GridSystem {
     }
 
     handleTileClick(tile) {
-        const { gridX, gridY } = tile;
+        let { gridX, gridY } = tile;
+
+        // If clicked on a unit sprite (not a tile), find the owning unit directly
+        if (gridX === undefined || gridY === undefined) {
+            const ownerUnit = this.scene.unitManager.units.find(u => u.sprite === tile && !u.isDead);
+            if (ownerUnit) {
+                gridX = ownerUnit.gridX;
+                gridY = ownerUnit.gridY;
+            } else {
+                return; // Clicked an unknown game object
+            }
+        }
         const clickedUnit = this.scene.unitManager.getUnitAt(gridX, gridY);
 
         // If a unit ability is active (like Sorcerer Fireball), execute it
