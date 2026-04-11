@@ -882,6 +882,15 @@
 
         function closeMetaShop() {
             document.getElementById('meta-shop-modal').style.display = 'none';
+            // Refresh army points if startingBalance upgrade was purchased
+            const _base = selectedMapId === 'mountain' ? 1300 : 1000;
+            const newTotal = _base + _metaStartBonus();
+            const diff = newTotal - armyTotalPoints;
+            if (diff !== 0) {
+                armyRemainingPoints = Math.max(0, armyRemainingPoints + diff);
+                armyTotalPoints = newTotal;
+                updateArmyDisplay();
+            }
         }
 
         function renderMetaShop() {

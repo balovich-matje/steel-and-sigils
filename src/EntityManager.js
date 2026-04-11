@@ -1506,19 +1506,19 @@ export class TurnSystem {
 
     // Calculate distance from a unit to another unit (accounting for 2x2 bosses)
     getDistanceToUnit(fromUnit, toUnit) {
-        // For normal 1x1 units, use simple Manhattan distance to center
+        // Chebyshev distance: diagonals count as 1 (allows diagonal attacks)
         if (fromUnit.bossSize === 1 && toUnit.bossSize === 1) {
-            return Math.abs(toUnit.gridX - fromUnit.gridX) + Math.abs(toUnit.gridY - fromUnit.gridY);
+            return Math.max(Math.abs(toUnit.gridX - fromUnit.gridX), Math.abs(toUnit.gridY - fromUnit.gridY));
         }
 
-        // For 2x2 units, find minimum distance between any occupied tiles
+        // For 2x2 units, find minimum Chebyshev distance between any occupied tiles
         const fromPositions = fromUnit.getOccupiedPositions();
         const toPositions = toUnit.getOccupiedPositions();
 
         let minDist = Infinity;
         for (const fromPos of fromPositions) {
             for (const toPos of toPositions) {
-                const dist = Math.abs(toPos.x - fromPos.x) + Math.abs(toPos.y - fromPos.y);
+                const dist = Math.max(Math.abs(toPos.x - fromPos.x), Math.abs(toPos.y - fromPos.y));
                 minDist = Math.min(minDist, dist);
             }
         }

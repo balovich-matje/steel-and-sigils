@@ -411,17 +411,20 @@ export class GridSystem {
         const sizeB = unitB.bossSize || 1;
 
         if (sizeA === 1 && sizeB === 1) {
-            return Math.abs(unitB.gridX - unitA.gridX) + Math.abs(unitB.gridY - unitA.gridY);
+            // Chebyshev distance: diagonals count as 1 (allows diagonal attacks)
+            return Math.max(Math.abs(unitB.gridX - unitA.gridX), Math.abs(unitB.gridY - unitA.gridY));
         }
 
-        // For multi-tile units, find minimum distance between any occupied tiles
+        // For multi-tile units, find minimum Chebyshev distance between any occupied tiles
         let minDist = Infinity;
         for (let dyA = 0; dyA < sizeA; dyA++) {
             for (let dxA = 0; dxA < sizeA; dxA++) {
                 for (let dyB = 0; dyB < sizeB; dyB++) {
                     for (let dxB = 0; dxB < sizeB; dxB++) {
-                        const dist = Math.abs((unitB.gridX + dxB) - (unitA.gridX + dxA)) +
-                            Math.abs((unitB.gridY + dyB) - (unitA.gridY + dyA));
+                        const dist = Math.max(
+                            Math.abs((unitB.gridX + dxB) - (unitA.gridX + dxA)),
+                            Math.abs((unitB.gridY + dyB) - (unitA.gridY + dyA))
+                        );
                         minDist = Math.min(minDist, dist);
                     }
                 }
@@ -434,7 +437,7 @@ export class GridSystem {
         // Highlight all enemies within attack range (including adjacent for melee)
         const enemies = this.scene.unitManager.getEnemyUnits();
         for (const enemy of enemies) {
-            const dist = Math.abs(enemy.gridX - unit.gridX) + Math.abs(enemy.gridY - unit.gridY);
+            const dist = Math.max(Math.abs(enemy.gridX - unit.gridX), Math.abs(enemy.gridY - unit.gridY));
             if (dist > 0 && (dist === 1 || dist <= unit.rangedRange)) {
                 this.highlightGraphics.lineStyle(3, 0xff6600, 1);
                 this.highlightGraphics.strokeRect(

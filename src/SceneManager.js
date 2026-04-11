@@ -215,6 +215,7 @@ export class BattleScene extends Phaser.Scene {
                             : unitData.statModifiers.moveRange;
                         unit.moveRange += movAdj;
                     }
+                    unit.moveRange = Math.max(1, unit.moveRange); // Never below 1
                     if (unitData.statModifiers.initiative) unit.initiative += unitData.statModifiers.initiative;
                     if (unitData.statModifiers.rangedRange) unit.rangedRange = unitData.statModifiers.rangedRange;
 
@@ -2306,7 +2307,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Show special Loot Goblin reward - 4 choices of 3 buffs each (2x2 grid)
-    showLootGoblinReward(remainingPicks = 4) {
+    showLootGoblinReward(remainingPicks = 4, preGeneratedChoices = null) {
         const rewardsContainer = document.getElementById('rewards-container');
 
         // Clear existing content and show loot goblin reward UI
@@ -2332,9 +2333,15 @@ export class BattleScene extends Phaser.Scene {
         `;
         rewardsContainer.appendChild(lootSection);
 
-        // Track used legendary/mythic buffs to prevent duplicates within this screen
-        const usedLegendaryBuffs = new Set();
-        const usedMythicBuffs = new Set();
+        // Generate ALL choice pools once on the first call so they never re-roll between picks
+        if (!preGeneratedChoices) {
+            const usedLegendaryBuffs = new Set();
+            const usedMythicBuffs = new Set();
+            preGeneratedChoices = [];
+            for (let i = 0; i < remainingPicks; i++) {
+                preGeneratedChoices.push(this.generateLootGoblinBuffChoice(usedLegendaryBuffs, usedMythicBuffs));
+            }
+        }
 
         // Create choice slots in a 2x2 grid (only show remaining picks)
         const cols = remainingPicks === 1 ? '1fr' : '1fr 1fr';
@@ -2350,7 +2357,7 @@ export class BattleScene extends Phaser.Scene {
             const buffsContainer = document.createElement('div');
             buffsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
 
-            const buffOptions = this.generateLootGoblinBuffChoice(usedLegendaryBuffs, usedMythicBuffs);
+            const buffOptions = preGeneratedChoices[choiceIndex];
 
             buffOptions.forEach(buff => {
                 const isMythic = buff.rarity === 'mythic';
@@ -2378,7 +2385,7 @@ export class BattleScene extends Phaser.Scene {
                 `, buff, rarity);
 
                 card.onclick = () => {
-                    this.showBuffTargetSelectionForLootGoblin(buff, card, remainingPicks);
+                    this.showBuffTargetSelectionForLootGoblin(buff, card, remainingPicks, preGeneratedChoices);
                 };
 
                 buffsContainer.appendChild(card);
@@ -2443,8 +2450,10 @@ export class BattleScene extends Phaser.Scene {
         const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
         const availableLegendaryBuffs = [];
 
+        // Returns true only when ALL units of that type already have the buff (no one left to give it to)
         const hasBuff = (unitType, buffProperty) => {
-            return playerUnits.some(u => u.type === unitType && u[buffProperty]);
+            const units = playerUnits.filter(u => u.type === unitType);
+            return units.length > 0 && units.every(u => u[buffProperty]);
         };
 
         if (playerUnits.some(u => u.type === 'BERSERKER') && !hasBuff('BERSERKER', 'hasDoubleStrike') && !usedBuffs.has('legendary_frenzy')) {
@@ -2546,8 +2555,13 @@ export class BattleScene extends Phaser.Scene {
         const hasProperty = (unitType, buffProperty) => {
             return playerUnits.some(u => u.type === unitType && u[buffProperty]);
         };
+        // True only when ALL units of that type already have the perk (for exclusion checks)
+        const allHaveProperty = (unitType, buffProperty) => {
+            const units = playerUnits.filter(u => u.type === unitType);
+            return units.length > 0 && units.every(u => u[buffProperty]);
+        };
 
-        if (hasProperty('PALADIN', 'hasCleave') && !hasProperty('PALADIN', 'hasDivineRetribution') && !usedBuffs.has('mythic_divine_retribution')) {
+        if (hasProperty('PALADIN', 'hasCleave') && !allHaveProperty('PALADIN', 'hasDivineRetribution') && !usedBuffs.has('mythic_divine_retribution')) {
             availableMythicBuffs.push({
                 id: 'mythic_divine_retribution',
                 name: t('buff.divine_retribution'),
@@ -2569,7 +2583,7 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !hasProperty('RANGER', 'hasSilverArrows') && !usedBuffs.has('mythic_silver_arrows')) {
+        if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !allHaveProperty('RANGER', 'hasSilverArrows') && !usedBuffs.has('mythic_silver_arrows')) {
             availableMythicBuffs.push({
                 id: 'mythic_silver_arrows',
                 name: t('buff.silver_arrows'),
@@ -2586,7 +2600,7 @@ export class BattleScene extends Phaser.Scene {
         }
 
         // Berserker mythic requires the unit to have Berserker Legendary `hasDoubleStrike`
-        if (playerUnits.some(u => u.type === 'BERSERKER') && hasProperty('BERSERKER', 'hasDoubleStrike') && !hasProperty('BERSERKER', 'hasWarlust') && !usedBuffs.has('mythic_warlust')) {
+        if (playerUnits.some(u => u.type === 'BERSERKER') && hasProperty('BERSERKER', 'hasDoubleStrike') && !allHaveProperty('BERSERKER', 'hasWarlust') && !usedBuffs.has('mythic_warlust')) {
             availableMythicBuffs.push({
                 id: 'mythic_warlust',
                 name: t('buff.warlust'),
@@ -2602,7 +2616,7 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (playerUnits.some(u => u.type === 'ROGUE') && hasProperty('ROGUE', 'hasBackstab') && !hasProperty('ROGUE', 'hasArcaneBlade') && !usedBuffs.has('mythic_arcane_blades')) {
+        if (playerUnits.some(u => u.type === 'ROGUE') && hasProperty('ROGUE', 'hasBackstab') && !allHaveProperty('ROGUE', 'hasArcaneBlade') && !usedBuffs.has('mythic_arcane_blades')) {
             availableMythicBuffs.push({
                 id: 'mythic_arcane_blades',
                 name: t('buff.arcane_blades'),
@@ -2626,7 +2640,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Show unit selection for Loot Goblin buff
-    showBuffTargetSelectionForLootGoblin(buffData, buffCard, remainingPicks = 1) {
+    showBuffTargetSelectionForLootGoblin(buffData, buffCard, remainingPicks = 1, preGeneratedChoices = null) {
         const playerUnits = this.unitManager.getPlayerUnits();
         if (playerUnits.length === 0) return;
 
@@ -2669,8 +2683,8 @@ export class BattleScene extends Phaser.Scene {
                 this.uiManager.showFloatingText(`${buffData.name} Applied!`, 400, 300, '#FFD700');
 
                 if (remainingPicks > 1) {
-                    // Still more picks left — return to Loot Goblin screen with one fewer slot
-                    this.showLootGoblinReward(remainingPicks - 1);
+                    // Still more picks left — pass the pre-generated choices so they don't re-roll
+                    this.showLootGoblinReward(remainingPicks - 1, preGeneratedChoices ? preGeneratedChoices.slice(1) : null);
                 } else {
                     // All picks used — move on to normal rewards
                     this.lootGoblinReward = false;
@@ -3051,9 +3065,10 @@ export class BattleScene extends Phaser.Scene {
         const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
         const availableLegendaryBuffs = [];
 
-        // Helper to check if any unit of a type already has the buff
+        // Returns true only when ALL units of that type already have the buff
         const hasBuff = (unitType, buffProperty) => {
-            return playerUnits.some(u => u.type === unitType && u[buffProperty]);
+            const units = playerUnits.filter(u => u.type === unitType);
+            return units.length > 0 && units.every(u => u[buffProperty]);
         };
 
         // Check for eligible legendary buffs based on player units
@@ -3153,9 +3168,14 @@ export class BattleScene extends Phaser.Scene {
         const hasProperty = (unitType, buffProperty) => {
             return playerUnits.some(u => u.type === unitType && u[buffProperty]);
         };
+        // True only when ALL units of that type already have the perk (for exclusion checks)
+        const allHaveProperty = (unitType, buffProperty) => {
+            const units = playerUnits.filter(u => u.type === unitType);
+            return units.length > 0 && units.every(u => u[buffProperty]);
+        };
 
         // Paladin mythic requires the unit to have the Paladin Legendary `hasCleave`
-        if (hasProperty('PALADIN', 'hasCleave') && !hasProperty('PALADIN', 'hasDivineRetribution')) {
+        if (hasProperty('PALADIN', 'hasCleave') && !allHaveProperty('PALADIN', 'hasDivineRetribution')) {
             availableMythicBuffs.push({
                 id: 'mythic_divine_retribution',
                 name: t('buff.divine_retribution'),
@@ -3180,7 +3200,7 @@ export class BattleScene extends Phaser.Scene {
         }
 
         // Ranger mythic requires the unit to have Ranger Legendary `hasRicochet`
-        if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !hasProperty('RANGER', 'hasSilverArrows')) {
+        if (playerUnits.some(u => u.type === 'RANGER') && hasProperty('RANGER', 'hasRicochet') && !allHaveProperty('RANGER', 'hasSilverArrows')) {
             availableMythicBuffs.push({
                 id: 'mythic_silver_arrows',
                 name: t('buff.silver_arrows'),
@@ -3197,7 +3217,7 @@ export class BattleScene extends Phaser.Scene {
         }
 
         // Berserker mythic requires the unit to have Berserker Legendary `hasDoubleStrike`
-        if (playerUnits.some(u => u.type === 'BERSERKER') && hasProperty('BERSERKER', 'hasDoubleStrike') && !hasProperty('BERSERKER', 'hasWarlust')) {
+        if (playerUnits.some(u => u.type === 'BERSERKER') && hasProperty('BERSERKER', 'hasDoubleStrike') && !allHaveProperty('BERSERKER', 'hasWarlust')) {
             availableMythicBuffs.push({
                 id: 'mythic_warlust',
                 name: t('buff.warlust'),
@@ -3213,7 +3233,7 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (playerUnits.some(u => u.type === 'ROGUE') && hasProperty('ROGUE', 'hasBackstab') && !hasProperty('ROGUE', 'hasArcaneBlade')) {
+        if (playerUnits.some(u => u.type === 'ROGUE') && hasProperty('ROGUE', 'hasBackstab') && !allHaveProperty('ROGUE', 'hasArcaneBlade')) {
             availableMythicBuffs.push({
                 id: 'mythic_arcane_blades',
                 name: t('buff.arcane_blades'),
