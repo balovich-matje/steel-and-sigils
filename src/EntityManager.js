@@ -309,9 +309,11 @@ export class Unit {
             if (absorptionBoss) boneBehemothAbsorption = true;
         }
 
+        let hpGain = 0;
+        let dmgGain = 0;
         if (boneBehemothAbsorption) {
-            const hpGain = this.maxHealth;
-            const dmgGain = Math.floor(this.damage * 0.5);
+            hpGain = this.maxHealth;
+            dmgGain = Math.floor(this.damage * 0.5);
             absorptionBoss.maxHealth += hpGain;
             absorptionBoss.health = Math.min(absorptionBoss.health + hpGain, absorptionBoss.maxHealth);
             absorptionBoss.damage += dmgGain;
