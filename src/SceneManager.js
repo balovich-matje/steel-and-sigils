@@ -88,6 +88,12 @@ export class BattleScene extends Phaser.Scene {
         this.load.image('rock_wide_img', 'images/obstacles/rock_wide.png');
         this.load.image('rock_jagged_img', 'images/obstacles/rock_jagged.png');
         
+        // Load sound effects
+        this.load.audio('sfx_fireball_cast', ['audio/fireball_cast_v1.wav']);
+        this.load.audio('sfx_fireball_explode', ['audio/fireball_explode_v1.wav']);
+        this.load.audio('sfx_armor_hit', ['audio/armor_hit_v1.wav']);
+        this.load.audio('sfx_skeleton_hit', ['audio/skeleton_hit_v1.wav']);
+
         // Load tile background images
         // Forest grass tiles (random selection for variety)
         this.load.image('grass1', 'images/tiles/grass1.png');
@@ -95,6 +101,26 @@ export class BattleScene extends Phaser.Scene {
         this.load.image('grass3', 'images/tiles/grass3.png');
         this.load.image('dirt_tile', 'images/tiles/dirt.png');
         this.load.image('rock_tile', 'images/tiles/rock.png');
+    }
+
+    // Play a sound effect by key. Silently no-ops if sound doesn't exist or audio fails.
+    playSfx(key, volume = 0.5) {
+        try {
+            if (this.cache.audio.exists(key)) {
+                this.sound.play(key, { volume });
+            }
+        } catch (e) { /* audio not supported */ }
+    }
+
+    // Play appropriate hit sound based on defender unit type
+    playHitSfx(defender) {
+        const skeletonTypes = ['SKELETON_ARCHER', 'SKELETON_SOLDIER', 'SUMMONER_LICH', 'BONE_BEHEMOTH'];
+        const armoredTypes = ['KNIGHT', 'PALADIN', 'ANIMATED_ARMOR', 'DREAD_KNIGHT', 'IRON_COLOSSUS'];
+        if (skeletonTypes.includes(defender.type)) {
+            this.playSfx('sfx_skeleton_hit', 0.4);
+        } else if (armoredTypes.includes(defender.type)) {
+            this.playSfx('sfx_armor_hit', 0.4);
+        }
     }
 
     create(data) {
@@ -1350,11 +1376,13 @@ export class BattleScene extends Phaser.Scene {
                         magicDmg = Math.floor(magicDmg * (this.spellPowerMultiplier || 1));
                         actualDmg = defender.takeSpellDamage(magicDmg, attacker);
                         this.uiManager.showDamageText(defender, actualDmg);
+                        this.playHitSfx(defender);
                         const suffix = attacker.hasBackstab && damage > attacker.damage ? ' (Backstab!)' : '';
                         this.addCombatLog(`${attacker.name} struck ${defender.name} with arcane energy for ${actualDmg} damage.${suffix}`, 'damage');
                     } else {
                     actualDmg = defender.takeDamage(damage, false, attacker);
                     this.uiManager.showDamageText(defender, actualDmg);
+                    this.playHitSfx(defender);
                     if (!(attacker.type === 'ROGUE' && attacker.hasBackstab)) {
                         this.addCombatLog(`${attacker.name} dealt melee attack to ${defender.name} dealing ${actualDmg} damage.`, 'damage');
                     }
@@ -1663,10 +1691,13 @@ export class BattleScene extends Phaser.Scene {
         // Fireball is always a fireball projectile - separate from piercing ranged attacks
         const targetX = targetGridX * this.tileSize + this.tileSize / 2;
         const targetY = targetGridY * this.tileSize + this.tileSize / 2;
-        
+
+        // Sound: fireball cast
+        this.playSfx('sfx_fireball_cast', 0.4);
+
         // Face the target
         this.faceTarget(caster, { gridX: targetGridX, gridY: targetGridY });
-        
+
         // Create fireball projectile (glowing orange/red ball)
         const fireball = this.add.circle(caster.sprite.x, caster.sprite.y - 20, 12, 0xff4500);
         fireball.setDepth(15);

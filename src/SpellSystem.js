@@ -466,6 +466,9 @@ export class SpellSystem {
         const y = gridY * tileSize + tileSize / 2;
         const scale = radius === 2 ? 5 : 3;
 
+        // Sound: explosion
+        this.scene.playSfx('sfx_fireball_explode', 0.5);
+
         // Core explosion - bright white/yellow center
         const core = this.scene.add.circle(x, y, 15, 0xffffaa);
         core.setDepth(16);
@@ -650,11 +653,14 @@ export class SpellSystem {
         const tileSize = this.scene.tileSize;
         const targetX = targetGridX * tileSize + tileSize / 2;
         const targetY = targetGridY * tileSize + tileSize / 2;
-        
+
         // Start from top of screen, slightly offset for dramatic effect
         const startX = targetX + (Math.random() - 0.5) * 40;
         const startY = -50;
-        
+
+        // Sound: fireball cast
+        this.scene.playSfx('sfx_fireball_cast', 0.4);
+
         // Create the falling fireball with trail effect
         const fireball = this.scene.add.circle(startX, startY, 15, 0xff4500);
         fireball.setDepth(20);
