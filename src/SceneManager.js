@@ -209,6 +209,7 @@ export class BattleScene extends Phaser.Scene {
         this.spellsPerRound = 1;
         this.permanentBuffs = false;
         this.armyBuffs = false;
+        this.spellEcho = false;
 
         // Restore magic buffs from previous battle
         if (data && data.magicBuffs) {
@@ -222,6 +223,7 @@ export class BattleScene extends Phaser.Scene {
                 if (buff.type === 'maxMana') { this.maxMana += buff.value; }
                 if (buff.type === 'permanentBuffs') this.permanentBuffs = true;
                 if (buff.type === 'armyBuffs') this.armyBuffs = true;
+                if (buff.type === 'spellEcho') this.spellEcho = true;
                 // manaRestore is a one-time effect, don't restore it
             }
         }
@@ -256,8 +258,9 @@ export class BattleScene extends Phaser.Scene {
                         unit.maxHealth += unitData.statModifiers.maxHealth;
                         unit.health += unitData.statModifiers.maxHealth;
                     }
-                    if (unitData.statModifiers.moveRange) {
+                    if (unitData.statModifiers.moveRange && !unitData.statModifiers.hasIronWill) {
                         // Berserker is immune to movement reduction — only apply positive modifiers
+                        // Iron Will: skip all moveRange modifications
                         const movAdj = unit.type === 'BERSERKER'
                             ? Math.max(0, unitData.statModifiers.moveRange)
                             : unitData.statModifiers.moveRange;
@@ -280,6 +283,13 @@ export class BattleScene extends Phaser.Scene {
                     if (unitData.statModifiers.hasSilverArrows) unit.hasSilverArrows = true;
                     if (unitData.statModifiers.hasWarlust) unit.hasWarlust = true;
                     if (unitData.statModifiers.hasArcaneBlade) unit.hasArcaneBlade = true;
+
+                    // Restore epic buffs
+                    if (unitData.statModifiers.hasBerserkerRage) unit.hasBerserkerRage = true;
+                    if (unitData.statModifiers.hasLastStand) unit.hasLastStand = true;
+                    if (unitData.statModifiers.hasJuggernaut) unit.hasJuggernaut = true;
+                    if (unitData.statModifiers.hasVampiricTouch) unit.hasVampiricTouch = true;
+                    if (unitData.statModifiers.hasIronWill) unit.hasIronWill = true;
 
                     unit.updateHealthBar();
                 }
@@ -1373,6 +1383,12 @@ export class BattleScene extends Phaser.Scene {
                     }
                 }
 
+                // Berserker's Rage: +50% damage when below 50% HP
+                if (attacker.hasBerserkerRage && attacker.health < attacker.maxHealth * 0.5) {
+                    damage = Math.floor(damage * 1.5);
+                    this.uiManager.showBuffText(attacker, 'RAGE!', '#CC3333');
+                }
+
                 // Rogue legendary perk: Backstab (4x damage if attacking from behind)
                 if (attacker.type === 'ROGUE' && attacker.hasBackstab) {
                     // Check if attacking from behind (same X but behind in Y relative to center of board, or same Y but behind in X)
@@ -1455,6 +1471,16 @@ export class BattleScene extends Phaser.Scene {
                         }
                     }
                     } // end else (non-arcane path)
+
+                    // Vampiric Touch: heal 25% of melee damage dealt
+                    if (attacker.hasVampiricTouch && actualDmg > 0 && attacker.health > 0) {
+                        const healAmt = Math.floor(actualDmg * 0.25);
+                        if (healAmt > 0) {
+                            attacker.heal(healAmt);
+                            attacker.updateHealthBar();
+                            this.uiManager.showHealText(attacker, healAmt);
+                        }
+                    }
 
                     // Shared: hit flash for both paths
                     this.tweens.add({
@@ -2775,6 +2801,7 @@ export class BattleScene extends Phaser.Scene {
             {
                 id: 'agility', name: t('buff.agility'), icon: '💨', desc: t('buff.agility.desc'), rarity: 'common',
                 effect: (unit) => {
+                    if (unit.hasIronWill) return; // Iron Will blocks MOV changes
                     unit.moveRange += 1;
                     unit.statModifiers = unit.statModifiers || {};
                     unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
@@ -2792,9 +2819,34 @@ export class BattleScene extends Phaser.Scene {
             {
                 id: 'ranged', name: t('buff.ranged'), icon: '🏹', desc: t('buff.ranged.desc'), rarity: 'common',
                 effect: (unit) => {
-                    if (!unit.rangedRange) unit.rangedRange = 3; else unit.rangedRange += 2;
+                    if (!unit.rangedRange) return; // Ranged units only
+                    unit.rangedRange += 5;
                     unit.statModifiers = unit.statModifiers || {};
                     unit.statModifiers.rangedRange = unit.rangedRange;
+                }
+            },
+            {
+                id: 'fortified_resolve', name: t('buff.fortified_resolve'), icon: '🏰', desc: t('buff.fortified_resolve.desc'), rarity: 'common',
+                effect: (unit) => {
+                    unit.initiative += 3; unit.maxHealth += 15; unit.health += 15;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.initiative = (unit.statModifiers.initiative || 0) + 3;
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 15;
+                    unit.updateHealthBar();
+                }
+            },
+            {
+                id: 'iron_will', name: t('buff.iron_will'), icon: '🧱', desc: t('buff.iron_will.desc'), rarity: 'common',
+                effect: (unit) => {
+                    unit.hasIronWill = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasIronWill = true;
+                    // Lock moveRange to base + meta movespeed only
+                    const baseMov = UNIT_TYPES[unit.type].moveRange;
+                    const metaMov = (typeof SaveManager !== 'undefined') ? (SaveManager.getUpgrades().movespeed || 0) : 0;
+                    unit.moveRange = baseMov + metaMov;
+                    // Clear any moveRange statModifier since Iron Will overrides all
+                    unit.statModifiers.moveRange = 0;
                 }
             }
         ];
@@ -2803,11 +2855,14 @@ export class BattleScene extends Phaser.Scene {
             {
                 id: 'champion_favor', name: t('buff.champion'), icon: '⭐', desc: t('buff.champion.desc'), rarity: 'epic',
                 effect: (unit) => {
-                    unit.maxHealth += 20; unit.health += 20; unit.damage += 5; unit.moveRange += 1;
+                    unit.maxHealth += 20; unit.health += 20; unit.damage += 5;
                     unit.statModifiers = unit.statModifiers || {};
                     unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 20;
                     unit.statModifiers.damage = (unit.statModifiers.damage || 0) + 5;
-                    unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                    if (!unit.hasIronWill) {
+                        unit.moveRange += 1;
+                        unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) + 1;
+                    }
                     unit.updateHealthBar();
                 }
             },
@@ -2820,7 +2875,8 @@ export class BattleScene extends Phaser.Scene {
                     unit.statModifiers = unit.statModifiers || {};
                     unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + hpDiff;
                     // Berserker's Reckless passive: immune to movement reduction
-                    if (unit.type !== 'BERSERKER') {
+                    // Iron Will: immune to all movement changes
+                    if (unit.type !== 'BERSERKER' && !unit.hasIronWill) {
                         unit.moveRange = Math.max(1, unit.moveRange - 2);
                         unit.statModifiers.moveRange = (unit.statModifiers.moveRange || 0) - 2;
                     }
@@ -2850,6 +2906,41 @@ export class BattleScene extends Phaser.Scene {
                     unit.statModifiers = unit.statModifiers || {};
                     unit.statModifiers.damage = (unit.statModifiers.damage || 0) + dmgDiff;
                     unit.statModifiers.hasTemporalShift = true;
+                }
+            },
+            {
+                id: 'berserker_rage', name: t('buff.berserker_rage'), icon: '😡', desc: t('buff.berserker_rage.desc'), rarity: 'epic',
+                effect: (unit) => {
+                    unit.hasBerserkerRage = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasBerserkerRage = true;
+                }
+            },
+            {
+                id: 'last_stand', name: t('buff.last_stand'), icon: '💫', desc: t('buff.last_stand.desc'), rarity: 'epic',
+                effect: (unit) => {
+                    unit.hasLastStand = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasLastStand = true;
+                }
+            },
+            {
+                id: 'juggernaut', name: t('buff.juggernaut'), icon: '🦏', desc: t('buff.juggernaut.desc'), rarity: 'epic',
+                effect: (unit) => {
+                    unit.hasJuggernaut = true;
+                    unit.maxHealth += 40; unit.health += 40;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasJuggernaut = true;
+                    unit.statModifiers.maxHealth = (unit.statModifiers.maxHealth || 0) + 40;
+                    unit.updateHealthBar();
+                }
+            },
+            {
+                id: 'vampiric_touch', name: t('buff.vampiric'), icon: '🧛', desc: t('buff.vampiric.desc'), rarity: 'epic',
+                effect: (unit) => {
+                    unit.hasVampiricTouch = true;
+                    unit.statModifiers = unit.statModifiers || {};
+                    unit.statModifiers.hasVampiricTouch = true;
                 }
             }
         ];
@@ -3005,6 +3096,12 @@ export class BattleScene extends Phaser.Scene {
                 buffType: 'armyBuffs', buffValue: 1,
                 effect: () => { this.armyBuffs = true; },
                 unique: true
+            },
+            {
+                id: 'spell_echo', name: t('magic.spell_echo'), icon: '🔁', desc: t('magic.spell_echo.desc'),
+                buffType: 'spellEcho', buffValue: 1,
+                effect: () => { this.spellEcho = true; },
+                unique: true
             }
         ];
 
@@ -3025,7 +3122,7 @@ export class BattleScene extends Phaser.Scene {
         magicContainer.innerHTML = '';
 
         // Special legendary magic buffs
-        const legendaryMagicBuffs = ['permanent_buffs', 'army_buffs'];
+        const legendaryMagicBuffs = ['permanent_buffs', 'army_buffs', 'spell_echo'];
 
         magicOptions.forEach(magic => {
             const isLegendary = legendaryMagicBuffs.includes(magic.id);

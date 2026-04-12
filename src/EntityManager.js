@@ -191,7 +191,7 @@ export class Unit {
 
         // Ogre Chieftain: Apply slow debuff on attack (if attacker is Ogre Chieftain)
         // Berserker's Reckless passive makes them immune to movement reduction
-        if (attacker && attacker.type === 'OGRE_CHIEFTAIN' && this.health > 0 && this.type !== 'BERSERKER') {
+        if (attacker && attacker.type === 'OGRE_CHIEFTAIN' && this.health > 0 && this.type !== 'BERSERKER' && !this.hasIronWill) {
             // Remove existing slow if any (doesn't stack)
             if (this.slowDebuffRounds > 0) {
                 this.moveRange += this.slowDebuffValue;
@@ -206,12 +206,25 @@ export class Unit {
             }
         }
 
+        // Last Stand: survive one lethal hit per battle with 1 HP
+        if (this.health <= 0 && this.hasLastStand) {
+            this.health = 1;
+            this.hasLastStand = false; // consumed
+            this.updateHealthBar();
+            if (this.scene && this.scene.uiManager) {
+                this.scene.uiManager.showBuffText(this, 'LAST STAND!', '#FFD700');
+            }
+            if (this.scene && this.scene.addCombatLog) {
+                this.scene.addCombatLog(`${this.name} survived a lethal blow! (Last Stand)`, 'buff');
+            }
+            return amount;
+        }
+
         if (this.health <= 0) {
-            // Track that this unit was killed by attacker (for Bloodlust)
             this.killedBy = attacker;
             this.die(this.scene);
         }
-        return amount; // Return actual mitigated damage for floating text
+        return amount;
     }
 
     heal(amount) {
@@ -244,10 +257,25 @@ export class Unit {
 
         this.health = Math.max(0, this.health - amount);
         this.updateHealthBar();
+
+        // Last Stand: survive one lethal hit per battle with 1 HP
+        if (this.health <= 0 && this.hasLastStand) {
+            this.health = 1;
+            this.hasLastStand = false;
+            this.updateHealthBar();
+            if (this.scene && this.scene.uiManager) {
+                this.scene.uiManager.showBuffText(this, 'LAST STAND!', '#FFD700');
+            }
+            if (this.scene && this.scene.addCombatLog) {
+                this.scene.addCombatLog(`${this.name} survived a lethal spell! (Last Stand)`, 'buff');
+            }
+            return amount;
+        }
+
         if (this.health <= 0) {
             this.die(this.scene);
         }
-        return amount; // Return actual mitigated damage for floating text
+        return amount;
     }
 
     die(scene) {
@@ -536,6 +564,10 @@ export class Unit {
             if (nearby.length > 0) {
                 scene.uiManager.showFloatingText('💥 SEISMIC SLAM!', 400, 200, '#BBBBBB');
                 for (const p of nearby) {
+                    if (p.hasJuggernaut) {
+                        scene.uiManager.showBuffText(p, 'IMMUNE!', '#FFD700');
+                        continue;
+                    }
                     const cxCenter = this.gridX + 0.5;
                     const cyCenter = this.gridY + 0.5;
                     const dx = p.gridX - cxCenter;
@@ -1138,8 +1170,8 @@ export class TurnSystem {
         this.currentUnit.resetTurn();
         this.updateTurnDisplay();
 
-        // Iron Colossus Stun: unit loses its turn
-        if (this.currentUnit.isStunned) {
+        // Iron Colossus Stun: unit loses its turn (Juggernaut: immune)
+        if (this.currentUnit.isStunned && !this.currentUnit.hasJuggernaut) {
             this.currentUnit.isStunned = false;
             this.scene.uiManager.showBuffText(this.currentUnit, 'STUNNED!', '#BBBBBB');
             this.scene.addCombatLog(`${this.currentUnit.name} is stunned and loses their turn!`, 'debuff');
@@ -1485,7 +1517,8 @@ export class TurnSystem {
 
             for (const player of playerUnits) {
                 // Berserker's Reckless passive: immune to movement reduction
-                if (player.type === 'BERSERKER') continue;
+                // Iron Will: immune to all movement changes
+                if (player.type === 'BERSERKER' || player.hasIronWill) continue;
                 // Reduce movement by 3, minimum 1
                 const slowAmount = 3;
                 player.moveRange = Math.max(1, player.moveRange - slowAmount);

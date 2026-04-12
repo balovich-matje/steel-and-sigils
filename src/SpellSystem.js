@@ -12,6 +12,17 @@ export class SpellSystem {
         this.teleportUnit = null;
     }
 
+    // Spell Echo: 20% chance to re-cast a damage spell (hero spells only, no mana cost)
+    trySpellEcho(spell, executeFn) {
+        if (!this.scene.spellEcho) return;
+        if (Math.random() >= 0.2) return;
+        this.scene.time.delayedCall(600, () => {
+            this.scene.uiManager.showFloatingText('SPELL ECHO!', 400, 250, '#9B59B6');
+            this.scene.addCombatLog(`Spell Echo! ${spell.name} casts again!`, 'spell');
+            executeFn();
+        });
+    }
+
     castSpell(spellId) {
         const spell = SPELLS[spellId];
         if (!spell) return;
@@ -173,13 +184,16 @@ export class SpellSystem {
                 // Hero spells (from spellbook) come from top of screen
                 this.createHeroFireball(centerX, centerY, () => {
                     this.executeAoEDamage(spell, centerX, centerY, 1);
+                    this.trySpellEcho(spell, () => this.executeAoEDamage(spell, centerX, centerY, 1));
                 });
                 break;
             case 'meteor':
                 this.executeAoEDamage(spell, centerX, centerY, 2);
+                this.trySpellEcho(spell, () => this.executeAoEDamage(spell, centerX, centerY, 2));
                 break;
             case 'iceStorm':
                 this.executeIceStorm(spell, centerX, centerY);
+                this.trySpellEcho(spell, () => this.executeIceStorm(spell, centerX, centerY));
                 break;
             default:
                 // Refund mana if spell effect not handled
@@ -331,8 +345,10 @@ export class SpellSystem {
             const damage = this.getSpellDamage(spell.power);
             for (const unit of targets) {
                 const actualIceDmg = unit.takeSpellDamage(damage);
-                unit.iceSlowRounds = 2;
-                unit.moveRange = Math.max(1, unit.moveRange - 1);
+                if (!unit.hasIronWill) {
+                    unit.iceSlowRounds = 2;
+                    unit.moveRange = Math.max(1, unit.moveRange - 1);
+                }
                 this.scene.uiManager.showDamageText(unit, actualIceDmg);
                 this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualIceDmg} damage.`, 'damage');
                 this.scene.uiManager.showBuffText(unit, 'SLOWED!', '#5B6B8B');
@@ -350,6 +366,16 @@ export class SpellSystem {
             this.scene.uiManager.showDamageText(unit, actualSingleDmg);
             this.scene.addCombatLog(`${spell.name} hit ${unit.name} dealing ${actualSingleDmg} damage.`, 'damage');
             this.scene.checkVictoryCondition();
+            this.trySpellEcho(spell, () => {
+                if (!unit.isDead) {
+                    this.createHeroLightningBolt(unit, () => {
+                        const echoDmg = unit.takeSpellDamage(damage);
+                        this.scene.uiManager.showDamageText(unit, echoDmg);
+                        this.scene.addCombatLog(`${spell.name} echo hit ${unit.name} for ${echoDmg} damage.`, 'damage');
+                        this.scene.checkVictoryCondition();
+                    });
+                }
+            });
         });
     }
 
@@ -376,7 +402,7 @@ export class SpellSystem {
     executeHaste(spell, unit) {
         // Only apply the movement bonus if haste is not already active (hasteRounds 0 = inactive).
         // Recasting on an already-hasted unit just refreshes the duration without stacking the bonus.
-        if (unit.hasteRounds === 0) {
+        if (unit.hasteRounds === 0 && !unit.hasIronWill) {
             unit.moveRange += spell.power;
         }
         // If permanentBuffs is enabled, duration is -1 (permanent), otherwise use spell duration
@@ -445,6 +471,13 @@ export class SpellSystem {
 
         // Use enhanced hero chain lightning animation
         this.createHeroChainLightning(targets, spell);
+        const echoDelay = (targets.length * 400) + 200;
+        this.scene.time.delayedCall(echoDelay, () => {
+            this.trySpellEcho(spell, () => {
+                const aliveTargets = targets.filter(t => !t.isDead);
+                if (aliveTargets.length > 0) this.createHeroChainLightning(aliveTargets, spell);
+            });
+        });
     }
 
     clearSpell() {
