@@ -88,19 +88,20 @@ export class BattleScene extends Phaser.Scene {
         this.load.image('rock_wide_img', 'images/obstacles/rock_wide.png');
         this.load.image('rock_jagged_img', 'images/obstacles/rock_jagged.png');
         
-        // Load sound effects
-        this.load.audio('sfx_fireball_cast', ['audio/fireball_cast_v1.wav']);
-        this.load.audio('sfx_fireball_explode', ['audio/fireball_explode_v1.wav']);
-        this.load.audio('sfx_armor_hit', ['audio/armor_hit_v1.wav']);
-        this.load.audio('sfx_skeleton_hit', ['audio/skeleton_hit_v1.wav']);
-        this.load.audio('sfx_meteor', ['audio/meteor.wav']);
-        this.load.audio('sfx_chain_zap', ['audio/chain_zap.wav']);
-        this.load.audio('sfx_heal', ['audio/heal.wav']);
-        this.load.audio('sfx_haste', ['audio/haste.wav']);
-        this.load.audio('sfx_shield', ['audio/shield.wav']);
-        this.load.audio('sfx_bless', ['audio/bless.wav']);
-        this.load.audio('sfx_ice_storm', ['audio/ice_storm.wav']);
-        this.load.audio('sfx_teleport', ['audio/teleport.wav']);
+        // Sound effects disabled — audio files removed pending higher quality generation
+        // To re-enable: place .wav files in audio/ and uncomment the lines below
+        // this.load.audio('sfx_fireball_cast', ['audio/fireball_cast_v1.wav']);
+        // this.load.audio('sfx_fireball_explode', ['audio/fireball_explode_v1.wav']);
+        // this.load.audio('sfx_armor_hit', ['audio/armor_hit_v1.wav']);
+        // this.load.audio('sfx_skeleton_hit', ['audio/skeleton_hit_v1.wav']);
+        // this.load.audio('sfx_meteor', ['audio/meteor.wav']);
+        // this.load.audio('sfx_chain_zap', ['audio/chain_zap.wav']);
+        // this.load.audio('sfx_heal', ['audio/heal.wav']);
+        // this.load.audio('sfx_haste', ['audio/haste.wav']);
+        // this.load.audio('sfx_shield', ['audio/shield.wav']);
+        // this.load.audio('sfx_bless', ['audio/bless.wav']);
+        // this.load.audio('sfx_ice_storm', ['audio/ice_storm.wav']);
+        // this.load.audio('sfx_teleport', ['audio/teleport.wav']);
 
         // Load tile background images
         // Forest grass tiles (random selection for variety)
