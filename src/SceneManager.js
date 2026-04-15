@@ -391,9 +391,9 @@ export class BattleScene extends Phaser.Scene {
         // Update mana display
         this.uiManager.updateManaDisplay();
 
-        // Start the game — delay if enemies are walking in from off-screen
-        if (this.battleNumber > 1) {
-            this.time.delayedCall(1000, () => this.turnSystem.initQueue());
+        // Start the game — wait for walk-in animation on waves 2+
+        if (this._walkInPending) {
+            // initQueue will be called by animateEnemyWalkIn callback
         } else {
             this.turnSystem.initQueue();
         }
@@ -751,12 +751,22 @@ export class BattleScene extends Phaser.Scene {
         }
 
         // Walk-in animation: enemies march from off-screen right
-        this.animateEnemyWalkIn();
+        if (this.battleNumber > 1) {
+            this._walkInPending = true;
+            this.animateEnemyWalkIn(() => {
+                this._walkInPending = false;
+                this.turnSystem.initQueue();
+            });
+        }
     }
 
-    animateEnemyWalkIn() {
+    animateEnemyWalkIn(onComplete = null) {
         const enemies = this.unitManager.getEnemyUnits();
+        if (enemies.length === 0) { if (onComplete) onComplete(); return; }
+
         const offscreenOffset = this.gridSystem.width * this.tileSize + 100;
+        let completedCount = 0;
+        const totalCount = enemies.filter(e => e.sprite).length;
 
         for (const enemy of enemies) {
             if (!enemy.sprite) continue;
@@ -771,30 +781,35 @@ export class BattleScene extends Phaser.Scene {
 
             // Staggered walk-in
             const delay = Math.random() * 400;
+            const duration = 600 + Math.random() * 200;
             this.tweens.add({
                 targets: enemy.sprite,
                 x: targetX,
                 alpha: 1,
-                duration: 600 + Math.random() * 200,
+                duration: duration,
                 delay: delay,
-                ease: 'Power2'
+                ease: 'Power2',
+                onComplete: () => {
+                    // Show health bar on arrival
+                    if (enemy.healthBar) {
+                        enemy.healthBar.setVisible(true);
+                        enemy.updateHealthBar();
+                    }
+                    completedCount++;
+                    if (completedCount >= totalCount && onComplete) {
+                        onComplete();
+                    }
+                }
             });
             if (enemy.shadow) {
                 this.tweens.add({
                     targets: enemy.shadow,
                     x: targetShadowX,
-                    duration: 600 + Math.random() * 200,
+                    duration: duration,
                     delay: delay,
                     ease: 'Power2'
                 });
             }
-            // Show health bar after arriving
-            this.time.delayedCall(delay + 700, () => {
-                if (enemy.healthBar) {
-                    enemy.healthBar.setVisible(true);
-                    enemy.updateHealthBar();
-                }
-            });
         }
     }
 
@@ -901,7 +916,11 @@ export class BattleScene extends Phaser.Scene {
             );
 
             // Walk-in animation for boss + adds
-            this.animateEnemyWalkIn();
+            this._walkInPending = true;
+            this.animateEnemyWalkIn(() => {
+                this._walkInPending = false;
+                this.turnSystem.initQueue();
+            });
         }
     }
 
