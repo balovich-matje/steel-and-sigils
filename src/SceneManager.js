@@ -3010,6 +3010,9 @@ export class BattleScene extends Phaser.Scene {
             buffOptions = this.getRandomBuffs(3);
         }
 
+        // Track which special buff IDs are in main row (to exclude from bonus row)
+        this._mainRowBuffIds = new Set(buffOptions.map(b => b.id));
+
         const buffContainer = document.getElementById('reward-buffs');
         this.renderBuffCards(buffOptions, buffContainer);
 
@@ -3157,8 +3160,9 @@ export class BattleScene extends Phaser.Scene {
         const unitSection = document.getElementById('reward-units-section');
         if (unitSection) unitSection.style.display = 'none';
 
-        // Generate and show a bonus buff row
-        let specialBuff = this.tryGenerateMythicBuff() || this.tryGenerateLegendaryBuff();
+        // Generate and show a bonus buff row — exclude buffs already in main row
+        const excludeIds = this._mainRowBuffIds || new Set();
+        let specialBuff = this.tryGenerateMythicBuff(excludeIds) || this.tryGenerateLegendaryBuff(excludeIds);
         let bonusBuffOptions;
         if (specialBuff && Math.random() < 0.5) {
             bonusBuffOptions = [specialBuff, ...this.getRandomBuffs(2)];
@@ -3183,7 +3187,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Try to generate a legendary buff (50% chance when called)
-    tryGenerateLegendaryBuff() {
+    tryGenerateLegendaryBuff(excludeIds = null) {
         const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
         const availableLegendaryBuffs = [];
 
@@ -3274,16 +3278,17 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (availableLegendaryBuffs.length === 0) {
-            return null;
-        }
+        // Filter out buffs already showing in another row
+        const filtered = excludeIds
+            ? availableLegendaryBuffs.filter(b => !excludeIds.has(b.id))
+            : availableLegendaryBuffs;
 
-        // Return a random legendary buff
-        return availableLegendaryBuffs[Math.floor(Math.random() * availableLegendaryBuffs.length)];
+        if (filtered.length === 0) return null;
+        return filtered[Math.floor(Math.random() * filtered.length)];
     }
 
     // Try to generate a mythic buff (can only appear if a legendary was already obtained)
-    tryGenerateMythicBuff() {
+    tryGenerateMythicBuff(excludeIds = null) {
         const playerUnits = this.unitManager.units.filter(u => u.isPlayer);
         const availableMythicBuffs = [];
 
@@ -3371,11 +3376,13 @@ export class BattleScene extends Phaser.Scene {
             });
         }
 
-        if (availableMythicBuffs.length === 0) {
-            return null;
-        }
+        // Filter out buffs already showing in another row
+        const filtered = excludeIds
+            ? availableMythicBuffs.filter(b => !excludeIds.has(b.id))
+            : availableMythicBuffs;
 
-        return availableMythicBuffs[Math.floor(Math.random() * availableMythicBuffs.length)];
+        if (filtered.length === 0) return null;
+        return filtered[Math.floor(Math.random() * filtered.length)];
     }
 
     selectReward(category, id, cardElement, effectData) {
