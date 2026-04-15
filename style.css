@@ -23,8 +23,28 @@ html, body {
 
 body {
     background: #1A1C1E;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'EB Garamond', 'Segoe UI', Georgia, serif;
     color: #E3D5B8;
+}
+
+/* Medieval heading font for titles, labels, and buttons */
+h1, h2, h3, h4,
+.panel-title,
+.spell-button,
+.spellbook-close,
+.map-name,
+.map-select-btn,
+.reward-card .buff-name,
+.victory-screen h2,
+.spellbook-header h2,
+#pregame-screen h2,
+#unit-info strong,
+.mana-display,
+.buff-display-header,
+#meta-shop-modal h3,
+.initiative-unit {
+    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+    letter-spacing: 0.5px;
 }
 
 /* ============================================
