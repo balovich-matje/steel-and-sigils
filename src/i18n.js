@@ -192,6 +192,9 @@ const TRANSLATIONS = {
 
         // Victory/Defeat
         'victory.title': 'The Battle is Won',
+        'victory.title_2': 'Victory... For Now',
+        'victory.title_3': 'The Dead Rest... You Do Not',
+        'victory.title_4': 'Bloodied but Standing',
         'victory.subtitle': 'Claim your spoils:',
         'defeat.title': 'Defeat',
         'defeat.message': 'Your army has fallen.',

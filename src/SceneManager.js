@@ -2197,7 +2197,9 @@ export class BattleScene extends Phaser.Scene {
         const victoryText = document.getElementById('victory-text');
         const confirmBtn = document.getElementById('confirm-rewards');
 
-        victoryText.innerHTML = playerWon ? t('victory.title') : t('defeat.title');
+        const victoryTitles = ['victory.title', 'victory.title_2', 'victory.title_3', 'victory.title_4'];
+        const randomTitle = victoryTitles[Math.floor(Math.random() * victoryTitles.length)];
+        victoryText.innerHTML = playerWon ? t(randomTitle) : t('defeat.title');
         victoryText.style.color = playerWon ? '#A68966' : '#9E4A4A';
         // Update i18n text if available
         if (typeof window !== 'undefined' && window.i18n) {
