@@ -241,7 +241,6 @@ export class GridSystem {
 
         if (activeAbility === 'SORCERER_FIREBALL') {
             // Fireball ability always shows AoE preview (3x3 area)
-            // This is separate from ranged piercing attacks
             this.drawAoePreview(gridX, gridY, 1);
             return;
         }
@@ -261,44 +260,6 @@ export class GridSystem {
 
         const radius = spell.effect === 'meteor' ? 2 : 1;
         this.drawAoePreview(gridX, gridY, radius);
-    }
-
-    _drawPiercingPreview_UNUSED(unit, targetX, targetY) {
-        this.clearAoePreview();
-
-        const dx = targetX - unit.gridX;
-        const dy = targetY - unit.gridY;
-        if (dx === 0 && dy === 0) return;
-
-        const length = Math.max(Math.abs(dx), Math.abs(dy));
-        const stepX = dx / length;
-        const stepY = dy / length;
-
-        this.aoePreviewGraphics.fillStyle(0x9B6BAB, 0.4); // Subtle purple
-
-        let currX = unit.gridX + stepX;
-        let currY = unit.gridY + stepY;
-
-        const path = [];
-        while (currX >= -0.5 && currX < this.width + 0.5 && currY >= -0.5 && currY < this.height + 0.5) {
-            const gx = Math.round(currX);
-            const gy = Math.round(currY);
-
-            if (gx >= 0 && gx < this.width && gy >= 0 && gy < this.height) {
-                if (path.length === 0 || path[path.length - 1].x !== gx || path[path.length - 1].y !== gy) {
-                    path.push({ x: gx, y: gy });
-                }
-            }
-
-            currX += stepX;
-            currY += stepY;
-        }
-
-        for (const p of path) {
-            const px = p.x * this.tileSize + 2;
-            const py = p.y * this.tileSize + 2;
-            this.aoePreviewGraphics.fillRect(px, py, this.tileSize - 4, this.tileSize - 4);
-        }
     }
 
     drawAoePreview(centerX, centerY, radius) {

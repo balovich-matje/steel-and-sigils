@@ -1154,30 +1154,6 @@ body {
     display: none !important;
 }
 
-.text-gold {
-    color: #A68966;
-}
-
-.text-parchment {
-    color: #E3D5B8;
-}
-
-.text-wood {
-    color: #B8A896;
-}
-
-.bg-charcoal {
-    background: #1A1C1E;
-}
-
-.bg-wood {
-    background: #2D241E;
-}
-
-.border-gold {
-    border-color: #A68966;
-}
-
 .action-divider {
     width: 2px;
     height: 30px;

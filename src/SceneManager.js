@@ -1738,7 +1738,7 @@ export class BattleScene extends Phaser.Scene {
      * @param {Function} onComplete - Callback when animation completes
      */
     createFireballProjectile(caster, targetGridX, targetGridY, onComplete) {
-        // Fireball is always a fireball projectile - separate from piercing ranged attacks
+        // Fireball projectile animation (horizontal, from caster to target)
         const targetX = targetGridX * this.tileSize + this.tileSize / 2;
         const targetY = targetGridY * this.tileSize + this.tileSize / 2;
 
@@ -1781,107 +1781,6 @@ export class BattleScene extends Phaser.Scene {
                 });
             }
         });
-    }
-
-    _createPiercingRay_UNUSED(caster, targetGridX, targetGridY, onComplete) {
-        const startX = caster.sprite.x;
-        const startY = caster.sprite.y - 20;
-        const targetX = targetGridX * this.tileSize + this.tileSize / 2;
-        const targetY = targetGridY * this.tileSize + this.tileSize / 2;
-        
-        // Face the target
-        this.faceTarget(caster, { gridX: targetGridX, gridY: targetGridY });
-        
-        // Calculate angle and distance
-        const angle = Phaser.Math.Angle.Between(startX, startY, targetX, targetY);
-        const distance = Phaser.Math.Distance.Between(startX, startY, targetX, targetY);
-        
-        // Create the main purple ray (a long thin rectangle rotated toward target)
-        const rayWidth = distance;
-        const rayHeight = 12;
-        const ray = this.add.rectangle(
-            startX + Math.cos(angle) * distance / 2,
-            startY + Math.sin(angle) * distance / 2,
-            rayWidth,
-            rayHeight,
-            0x9b59b6 // Purple
-        );
-        ray.setRotation(angle);
-        ray.setDepth(15);
-        ray.setAlpha(0);
-        
-        // Inner bright core
-        const coreRay = this.add.rectangle(
-            startX + Math.cos(angle) * distance / 2,
-            startY + Math.sin(angle) * distance / 2,
-            rayWidth,
-            rayHeight * 0.5,
-            0xe74c3c // Bright pink/red
-        );
-        coreRay.setRotation(angle);
-        coreRay.setDepth(16);
-        coreRay.setAlpha(0);
-        
-        // Energy pulse at the start
-        const startPulse = this.add.circle(startX, startY, 20, 0x9b59b6);
-        startPulse.setDepth(17);
-        
-        // Animate the ray shooting out
-        this.tweens.add({
-            targets: [ray, coreRay],
-            alpha: { from: 0, to: 1 },
-            duration: 100,
-            onComplete: () => {
-                // Fade out
-                this.tweens.add({
-                    targets: [ray, coreRay],
-                    alpha: 0,
-                    duration: 300,
-                    delay: 100,
-                    onComplete: () => {
-                        ray.destroy();
-                        coreRay.destroy();
-                        if (onComplete) onComplete();
-                        
-                        // Restore original facing after animation
-                        this.time.delayedCall(200, () => {
-                            this.restoreFacing(caster);
-                        });
-                    }
-                });
-            }
-        });
-        
-        // Pulse animation at start point
-        this.tweens.add({
-            targets: startPulse,
-            scale: { from: 0.5, to: 1.5 },
-            alpha: { from: 1, to: 0 },
-            duration: 300,
-            onComplete: () => startPulse.destroy()
-        });
-        
-        // Add purple sparkles along the ray
-        const sparkles = 10;
-        for (let i = 0; i < sparkles; i++) {
-            const t = (i + 1) / (sparkles + 1);
-            const sparkleX = startX + Math.cos(angle) * distance * t;
-            const sparkleY = startY + Math.sin(angle) * distance * t;
-            
-            const sparkle = this.add.circle(sparkleX, sparkleY, 4, 0xffffff);
-            sparkle.setDepth(16);
-            sparkle.setAlpha(0);
-            
-            this.tweens.add({
-                targets: sparkle,
-                alpha: { from: 0, to: 1 },
-                scale: { from: 0, to: 1.5 },
-                duration: 150,
-                delay: i * 30,
-                yoyo: true,
-                onComplete: () => sparkle.destroy()
-            });
-        }
     }
 
     /**
@@ -1996,62 +1895,6 @@ export class BattleScene extends Phaser.Scene {
         };
 
         bounceToNext(mainTarget, 200);
-    }
-
-    _performPiercingAttack_UNUSED(attacker, target) {
-        const baseDamage = Math.floor(attacker.damage * 0.8 * attacker.blessValue);
-
-        this.uiManager.showBuffText(attacker, 'PIERCE!', '#6B7A9A');
-
-        const dx = target.gridX - attacker.gridX;
-        const dy = target.gridY - attacker.gridY;
-        if (dx === 0 && dy === 0) return;
-
-        const length = Math.max(Math.abs(dx), Math.abs(dy));
-        const stepX = dx / length;
-        const stepY = dy / length;
-
-        let currX = attacker.gridX + stepX;
-        let currY = attacker.gridY + stepY;
-
-        const path = [];
-        const gridWidth = this.gridSystem.width;
-        const gridHeight = this.gridSystem.height;
-        while (currX >= -0.5 && currX < gridWidth + 0.5 && currY >= -0.5 && currY < gridHeight + 0.5) {
-            const gx = Math.round(currX);
-            const gy = Math.round(currY);
-
-            if (gx >= 0 && gx < gridWidth && gy >= 0 && gy < gridHeight) {
-                if (path.length === 0 || path[path.length - 1].x !== gx || path[path.length - 1].y !== gy) {
-                    path.push({ x: gx, y: gy });
-                }
-            }
-
-            currX += stepX;
-            currY += stepY;
-        }
-
-        let hitCount = 0;
-        for (const p of path) {
-            const enemy = this.unitManager.getUnitAt(p.x, p.y);
-            if (enemy && !enemy.isPlayer && !enemy.isDead) {
-                hitCount++;
-                const delay = hitCount * 100;
-
-                this.time.delayedCall(delay, () => {
-                    const actualPierceDmg = enemy.takeDamage(baseDamage, true, attacker);
-                    this.uiManager.showDamageText(enemy, actualPierceDmg);
-                    this.addCombatLog(`${attacker.name} pierce hit ${enemy.name} dealing ${actualPierceDmg} damage.`, 'damage');
-                    this.tweens.add({
-                        targets: enemy.sprite,
-                        alpha: 0.3,
-                        duration: 50,
-                        yoyo: true,
-                        repeat: 2
-                    });
-                });
-            }
-        }
     }
 
     // UI Methods
