@@ -47,6 +47,15 @@ h1, h2, h3, h4,
     letter-spacing: 0.5px;
 }
 
+/* Cinzel looks best in small caps — force uniform capitalization on buttons */
+.spell-button,
+.spellbook-close,
+.map-select-btn {
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
 /* ============================================
    MAIN GAME LAYOUT
    ============================================ */
