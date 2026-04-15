@@ -42,13 +42,23 @@ export const STAGES = {
     ruins: {
         id: 'ruins',
         name: 'Ruins of a Castle',
-        width: 15,
-        height: 15,
-        playerArea: { x1: 5, x2: 10, y1: 5, y2: 10 },
+        width: 10,
+        height: 8,
+        playerArea: { x1: 0, x2: 2, y1: 0, y2: 8 },
         hasObstacles: true,
-        spawnLogic: 'perimeter',
-        startingPoints: 1700,
-        tileType: 'dirt'
+        spawnLogic: 'right_columns',
+        startingPoints: 2000,
+        tileType: 'grass',
+        wallLayout: {
+            walls: [
+                { x: 4, y: 0 }, { x: 4, y: 1 },
+                { x: 4, y: 4 }, { x: 4, y: 5 }, { x: 4, y: 6 }, { x: 4, y: 7 }
+            ],
+            towers: [
+                { x: 3, y: 1 }, { x: 3, y: 6 }
+            ]
+            // Gate: rows 2-3 at cols 4-5 are simply open (no obstacle)
+        }
     },
     mountain: {
         id: 'mountain',

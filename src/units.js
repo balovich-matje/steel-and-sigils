@@ -323,6 +323,7 @@ const UNIT_TYPES = {
         damage: 60, moveRange: 4, initiative: 13,
         isPlayer: false, cost: 2000,
         isBoss: true, bossSize: 2,
+        canFly: true,
         passives: [
             { name: 'Ethereal', description: 'Takes 75% less damage from physical attacks.' },
             { name: 'Arcane Weakness', description: 'Takes 50% more damage from ranged attacks and spells.' },
@@ -447,6 +448,7 @@ const UNIT_TYPES = {
         damage: 50, moveRange: 6, initiative: 15,
         isPlayer: false, cost: 800,
         isRare: true,
+        canFly: true,
         passives: [
             { name: 'Ethereal', description: 'Takes 75% less damage from physical attacks.' },
             { name: 'Arcane Weakness', description: 'Takes 50% more damage from spells.' }

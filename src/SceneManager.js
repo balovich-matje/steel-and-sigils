@@ -510,7 +510,7 @@ export class BattleScene extends Phaser.Scene {
         const target = this.unitManager.getUnitAt(gridX, gridY);
 
         if (this.activeUnitAbility === 'HEAL') {
-            if (target && target.isPlayer && !target.isDead) {
+            if (target && target.isPlayer && !target.isDead && this.gridSystem.hasUnitLineOfSight(unit, target)) {
                 // Cleric Heal: restore based on SPELLS.heal.power and passive bonuses
                 let healAmount = SPELLS.heal.power;
                 const playerUnits = this.unitManager.getPlayerUnits();
@@ -545,9 +545,15 @@ export class BattleScene extends Phaser.Scene {
             this._executingAbility = false;
         }
         else if (this.activeUnitAbility === 'SORCERER_FIREBALL') {
+            // LOS check: Sorcerer fireball requires line of sight to target tile
+            if (!this.gridSystem.hasLineOfSight(unit.gridX, unit.gridY, gridX, gridY)) {
+                this.uiManager.showFloatingText('No line of sight!', 400, 300, '#ff4444');
+                this._executingAbility = false;
+                return;
+            }
             // Sorcerer Fireball: cast fireball with army-wide passive boost
             const spell = SPELLS.fireball;
-            
+
             // Clear ability flag immediately to prevent double execution
             this.activeUnitAbility = null;
             
@@ -690,7 +696,11 @@ export class BattleScene extends Phaser.Scene {
             return;
         }
 
-        const totalPoints = 1000 + (this.battleNumber - 1) * 250;
+        // Ruins castle siege: faster enemy scaling (+30% more points per wave)
+        const isRuins = this.currentStage && this.currentStage.id === 'ruins';
+        const basePoints = isRuins ? 1300 : 1000;
+        const pointsPerWave = isRuins ? 325 : 250;
+        const totalPoints = basePoints + (this.battleNumber - 1) * pointsPerWave;
         const enemyTypes = ENEMY_FACTIONS[this.currentEnemyFaction];
 
         let remainingPoints = totalPoints;
@@ -885,8 +895,20 @@ export class BattleScene extends Phaser.Scene {
         // If we have saved obstacles from a previous battle, restore them
         if (savedObstacles && savedObstacles.length > 0) {
             for (const obs of savedObstacles) {
-                this.gridSystem.addObstacle(obs.x, obs.y, obs.type || 'wall');
+                if (obs.type === 'castle_wall') {
+                    this.gridSystem.addWall(obs.x, obs.y);
+                } else if (obs.type === 'tower') {
+                    this.gridSystem.addTower(obs.x, obs.y);
+                } else {
+                    this.gridSystem.addObstacle(obs.x, obs.y, obs.type || 'wall');
+                }
             }
+            return;
+        }
+
+        // Ruins of a Castle: place walls, towers, and gate from layout config
+        if (this.currentStage.wallLayout) {
+            this.generateCastleLayout();
             return;
         }
 
@@ -896,9 +918,7 @@ export class BattleScene extends Phaser.Scene {
             return;
         }
 
-        // Ruins of a Castle logic:
-        // Generate only 2-3 wall pieces around player area
-        // Each wall must have minimum 2-cell gap between them
+        // Legacy ruins logic (fallback):
         const size = this.currentStage.width;
         const playerArea = this.currentStage.playerArea;
         
@@ -983,6 +1003,8 @@ export class BattleScene extends Phaser.Scene {
         // Clear the obstacles Set in gridSystem
         if (this.gridSystem) {
             this.gridSystem.obstacles.clear();
+            this.gridSystem.walls.clear();
+            this.gridSystem.towers.clear();
             // Also clear any wall images that were created
             if (this.gridSystem.wallImages) {
                 for (const wallImg of this.gridSystem.wallImages) {
@@ -992,6 +1014,16 @@ export class BattleScene extends Phaser.Scene {
                 }
                 this.gridSystem.wallImages = [];
             }
+        }
+    }
+
+    generateCastleLayout() {
+        const layout = this.currentStage.wallLayout;
+        for (const w of layout.walls) {
+            this.gridSystem.addWall(w.x, w.y);
+        }
+        for (const t of layout.towers) {
+            this.gridSystem.addTower(t.x, t.y);
         }
     }
 
@@ -1118,6 +1150,17 @@ export class BattleScene extends Phaser.Scene {
             for (let y = pSize; y < height - pSize; y++) {
                 for (let x = width - pSize; x < width; x++) {
                     positions.push({ x, y });
+                }
+            }
+        } else if (this.currentStage.spawnLogic === 'right_columns') {
+            // Ruins Castle Siege: 3 columns on the right (inside castle), all rows
+            const width = this.gridSystem.width;
+            const height = this.gridSystem.height;
+            for (let x = width - 3; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    if (!this.gridSystem.isObstacle(x, y) && !this.gridSystem.isWall(x, y)) {
+                        positions.push({ x, y });
+                    }
                 }
             }
         } else if (this.currentStage.spawnLogic === 'right_flank') {
@@ -1644,6 +1687,11 @@ export class BattleScene extends Phaser.Scene {
 
     performRangedAttack(attacker, defender) {
         if (!attacker.canAttack()) return;
+        // LOS check: ranged attacks blocked by walls
+        if (!this.gridSystem.hasUnitLineOfSight(attacker, defender)) {
+            this.uiManager.showFloatingText('No line of sight!', attacker.sprite.x, attacker.sprite.y - 40, '#ff4444');
+            return;
+        }
 
         attacker.hasAttacked = true;
         document.body.style.cursor = 'default';

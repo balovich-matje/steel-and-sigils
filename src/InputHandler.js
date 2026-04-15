@@ -19,6 +19,8 @@ export class GridSystem {
         this.selectedUnit = null;
         this.validMoves = [];
         this.obstacles = new Set(); // Store as "x,y" strings
+        this.walls = new Set();    // Wall tiles (block LOS + movement)
+        this.towers = new Set();   // Tower tiles (ranged units only, double range)
         this.wallImages = []; // Store obstacle image references for cleanup
     }
 
@@ -202,11 +204,11 @@ export class GridSystem {
             if (currentUnit && currentUnit.isPlayer && currentUnit.canAttack()) {
                 const dist = this.getDistanceBetweenUnits(currentUnit, clickedUnit);
 
-                if (dist > 1 && dist <= currentUnit.rangedRange && currentUnit.rangedRange > 0) {
+                if (dist > 1 && dist <= currentUnit.rangedRange && currentUnit.rangedRange > 0 && this.hasUnitLineOfSight(currentUnit, clickedUnit)) {
                     this.scene.performRangedAttack(currentUnit, clickedUnit);
                     return;
                 }
-                if (dist === 1) {
+                if (dist === 1 && this.hasUnitLineOfSight(currentUnit, clickedUnit)) {
                     this.scene.performAttack(currentUnit, clickedUnit);
                     return;
                 }
@@ -362,7 +364,7 @@ export class GridSystem {
             const attackRange = unit.rangedRange || 1;
             for (const enemy of enemies) {
                 const dist = this.getDistanceBetweenUnits(unit, enemy);
-                if (dist <= attackRange) {
+                if (dist <= attackRange && this.hasUnitLineOfSight(unit, enemy)) {
                     // Highlight all tiles of attackable enemy
                     const enemySize = enemy.bossSize || 1;
                     for (let dy = 0; dy < enemySize; dy++) {
@@ -414,7 +416,7 @@ export class GridSystem {
         const enemies = this.scene.unitManager.getEnemyUnits();
         for (const enemy of enemies) {
             const dist = Math.max(Math.abs(enemy.gridX - unit.gridX), Math.abs(enemy.gridY - unit.gridY));
-            if (dist > 0 && (dist === 1 || dist <= unit.rangedRange)) {
+            if (dist > 0 && (dist === 1 || dist <= unit.rangedRange) && this.hasUnitLineOfSight(unit, enemy)) {
                 this.highlightGraphics.lineStyle(3, 0xff6600, 1);
                 this.highlightGraphics.strokeRect(
                     enemy.gridX * this.tileSize + 4,
@@ -444,11 +446,16 @@ export class GridSystem {
         return this.validMoves.some(m => m.x === x && m.y === y);
     }
 
-    isValidMoveAI(x, y) {
+    isValidMoveAI(x, y, unit = null) {
         if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
             return false;
         }
-        return !this.scene.unitManager.getUnitAt(x, y) && !this.isObstacle(x, y);
+        if (this.scene.unitManager.getUnitAt(x, y)) return false;
+        // Tower tiles: only ranged units can enter
+        if (this.isTower(x, y)) {
+            return unit && unit.rangedRange > 0;
+        }
+        return !this.isObstacle(x, y);
     }
 
     // Check if a position is valid for a unit of given size
@@ -523,6 +530,80 @@ export class GridSystem {
 
     isObstacle(x, y) {
         return this.obstacles.has(`${x},${y}`);
+    }
+
+    addWall(x, y) {
+        const key = `${x},${y}`;
+        this.obstacles.add(key);
+        this.walls.add(key);
+        if (this.tiles[y] && this.tiles[y][x]) {
+            this.tiles[y][x].setVisible(false);
+            const tileSize = this.tileSize;
+            const wallSprite = this.scene.add.text(
+                x * tileSize + tileSize / 2,
+                y * tileSize + tileSize / 2,
+                '🧱', { fontSize: `${Math.floor(tileSize * 0.7)}px` }
+            ).setOrigin(0.5).setDepth(5);
+            if (!this.wallImages) this.wallImages = [];
+            this.wallImages.push({ x, y, type: 'castle_wall', image: wallSprite });
+        }
+    }
+
+    addTower(x, y) {
+        const key = `${x},${y}`;
+        this.towers.add(key);
+        // Towers are NOT added to obstacles — ranged units can enter them
+        // But they block melee units (handled in movement validation)
+        if (this.tiles[y] && this.tiles[y][x]) {
+            this.tiles[y][x].setVisible(false);
+            const tileSize = this.tileSize;
+            const towerSprite = this.scene.add.text(
+                x * tileSize + tileSize / 2,
+                y * tileSize + tileSize / 2,
+                '🏰', { fontSize: `${Math.floor(tileSize * 0.7)}px` }
+            ).setOrigin(0.5).setDepth(5);
+            if (!this.wallImages) this.wallImages = [];
+            this.wallImages.push({ x, y, type: 'tower', image: towerSprite });
+        }
+    }
+
+    isWall(x, y) {
+        return this.walls.has(`${x},${y}`);
+    }
+
+    isTower(x, y) {
+        return this.towers.has(`${x},${y}`);
+    }
+
+    // Bresenham LOS: returns true if no wall tiles between (x1,y1) and (x2,y2)
+    hasLineOfSight(x1, y1, x2, y2) {
+        if (this.walls.size === 0) return true; // No walls on this map
+        let dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
+        let sx = x1 < x2 ? 1 : -1, sy = y1 < y2 ? 1 : -1;
+        let err = dx - dy;
+        let cx = x1, cy = y1;
+        while (cx !== x2 || cy !== y2) {
+            const e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; cx += sx; }
+            if (e2 < dx) { err += dx; cy += sy; }
+            if (cx === x2 && cy === y2) break; // Reached target
+            if (this.isWall(cx, cy)) return false; // Wall blocks LOS
+        }
+        return true;
+    }
+
+    // LOS check between two units (accounts for multi-tile bosses)
+    hasUnitLineOfSight(unitA, unitB) {
+        if (this.walls.size === 0) return true;
+        const posA = unitA.getOccupiedPositions ? unitA.getOccupiedPositions() : [{ x: unitA.gridX, y: unitA.gridY }];
+        const posB = unitB.getOccupiedPositions ? unitB.getOccupiedPositions() : [{ x: unitB.gridX, y: unitB.gridY }];
+        // Any tile of A can see any tile of B → LOS exists
+        for (const a of posA) {
+            for (const b of posB) {
+                if (this.hasLineOfSight(a.x, a.y, b.x, b.y)) return true;
+            }
+        }
+        return false;
     }
 
     _drawGridLines() {

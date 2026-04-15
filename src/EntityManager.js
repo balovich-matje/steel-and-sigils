@@ -490,6 +490,20 @@ export class Unit {
         this.hasPulled = false;
         this.hasCastFireball = false;
 
+        // Tower range bonus: double ranged range while on tower tile
+        if (this.scene && this.scene.gridSystem) {
+            const onTower = this.scene.gridSystem.isTower(this.gridX, this.gridY);
+            if (onTower && this.rangedRange > 0 && !this.towerBonusApplied) {
+                this.towerBaseRange = this.rangedRange;
+                this.rangedRange *= 2;
+                this.towerBonusApplied = true;
+                this.scene.uiManager.showBuffText(this, 'TOWER!', '#DAA520');
+            } else if (!onTower && this.towerBonusApplied) {
+                this.rangedRange = this.towerBaseRange;
+                this.towerBonusApplied = false;
+            }
+        }
+
         // Store starting position for Rogue's hit-and-run
         if (this.type === 'ROGUE' || this.type === 'ORC_ROGUE' || this.type === 'LOOT_GOBLIN') {
             this.turnStartX = this.gridX;
@@ -1638,9 +1652,10 @@ export class TurnSystem {
         return minDist;
     }
 
-    // Check if a move is valid for a unit (accounting for 2x2)
+    // Check if a move is valid for a unit (accounting for 2x2, towers, flying)
     isValidMoveForUnit(unit, x, y) {
         const bossSize = unit.bossSize || 1;
+        const gs = this.scene.gridSystem;
 
         for (let dy = 0; dy < bossSize; dy++) {
             for (let dx = 0; dx < bossSize; dx++) {
@@ -1648,13 +1663,16 @@ export class TurnSystem {
                 const checkY = y + dy;
 
                 // Check bounds
-                if (checkX < 0 || checkX >= this.scene.gridSystem.width ||
-                    checkY < 0 || checkY >= this.scene.gridSystem.height) {
+                if (checkX < 0 || checkX >= gs.width || checkY < 0 || checkY >= gs.height) {
                     return false;
                 }
 
-                // Check obstacles
-                if (this.scene.gridSystem.isObstacle(checkX, checkY)) {
+                // Tower: only ranged units can enter
+                if (gs.isTower(checkX, checkY)) {
+                    if (!unit.rangedRange || unit.rangedRange <= 0) return false;
+                } else if (gs.isObstacle(checkX, checkY)) {
+                    // Flying units can pass through walls but NOT stop on them
+                    // (handled in pathfinding — this function checks the destination)
                     return false;
                 }
 
@@ -1705,7 +1723,14 @@ export class TurnSystem {
             for (const neighbor of neighbors) {
                 if (closedSet.has(`${neighbor.x},${neighbor.y}`)) continue;
 
-                if (!this.isValidMoveForUnit(unit, neighbor.x, neighbor.y)) continue;
+                // Flying units can traverse wall tiles (but not stop on them)
+                if (!this.isValidMoveForUnit(unit, neighbor.x, neighbor.y)) {
+                    if (unit.canFly && this.scene.gridSystem.isWall(neighbor.x, neighbor.y)) {
+                        // Allow traversal — pathfinding will continue through the wall
+                    } else {
+                        continue;
+                    }
+                }
 
                 const tentativeG = current.g + 1;
                 let openNeighbor = openSet.find(n => n.x === neighbor.x && n.y === neighbor.y);

@@ -31,7 +31,7 @@ const TRANSLATIONS = {
         'map.mountain.name': 'Mountain Pass',
         'map.mountain.stats': '13×11 Grid<br>1300 Points<br>Chokepoint',
         'map.ruins.name': 'Ruins of a Castle',
-        'map.ruins.stats': '15×15 Grid<br>1700 Points<br>Dirt & Walls',
+        'map.ruins.stats': '10×8 Grid<br>2000 Points<br>Castle Siege',
 
         // Faction Selection
         'faction.select.title': '👹 Choose Your Enemy',
@@ -406,7 +406,7 @@ const TRANSLATIONS = {
         'map.mountain.name': 'Горный Перевал',
         'map.mountain.stats': '13×11 Клеток<br>1300 Очков<br>Узкие проходы',
         'map.ruins.name': 'Руины Замка',
-        'map.ruins.stats': '15×15 Клеток<br>1700 Очков<br>Земля и Стены',
+        'map.ruins.stats': '10×8 Клеток<br>2000 Очков<br>Осада Замка',
 
         // Faction Selection
         'faction.select.title': '👹 Выберите Врага',

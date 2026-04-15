@@ -168,7 +168,16 @@
                     </div>
                 </button>
 
-                <!-- Ruins Map Option (disabled pending rework) -->
+                <!-- Ruins Map Option: Castle Siege -->
+                <button class="map-select-btn" onclick="selectMap('ruins')" data-stage="ruins">
+                    <div class="map-preview ruins-preview">🏰</div>
+                    <div class="map-name" data-i18n="map.ruins.name">Ruins of a Castle</div>
+                    <div class="map-stats" data-i18n-html="map.ruins.stats">
+                        10×8 Grid<br>
+                        2000 Points<br>
+                        Castle Siege
+                    </div>
+                </button>
             </div>
         </div>
 
@@ -806,7 +815,7 @@
             });
 
             // Update points based on map (+ meta starting balance bonus)
-            const _basePoints = mapId === 'ruins' ? 1700 : mapId === 'mountain' ? 1300 : 1000;
+            const _basePoints = mapId === 'ruins' ? 2000 : mapId === 'mountain' ? 1300 : 1000;
             armyTotalPoints = _basePoints + _metaStartBonus();
             resetArmyCounts();
 
@@ -883,7 +892,7 @@
         function closeMetaShop() {
             document.getElementById('meta-shop-modal').style.display = 'none';
             // Refresh army points if startingBalance upgrade was purchased
-            const _base = selectedMapId === 'mountain' ? 1300 : 1000;
+            const _base = selectedMapId === 'ruins' ? 2000 : selectedMapId === 'mountain' ? 1300 : 1000;
             const newTotal = _base + _metaStartBonus();
             const diff = newTotal - armyTotalPoints;
             if (diff !== 0) {
