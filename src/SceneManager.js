@@ -391,8 +391,12 @@ export class BattleScene extends Phaser.Scene {
         // Update mana display
         this.uiManager.updateManaDisplay();
 
-        // Start the game
-        this.turnSystem.initQueue();
+        // Start the game — delay if enemies are walking in from off-screen
+        if (this.battleNumber > 1) {
+            this.time.delayedCall(1000, () => this.turnSystem.initQueue());
+        } else {
+            this.turnSystem.initQueue();
+        }
 
         // Make scene accessible globally for UI buttons
         window.gameScene = this;
