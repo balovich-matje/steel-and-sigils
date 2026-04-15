@@ -595,6 +595,9 @@ export class GridSystem {
     // LOS check between two units (accounts for multi-tile bosses)
     hasUnitLineOfSight(unitA, unitB) {
         if (this.walls.size === 0) return true;
+        // Units on towers have elevated vision — bypass LOS entirely
+        if (this.isTower(unitA.gridX, unitA.gridY)) return true;
+        if (this.isTower(unitB.gridX, unitB.gridY)) return true;
         const posA = unitA.getOccupiedPositions ? unitA.getOccupiedPositions() : [{ x: unitA.gridX, y: unitA.gridY }];
         const posB = unitB.getOccupiedPositions ? unitB.getOccupiedPositions() : [{ x: unitB.gridX, y: unitB.gridY }];
         // Any tile of A can see any tile of B → LOS exists
