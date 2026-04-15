@@ -191,12 +191,12 @@ const TRANSLATIONS = {
         'spell.desc.regenerate': 'Heals 15 HP at the start of each turn for 4 turns',
 
         // Victory/Defeat
-        'victory.title': '🎉 Victory! 🎉',
-        'victory.subtitle': 'Choose your rewards for the next battle:',
-        'defeat.title': 'Defeat...',
-        'defeat.message': 'Your army has fallen...',
-        'defeat.submessage': 'Better luck next time, commander.',
-        'defeat.retry': '⚔️ Try Again',
+        'victory.title': 'The Battle is Won',
+        'victory.subtitle': 'Claim your spoils:',
+        'defeat.title': 'Defeat',
+        'defeat.message': 'Your army has fallen.',
+        'defeat.submessage': 'The dead do not forgive. Rise and try again.',
+        'defeat.retry': '⚔️ March Again',
 
         // Rewards
         'reward.recruit': '⚔️ Recruit a New Unit',
@@ -207,8 +207,8 @@ const TRANSLATIONS = {
         'reward.epic_power': '⚡ Epic Power',
         'reward.mythic_power': '🔥 Mythic Power',
         'reward.legendary_enhancement': '✨ Legendary Enhancement',
-        'reward.no_unit_round1': 'First victory! No new unit yet.',
-        'reward.no_unit_later': 'Victory! New unit available in round {0}.',
+        'reward.no_unit_round1': 'First blood drawn. No new recruit yet.',
+        'reward.no_unit_later': 'Well fought. New recruit available in round {0}.',
         'reward.new_unit_every2': '(New units every 2 rounds)',
         'reward.confirm': 'Confirm Choices ({0}/3)',
         'reward.discard_units': 'Discard units<br>for bonus buff',
@@ -566,12 +566,12 @@ const TRANSLATIONS = {
         'spell.desc.regenerate': 'Восстанавливает 15 ЗДОР в начале каждого хода в течение 4 ходов',
 
         // Victory/Defeat
-        'victory.title': '🎉 Победа! 🎉',
-        'victory.subtitle': 'Выберите награды для следующего боя:',
-        'defeat.title': 'Поражение...',
-        'defeat.message': 'Ваша армия пала...',
-        'defeat.submessage': 'Повезёт в следующий раз, командир.',
-        'defeat.retry': '⚔️ Попробовать Снова',
+        'victory.title': 'Бой Выигран',
+        'victory.subtitle': 'Соберите трофеи:',
+        'defeat.title': 'Поражение',
+        'defeat.message': 'Ваша армия пала.',
+        'defeat.submessage': 'Мёртвые не прощают. Восстань и попробуй снова.',
+        'defeat.retry': '⚔️ В Бой',
 
         // Rewards
         'reward.recruit': '⚔️ Нанять Нового Юнита',
@@ -582,8 +582,8 @@ const TRANSLATIONS = {
         'reward.epic_power': '⚡ Эпическая Сила',
         'reward.mythic_power': '🔥 Мифическая Сила',
         'reward.legendary_enhancement': '✨ Легендарное Усиление',
-        'reward.no_unit_round1': 'Первая победа! Пока без нового юнита.',
-        'reward.no_unit_later': 'Победа! Новый юнит доступен в раунде {0}.',
+        'reward.no_unit_round1': 'Первая кровь пролита. Пока без нового рекрута.',
+        'reward.no_unit_later': 'Славный бой. Новый рекрут доступен в раунде {0}.',
         'reward.new_unit_every2': '(Новые юниты каждые 2 раунда)',
         'reward.confirm': 'Подтвердить Выбор ({0}/3)',
         'reward.discard_units': 'Отказаться<br>от юнитов',

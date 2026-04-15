@@ -51,19 +51,34 @@ utils/              — Asset generation scripts + docs
 
 ## Roadmap
 
-### Completed (v1.00 - v1.10)
+### Completed (v1.00 - v1.11)
 - [x] Core combat system (9 units, 12 spells, 3 factions)
-- [x] 3 battle maps (Forest, Mountain Pass, Ruins — Ruins disabled for rework)
+- [x] 3 battle maps (Forest, Mountain Pass, Ruins — castle siege with walls/towers/LOS)
 - [x] Boss system (10 bosses across 3 factions including Bone Behemoth)
 - [x] Legendary + Mythic perk trees (5 legendary, 4 mythic)
 - [x] Rogue-lite meta-progression (SaveManager, power-up shop)
 - [x] Diagonal attacks (Chebyshev distance)
 - [x] 7 common buffs, 8 epic buffs, 9 magic rewards including Spell Echo
+- [x] Line-of-sight system (Bresenham) for castle siege walls
+- [x] Flying passive (Lost Spirit, Banshee Sovereign)
+- [x] Tower mechanic (ranged units get doubled range)
+- [x] Medieval fonts (Cinzel headings + EB Garamond body, Cyrillic support)
+- [x] Grim dark fantasy tone pass (victory/defeat text rework)
 - [x] i18n (English + Russian)
 - [x] AI-generated sprite pipeline (Pollinations API + background removal)
 - [x] Local SFX generation pipeline (Meta AudioGen — quality insufficient, parked)
 
-### Phase 1: Steam Playtest Prep
+### Phase 1: UI Overhaul (Songs of Conquest reference)
+Target: achieve a dark medieval manuscript aesthetic similar to Songs of Conquest.
+- [x] Custom medieval fonts (Cinzel + EB Garamond)
+- [ ] UI panel frames and borders (Kenney Fantasy UI or custom dark fantasy pack)
+- [ ] Textured panel backgrounds (parchment/leather, not flat CSS)
+- [ ] Custom icon set (replace emoji with pixel art icons)
+- [ ] Ornate decorative corners and dividers
+- [ ] Consistent dark fantasy color treatment across all screens
+- [ ] Grim dark flavor text for all game strings
+
+### Phase 2: Steam Playtest Prep
 - [ ] Electron wrapper + Steam overlay integration
 - [ ] steamworks.js basic init (app ID, overlay)
 - [ ] Store page assets (capsule images, screenshots, description)
