@@ -745,6 +745,53 @@ export class BattleScene extends Phaser.Scene {
                 320, 100, '#A68966'
             );
         }
+
+        // Walk-in animation: enemies march from off-screen right
+        this.animateEnemyWalkIn();
+    }
+
+    animateEnemyWalkIn() {
+        const enemies = this.unitManager.getEnemyUnits();
+        const offscreenOffset = this.gridSystem.width * this.tileSize + 100;
+
+        for (const enemy of enemies) {
+            if (!enemy.sprite) continue;
+            const targetX = enemy.sprite.x;
+            const targetShadowX = enemy.shadow ? enemy.shadow.x : null;
+
+            // Start off-screen right
+            enemy.sprite.x = targetX + offscreenOffset;
+            enemy.sprite.setAlpha(0.7);
+            if (enemy.shadow) enemy.shadow.x = targetShadowX + offscreenOffset;
+            if (enemy.healthBar) enemy.healthBar.setVisible(false);
+
+            // Staggered walk-in
+            const delay = Math.random() * 400;
+            this.tweens.add({
+                targets: enemy.sprite,
+                x: targetX,
+                alpha: 1,
+                duration: 600 + Math.random() * 200,
+                delay: delay,
+                ease: 'Power2'
+            });
+            if (enemy.shadow) {
+                this.tweens.add({
+                    targets: enemy.shadow,
+                    x: targetShadowX,
+                    duration: 600 + Math.random() * 200,
+                    delay: delay,
+                    ease: 'Power2'
+                });
+            }
+            // Show health bar after arriving
+            this.time.delayedCall(delay + 700, () => {
+                if (enemy.healthBar) {
+                    enemy.healthBar.setVisible(true);
+                    enemy.updateHealthBar();
+                }
+            });
+        }
     }
 
     createBossWave() {
@@ -848,6 +895,9 @@ export class BattleScene extends Phaser.Scene {
                 t('combat.boss_appears', bossEmoji, bossName),
                 320, 120, '#ff4444'
             );
+
+            // Walk-in animation for boss + adds
+            this.animateEnemyWalkIn();
         }
     }
 
@@ -2166,15 +2216,19 @@ export class BattleScene extends Phaser.Scene {
 
         if (enemyUnits.length === 0) {
             this.victoryShown = true;
-            // Clear silence if it was active
             if (this.silenceActive) {
                 this.silenceActive = false;
-                this.uiManager.showFloatingText('🔇 Silence lifted!', 400, 250, '#6B8B5B');
+                this.uiManager.showFloatingText('Silence lifted!', 400, 250, '#6B8B5B');
             }
-            this.showVictoryScreen(true);
+            // Delay victory screen to let killing blow death animation play
+            this.time.delayedCall(1200, () => {
+                this.showVictoryScreen(true);
+            });
         } else if (playerUnits.length === 0) {
             this.victoryShown = true;
-            this.showVictoryScreen(false);
+            this.time.delayedCall(1200, () => {
+                this.showVictoryScreen(false);
+            });
         }
     }
 

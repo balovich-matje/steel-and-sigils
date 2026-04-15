@@ -1,4 +1,4 @@
-# ⚔️ Steel and Sigils v1.11
+# ⚔️ Steel and Sigils v1.12
 
 A tactical combat roguelite inspired by Heroes of Might and Magic. Built with Phaser 3 + vanilla JS. No build step — open `index.html` in a browser.
 

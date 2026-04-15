@@ -468,17 +468,23 @@ export class Unit {
             scene.addCombatLog('Void Herald defeated! Movement speed restored!', 'buff');
         }
 
-        // Check victory condition
+        // Check victory condition — delay to let death animation play
         if (scene && scene.unitManager) {
             const enemies = scene.unitManager.getEnemyUnits();
             const players = scene.unitManager.getPlayerUnits();
 
             if (enemies.length === 0 && !scene.victoryShown) {
                 scene.victoryShown = true;
-                scene.showVictoryScreen(true);
+                scene.addCombatLog('All enemies defeated!', 'kill');
+                scene.time.delayedCall(1200, () => {
+                    scene.showVictoryScreen(true);
+                });
             } else if (players.length === 0 && !scene.victoryShown) {
                 scene.victoryShown = true;
-                scene.showVictoryScreen(false);
+                scene.addCombatLog('Your army has fallen...', 'kill');
+                scene.time.delayedCall(1200, () => {
+                    scene.showVictoryScreen(false);
+                });
             }
         }
     }
@@ -1147,7 +1153,8 @@ export class TurnSystem {
     }
 
     initQueue() {
-        this.scene.addCombatLog(`══ Round ${this.roundNumber} ══`, 'round');
+        const wave = this.scene.battleNumber || 1;
+        this.scene.addCombatLog(`══ Wave ${wave} · Round ${this.roundNumber} ══`, 'round');
         this.updateQueue();
         this.nextTurn();
     }
@@ -1207,7 +1214,8 @@ export class TurnSystem {
 
     startNewRound() {
         this.roundNumber++;
-        this.scene.addCombatLog(`══ Round ${this.roundNumber} ══`, 'round');
+        const wave = this.scene.battleNumber || 1;
+        this.scene.addCombatLog(`══ Wave ${wave} · Round ${this.roundNumber} ══`, 'round');
         this.scene.regenerateMana();
         this.scene.spellsCastThisRound = 0;
         // Reset spell button at start of new round
